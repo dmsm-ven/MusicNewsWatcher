@@ -22,21 +22,16 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ISettingsStorage settingsStorage;
     private readonly Timer autoUpdateTimer; 
 
-
     bool inProgress;
     public bool InProgress
     {
         get => inProgress;
         set
         {
-            if(Set(ref inProgress, value))
+            if (Set(ref inProgress, value))
             {
                 settingsStorage.SetValue(nameof(SettingsRoot.LastCheck), (DateTime?)DateTime.Now);
                 RaisePropertyChanged(nameof(Title));
-            }
-            if(InProgress == false)
-            {
-                TrackedArtists.ToList().ForEach(a => a.CheckInProgress = false);
             }
         }
     }
@@ -44,21 +39,6 @@ public class MainWindowViewModel : ViewModelBase
     public string Title
     {
         get => $"Bandcamp Watcher | Последнее обновление выполнено: {settingsStorage.Load().LastCheck}";
-    }
-
-    public int progressCurrent = 0;
-    public int ProgressCurrent
-    {
-        get => progressCurrent;
-        set
-        {
-            Set(ref progressCurrent, value);
-            TrackedArtists.ToList().ForEach(a => a.CheckInProgress = false);
-            if (progressCurrent < TrackedArtists.Count)
-            {
-                TrackedArtists[progressCurrent].CheckInProgress = true;
-            }
-        }
     }
 
     ArtistModel selectedArtist;
@@ -72,6 +52,7 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
+    public ICommand CheckUpdatesSelectedCommand { get; }
     public ICommand ShowSettingsWindowCommand { get; }
     public MainWindowViewModel(ISettingsStorage settingsStorage)
     {
@@ -82,7 +63,8 @@ public class MainWindowViewModel : ViewModelBase
         AddArtistCommand = new LambdaCommand(AddTrackedArtist, e => true);
         DeleteArtistCommand = new LambdaCommand(DeleteArtists, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
-        CheckUpdatesAllCommand = new LambdaCommand(CheckUpdatesAll, e => !InProgress);
+        CheckUpdatesAllCommand = new LambdaCommand(e => CheckUpdates(null), e => !InProgress);
+        CheckUpdatesSelectedCommand = new LambdaCommand(e => CheckUpdates(SelectedArtist), e => !InProgress && SelectedArtist != null);
         ShowSettingsWindowCommand = new LambdaCommand(e => MessageBox.Show("NOT IMPLEMENTED!"), e => true);
         TrackedArtists = new ObservableCollection<ArtistModel>();
 
@@ -102,7 +84,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
-        Application.Current.Dispatcher.Invoke(() => CheckUpdatesAll(null));
+        Application.Current.Dispatcher.Invoke(() => CheckUpdates(null));
     }
 
     private void LoadAllArtists()
@@ -128,37 +110,48 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private async void CheckUpdatesAll(object obj)
+    private async void CheckUpdates(object obj)
     {
-        InProgress = true;
-        bool hasNew = false;
+        InProgress = true;        
         try
         {
-            await parser.CheckUpdates(TrackedArtists);
 
+            var source = new List<ArtistModel>(obj == null ? TrackedArtists : new[] { SelectedArtist});
 
-            foreach (var artist in TrackedArtists.Where(a => a.HasNew))
-            {
-                var dbArtist = _db.Artists.Single(a => a.Uri == artist.Uri);
-                foreach (var album in artist.Albums)
-                {
-                    if (dbArtist.Albums.FirstOrDefault(a => a.Uri == album.Uri) != null) 
-                    { 
-                        continue; 
-                    }
-                    dbArtist.Albums.Add(new Album() { Title = album.Title, Uri = album.Uri, Image = album.Image, Created = DateTime.Now });
-                    hasNew = true;
-                }
-            }
-            _db.SaveChanges();
+            await parser.CheckUpdates(source);
+
+            SaveChangesIfNeed();
+        }
+        catch(Exception ex)
+        {
+            MessageBox.Show($"Ошибка обновления: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
             InProgress = false;
-            if (hasNew)
+        }
+    }
+
+    private void SaveChangesIfNeed()
+    {
+        bool hasChanges = false;
+        foreach (var artist in TrackedArtists.Where(a => a.HasNew))
+        {
+            var dbArtist = _db.Artists.Single(a => a.Uri == artist.Uri);
+            foreach (var album in artist.Albums)
             {
-                SystemSounds.Exclamation.Play();
+                if (dbArtist.Albums.FirstOrDefault(a => a.Uri == album.Uri) != null)
+                {
+                    continue;
+                }
+                dbArtist.Albums.Add(new Album() { Title = album.Title, Uri = album.Uri, Image = album.Image, Created = DateTime.Now });
             }
+        }
+
+        if (hasChanges)
+        {
+            _db.SaveChanges();
+            SystemSounds.Exclamation.Play();
         }
     }
 

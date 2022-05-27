@@ -54,7 +54,6 @@ internal class BandcampParser
             var doc = new HtmlDocument();
             doc.LoadHtml(page);
 
-            artist.HasNew = false;
             int beforeCount = artist.Albums.Count;
             
             doc.DocumentNode.SelectNodes("//ol[@id='music-grid']/li")
@@ -69,7 +68,7 @@ internal class BandcampParser
                 .ToList()
                 .ForEach(na => artist.Albums.Insert(0, na));
 
-            artist.HasNew = beforeCount != artist.Albums.Count;
+            artist.HasNew = artist.HasNew || (beforeCount != artist.Albums.Count);
         }
         catch
         {
