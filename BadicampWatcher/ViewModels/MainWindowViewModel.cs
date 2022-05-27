@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Media;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
@@ -16,8 +17,8 @@ namespace BandcampWatcher.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly BandcampWatcherDbContext _db = new BandcampWatcherDbContext();
-    private readonly BandcampParser parser = new BandcampParser();
+    private readonly BandcampWatcherDbContext _db;
+    private readonly BandcampParser parser;
     private readonly ISettingsStorage settingsStorage;
     private readonly Timer autoUpdateTimer; 
 
@@ -74,6 +75,10 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowSettingsWindowCommand { get; }
     public MainWindowViewModel(ISettingsStorage settingsStorage)
     {
+        _db = new BandcampWatcherDbContext();
+        parser = new BandcampParser(_db);
+        this.settingsStorage = settingsStorage;
+
         AddArtistCommand = new LambdaCommand(AddTrackedArtist, e => true);
         DeleteArtistCommand = new LambdaCommand(DeleteArtists, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
@@ -82,7 +87,7 @@ public class MainWindowViewModel : ViewModelBase
         TrackedArtists = new ObservableCollection<ArtistModel>();
 
         LoadAllArtists();
-        this.settingsStorage = settingsStorage;
+        
         autoUpdateTimer = new Timer((int)TimeSpan.FromHours(1).TotalMilliseconds);
         autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
         autoUpdateTimer.Start();
@@ -91,6 +96,8 @@ public class MainWindowViewModel : ViewModelBase
         {
             AutoUpdateTimer_Elapsed(null, null);
         }
+        //_db.Albums.RemoveRange(_db.Albums);
+        //_db.SaveChanges();
     }
 
     private void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
@@ -107,7 +114,7 @@ public class MainWindowViewModel : ViewModelBase
                 Name = artist.Name,
                 Image = artist.Image,
                 Uri = artist.Uri,
-                Albums = new ObservableCollection<AlbumModel>(artist.Albums.Select(a => new AlbumModel()
+                Albums = new ObservableCollection<AlbumModel>(artist.Albums.Select(a => new AlbumModel(_db)
                 {
                     Image = a.Image,
                     Uri = a.Uri,
@@ -115,8 +122,7 @@ public class MainWindowViewModel : ViewModelBase
                     IsViewed = a.IsViewed,
                     Title = a.Title
                 }))
-            };
-            newArtist.Albums.ToList().ForEach(a => a.OpenUrlClicked += () => Album_OpenUrlClicked(artist.ArtistId, a));
+            };          
             TrackedArtists.Add(newArtist);
 
         }
@@ -125,22 +131,23 @@ public class MainWindowViewModel : ViewModelBase
     private async void CheckUpdatesAll(object obj)
     {
         InProgress = true;
+        bool hasNew = false;
         try
         {
-            var newAlbums = await parser.CheckUpdates(TrackedArtists, new Progress<int>(v => ProgressCurrent = v));
-            foreach (var kvp in newAlbums)
-            {
-                var artist = _db.Artists.Single(a => a.Name == kvp.Key.Name);
+            await parser.CheckUpdates(TrackedArtists);
 
-                foreach (var album in kvp.Value)
+
+            foreach (var artist in TrackedArtists.Where(a => a.HasNew))
+            {
+                var dbArtist = _db.Artists.Single(a => a.Uri == artist.Uri);
+                foreach (var album in artist.Albums)
                 {
-                    if (artist.Albums.FirstOrDefault(a => a.Uri == album.Uri) == null)
-                    {
-                        kvp.Key.Albums.Add(album);
-                        album.OpenUrlClicked += () => Album_OpenUrlClicked(artist.ArtistId, album);
-                        artist.Albums.Add(new Album() { Title = album.Title, Uri = album.Uri, Image = album.Image, Created = DateTime.Now });
-                        kvp.Key.HasNew = true;
+                    if (dbArtist.Albums.FirstOrDefault(a => a.Uri == album.Uri) != null) 
+                    { 
+                        continue; 
                     }
+                    dbArtist.Albums.Add(new Album() { Title = album.Title, Uri = album.Uri, Image = album.Image, Created = DateTime.Now });
+                    hasNew = true;
                 }
             }
             _db.SaveChanges();
@@ -148,20 +155,11 @@ public class MainWindowViewModel : ViewModelBase
         finally
         {
             InProgress = false;
+            if (hasNew)
+            {
+                SystemSounds.Exclamation.Play();
+            }
         }
-    }
-
-    private void Album_OpenUrlClicked(int artist_id, AlbumModel albumModel)
-    {
-        var psi = new System.Diagnostics.ProcessStartInfo();
-        psi.UseShellExecute = true;
-        psi.FileName = albumModel.Uri;
-        System.Diagnostics.Process.Start(psi);
-        
-        var albumEntity = _db.Albums.Single(a => a.ArtistId == artist_id && a.Title == albumModel.Title);
-        albumModel.IsViewed = true;
-        albumEntity.IsViewed = true;
-        _db.SaveChanges();
     }
 
     private void AddTrackedArtist(object obj)

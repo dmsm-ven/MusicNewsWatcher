@@ -93,7 +93,7 @@
             </Border>
 
             <Border BorderThickness="1" BorderBrush="LightGray" CornerRadius="4" Grid.Column="1"
-                    MaxWidth="300"
+                    MaxWidth="400"
                     Visibility="{Binding SelectedArtist, Converter={StaticResource NotNullToVisibilityConverter}}">
                 <ListBox ItemsSource="{Binding SelectedArtist.Albums}">
                     <ListBox.ItemTemplate>
@@ -104,7 +104,7 @@
                                 </Button>
                                 <TextBlock Text="{Binding Created, ConverterCulture=ru-RU, StringFormat='dd.MM.yyyy'}" Margin="2 2 8 2" 
                                            Foreground="{Binding IsViewed, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Gray;Blue'}"/>
-                                <Label Content="{Binding Title}" Foreground="Yellow" FontWeight="Bold" Background="Navy" Margin="2"/>
+                                <Label Content="{Binding DisplayName}" Foreground="Yellow" FontWeight="Bold" Background="Navy" Margin="2"/>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

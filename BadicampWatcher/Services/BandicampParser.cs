@@ -12,7 +12,9 @@ namespace BandcampWatcher.ViewModels;
 internal class BandcampParser
 {
     private readonly HttpClient client;
-    public BandcampParser()
+    private readonly BandcampWatcherDbContext dbContext;
+
+    public BandcampParser(BandcampWatcherDbContext dbContext)
     {
         client = new HttpClient(new HttpClientHandler()
         {
@@ -21,61 +23,61 @@ internal class BandcampParser
             UseCookies = true,
             AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
         });
+        this.dbContext = dbContext;
     }
 
-    internal async Task<Dictionary<ArtistModel, List<AlbumModel>>> CheckUpdates(IEnumerable<ArtistModel>  artists, IProgress<int> progress)
+    public async Task CheckUpdates(IList<ArtistModel> artists, int chunkSize = 5)
     {
-        var dic = new Dictionary<ArtistModel, List<AlbumModel>>();
+        int totalArtists = artists.Count;
+        int currentPage = 1;
 
-        int current = 0;
-
-        foreach(var artist in artists)
+        do
         {
-            try
-            {
-                progress?.Report(current);
-                await GetArtistAlbumsInfo(dic, artist);
-                current++;
-                progress?.Report(current);
-            }
-            catch
-            {
+            var tasks = artists
+                .Select(a => CheckArtistNewAlbums(a))
+                .Skip((currentPage - 1) * chunkSize)
+                .Take(chunkSize)
+                .ToArray();
+            await Task.WhenAll(tasks);
+            currentPage++;
+        } while (chunkSize * (currentPage - 1) < totalArtists);
+    }
 
-            }
+    private async Task CheckArtistNewAlbums(ArtistModel artist)
+    {
+        artist.CheckInProgress = true;
 
+        try
+        {
+            var page = await client.GetStringAsync(artist.Uri + "/music");
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(page);
+
+            artist.HasNew = false;
+            int beforeCount = artist.Albums.Count;
+            
+            doc.DocumentNode.SelectNodes("//ol[@id='music-grid']/li")
+                .Select(li => new AlbumModel(dbContext)
+                {
+                    Title = li.SelectSingleNode(".//p[@class='title']")?.InnerText.Trim() ?? "<Нет названия>",
+                    Created = DateTime.Now,
+                    Uri = $"{artist.Uri.Trim('/')}{li.SelectSingleNode(".//a").GetAttributeValue("href", null)}",
+                    Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null)
+                })
+                .Where(na => artist.Albums.FirstOrDefault(a => a.Uri == na.Uri) == null)
+                .ToList()
+                .ForEach(na => artist.Albums.Insert(0, na));
+
+            artist.HasNew = beforeCount != artist.Albums.Count;
+        }
+        catch
+        {
             
         }
-
-        return dic;
-    }
-
-
-    private async Task GetArtistAlbumsInfo(Dictionary<ArtistModel, List<AlbumModel>> dic, ArtistModel artist)
-    {
-        var page = await client.GetStringAsync(artist.Uri + "/music");
-
-        var doc = new HtmlDocument();
-        doc.LoadHtml(page);
-
-        var findedAlbums = doc.DocumentNode.SelectNodes("//ol[@id='music-grid']/li")
-            .Select(li => new AlbumModel()
-            {
-                Title = li.SelectSingleNode(".//p[@class='title']")?.InnerText.Trim() ?? "<Нет названия>",
-                Created = DateTime.Now,
-                Uri = $"{artist.Uri.Trim('/')}{li.SelectSingleNode(".//a").GetAttributeValue("href", null)}",
-                Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null),
-            })
-            .ToList();
-
-        foreach (var album in findedAlbums)
+        finally
         {
-            if (artist.Albums.FirstOrDefault(a => a.Uri.Equals(album.Uri)) != null) { continue; }
-
-            if (!dic.ContainsKey(artist))
-            {
-                dic[artist] = new List<AlbumModel>();
-            }
-            dic[artist].Add(album);
+            artist.CheckInProgress = false;
         }
     }
 }
