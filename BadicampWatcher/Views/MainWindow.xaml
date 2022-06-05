@@ -8,9 +8,14 @@
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
+        
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=False}"
         Title="{Binding Title}" Height="300" Width="600">
-
+    <Window.Background>
+        <ImageBrush TileMode="FlipXY" ViewportUnits="Absolute"
+                            Viewport="0,0,250,250"
+                            Stretch="Fill" ImageSource="/Assets/background-texture.jpg" />
+    </Window.Background>
     <Window.Resources>
         <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>
         <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
@@ -36,7 +41,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="2">
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="5 2 5 2" Background="{StaticResource MainWindowTransparentBrush}">
             <Button Command="{Binding CheckUpdatesSelectedCommand}">
                 <icons:PackIconFontAwesome Kind="SquareFullSolid"/>
             </Button>
@@ -65,8 +70,10 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Border BorderThickness="1" BorderBrush="LightGray" CornerRadius="4" Margin="2">
+            <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="4" Margin="2">
+
                 <ListBox ItemsSource="{Binding TrackedArtists}" SelectedItem="{Binding SelectedArtist}" 
+                         Background="{StaticResource MainWindowTransparentBrush}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -98,9 +105,9 @@
                 </ListBox>
             </Border>
 
-            <Border BorderThickness="1" BorderBrush="LightGray" CornerRadius="4" Margin="2"
+            <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="4" Margin="2"
                     Grid.Column="1" MinWidth="350" MaxWidth="350">
-                <ListBox ItemsSource="{Binding SelectedArtist.Albums}">
+                <ListBox ItemsSource="{Binding SelectedArtist.Albums}" Background="{StaticResource MainWindowTransparentBrush}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -118,6 +125,7 @@
         </Grid>
         
         <ProgressBar Grid.Row="2" Height="24" Margin="2"
+                     Opacity="0.4"
                      IsIndeterminate="True"
                      Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}}"></ProgressBar>
     </Grid>
