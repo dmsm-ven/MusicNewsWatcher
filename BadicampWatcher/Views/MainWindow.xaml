@@ -7,14 +7,13 @@
         xmlns:con="clr-namespace:BandcampWatcher.Infrastructure.Converters"
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:tb="http://www.hardcodet.net/taskbar"
-        mc:Ignorable="d"
-        
+        mc:Ignorable="d"        
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=False}"
         Title="{Binding Title}" Height="300" Width="600">
     <Window.Background>
         <ImageBrush TileMode="FlipXY" ViewportUnits="Absolute"
-                            Viewport="0,0,250,250"
-                            Stretch="Fill" ImageSource="/Assets/background-texture.jpg" />
+                            Viewport="0,0,200,200"
+                            Stretch="Fill" ImageSource="../Assets/bricks.jpg" />
     </Window.Background>
     <Window.Resources>
         <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>

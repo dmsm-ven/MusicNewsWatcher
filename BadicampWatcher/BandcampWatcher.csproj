@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <None Remove="Assets\background-texture.jpg" />
+    <None Remove="Assets\bricks.jpg" />
+    <None Remove="Assets\cosmos-texture.jpg" />
     <None Remove="logo.ico" />
   </ItemGroup>
 
@@ -27,6 +29,12 @@
 
   <ItemGroup>
     <Resource Include="Assets\background-texture.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\bricks.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\cosmos-texture.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="logo.ico" />

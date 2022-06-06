@@ -35,7 +35,6 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
     }
-
     public string Title
     {
         get => $"Bandcamp Watcher | Последнее обновление выполнено: {settingsStorage.Load().LastCheck}";
@@ -54,12 +53,9 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand CheckUpdatesAllCommand { get; }
     public ICommand CheckUpdatesSelectedCommand { get; }
     public ICommand ShowSettingsWindowCommand { get; }
-    public MainWindowViewModel(ISettingsStorage settingsStorage)
-    {
-        _db = new BandcampWatcherDbContext();
-        parser = new BandcampParser(_db);
-        this.settingsStorage = settingsStorage;
 
+    public MainWindowViewModel()
+    {
         AddArtistCommand = new LambdaCommand(AddTrackedArtist, e => true);
         DeleteArtistCommand = new LambdaCommand(DeleteArtists, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
@@ -68,18 +64,22 @@ public class MainWindowViewModel : ViewModelBase
         ShowSettingsWindowCommand = new LambdaCommand(e => MessageBox.Show("NOT IMPLEMENTED!"), e => true);
         TrackedArtists = new ObservableCollection<ArtistModel>();
 
-        LoadAllArtists();
-        
+        _db = new BandcampWatcherDbContext();
+        parser = new BandcampParser(_db);
+
         autoUpdateTimer = new Timer((int)TimeSpan.FromHours(1).TotalMilliseconds);
         autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
         autoUpdateTimer.Start();
-
+    }
+    public MainWindowViewModel(ISettingsStorage settingsStorage) : this()
+    {
+        this.settingsStorage = settingsStorage;
+        LoadAllArtists();
+       
         if ((settingsStorage.Load().LastCheck ?? new DateTime()) + TimeSpan.FromHours(1) < DateTime.Now)
         {
             AutoUpdateTimer_Elapsed(null, null);
         }
-        //_db.Albums.RemoveRange(_db.Albums);
-        //_db.SaveChanges();
     }
 
     private void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
@@ -89,9 +89,8 @@ public class MainWindowViewModel : ViewModelBase
 
     private void LoadAllArtists()
     {
-        foreach (var artist in _db.Artists.Include(a => a.Albums))
-        {
-            var newArtist = new ArtistModel()
+        var source = _db.Artists.Include(a => a.Albums)
+            .Select(artist => new ArtistModel()
             {
                 Name = artist.Name,
                 Image = artist.Image,
@@ -104,9 +103,12 @@ public class MainWindowViewModel : ViewModelBase
                     IsViewed = a.IsViewed,
                     Title = a.Title
                 }))
-            };          
-            TrackedArtists.Add(newArtist);
+            })           
+            .ToList();
 
+        foreach (var artist in source.OrderByDescending(a => a.LastAlbumDate))
+        {       
+            TrackedArtists.Add(artist);
         }
     }
 
@@ -135,7 +137,8 @@ public class MainWindowViewModel : ViewModelBase
     private void SaveChangesIfNeed()
     {
         bool hasChanges = false;
-        foreach (var artist in TrackedArtists.Where(a => a.HasNew))
+        var artistWithUpdate = TrackedArtists.Where(a => a.HasNew).ToList();
+        foreach (var artist in artistWithUpdate)
         {
             var dbArtist = _db.Artists.Single(a => a.Uri == artist.Uri);
             foreach (var album in artist.Albums)
@@ -144,7 +147,14 @@ public class MainWindowViewModel : ViewModelBase
                 {
                     continue;
                 }
-                dbArtist.Albums.Add(new Album() { Title = album.Title, Uri = album.Uri, Image = album.Image, Created = DateTime.Now });
+                dbArtist.Albums.Add(new Album() 
+                { 
+                    Title = album.Title, 
+                    Uri = album.Uri, 
+                    Image = album.Image, 
+                    Created = DateTime.Now 
+                });
+                hasChanges = true;
             }
         }
 
