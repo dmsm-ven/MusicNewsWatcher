@@ -16,22 +16,10 @@
                             Stretch="Fill" ImageSource="../Assets/bricks.jpg" />
     </Window.Background>
     <Window.Resources>
+        <SolidColorBrush x:Key="MainWindowTransparentBrush" Opacity="0.9" Color="WhiteSmoke"/>
         <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>
         <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
         <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter"></con:BoolToForegroundColorConverter>
-
-        <Style TargetType="Button">
-                <Setter Property="Margin" Value="2 2 4 2"/>
-                <Setter Property="Padding" Value="2"/>
-                <Setter Property="Foreground" Value="Navy"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderBrush" Value="Transparent"/>
-            </Style>
-        <Style TargetType="{x:Type icons:PackIconFontAwesome}">
-            <Setter Property="Width" Value="22"/>
-            <Setter Property="Height" Value="22"/>
-            <Setter Property="Foreground" Value="Navy"/>
-        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -41,26 +29,27 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="5 2 5 2" Background="{StaticResource MainWindowTransparentBrush}">
-            <Button Command="{Binding CheckUpdatesSelectedCommand}">
-                <icons:PackIconFontAwesome Kind="SquareFullSolid"/>
+            <Button Command="{Binding CheckUpdatesSelectedCommand}"
+                    ToolTip="Обновить выбраного исполнителя"
+                    Style="{StaticResource ToolButtonStyle}">
+                <icons:PackIconFontAwesome Kind="HandPointerSolid"/>
             </Button>
 
-            <Button Command="{Binding CheckUpdatesAllCommand}">
+            <Button Command="{Binding CheckUpdatesAllCommand}" 
+                    ToolTip="Обновить всех"
+                    Style="{StaticResource ToolButtonStyle}">
                 <icons:PackIconFontAwesome Kind="TableSolid"/>
             </Button>
             <Rectangle Width="1" VerticalAlignment="Stretch" Fill="LightBlue" Margin="4 2"/>
-            
-            <Button Command="{Binding AddArtistCommand}">
+
+            <Button Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
                 <icons:PackIconFontAwesome Kind="PlusCircleSolid"/>
             </Button>
-            <Button Command="{Binding EditArtistCommand}">
+            <Button Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
                 <icons:PackIconFontAwesome Kind="PencilAltSolid"/>
             </Button>
-            <Button Command="{Binding DeleteArtistCommand}">
+            <Button Command="{Binding DeleteArtistCommand}" Style="{StaticResource ToolButtonStyle}">
                 <icons:PackIconFontAwesome Kind="TrashSolid"/>
-            </Button>
-            <Button Command="{Binding ShowSettingsWindowCommand}">
-                <icons:PackIconFontAwesome Kind="CogsSolid"/>
             </Button>
         </StackPanel>
 
@@ -110,7 +99,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Button Command="{Binding OpenInBrowserCommand}" Margin="2 2 6 2">
+                                <Button Command="{Binding OpenInBrowserCommand}" Margin="2 2 6 2" Style="{StaticResource ToolButtonStyle}">
                                     <icons:PackIconFontAwesome Kind="LinkSolid"/>
                                 </Button>
                                 <TextBlock Text="{Binding Created, ConverterCulture=ru-RU, StringFormat='dd.MM.yyyy'}" Margin="2 2 8 2" 
