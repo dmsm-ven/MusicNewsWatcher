@@ -6,7 +6,7 @@
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
              mc:Ignorable="d" 
              d:DesignHeight="200" d:DesignWidth="600">
-    <StackPanel DataContext="{Binding SelectedMusicProvider}" Orientation="Horizontal" 
+    <StackPanel Orientation="Horizontal" 
                     Grid.Row="0" Margin="5 2 5 2" 
                     Background="{StaticResource MainWindowTransparentBrush}">
         <Button Command="{Binding CheckUpdatesSelectedCommand}"

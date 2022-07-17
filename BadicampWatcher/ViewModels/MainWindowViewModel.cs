@@ -3,6 +3,7 @@ using BandcampWatcher.Models;
 using BandcampWatcher.Services;
 using BandcampWatcher.Views;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -32,19 +33,21 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        LoadedCommand = new LambdaCommand(async e => await RefreshSource());
-        
-        MusicProviders = new ObservableCollection<MusicProviderViewModel>()
+        LoadedCommand = new LambdaCommand(async e => await RefreshSource());       
+        MusicProviders = new ObservableCollection<MusicProviderViewModel>();
+        AddDesignTimeProviders();
+    }
+
+    private void AddDesignTimeProviders()
+    {
+        MusicProviders.Add(new MusicProviderViewModel(new MusifyMusicProvider(), null, null)
         {
-            new MusicProviderViewModel(new MusifyMusicProvider(), null, null)
-            {
-                Name = "Musify"
-            },
-            new MusicProviderViewModel(new BandcampMusicProvider(), null, null)
-            {
-                Name = "Bandcamp"
-            },
-        };
+            Name = "Musify"
+        });
+        MusicProviders.Add(new MusicProviderViewModel(new BandcampMusicProvider(), null, null)
+        {
+            Name = "Bandcamp"
+        });
     }
 
     public MainWindowViewModel(
@@ -83,6 +86,8 @@ public class MainWindowViewModel : ViewModelBase
                 await mp.LoadAllArtists(db);
                 mp.OnMusicProviderChanged += Mp_OnSelectionChanged;
             });
+
+        SelectedMusicProvider = SelectedMusicProvider ?? MusicProviders.FirstOrDefault();
     }
 
     private void Mp_OnSelectionChanged(MusicProviderViewModel mp)

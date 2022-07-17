@@ -31,7 +31,6 @@
 
         <vp:MainMenuView DataContext="{Binding SelectedMusicProvider}" />
         
-
         <Grid Grid.Row="1" Margin="2">
             <Grid.Resources>
                 <Style TargetType="Border">
@@ -54,9 +53,9 @@
             </Grid.Resources>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="3*"/>
                 <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
 
             <!-- TODO: Вынести каждый блок меню в отдельный UserControl -->
@@ -114,5 +113,8 @@
 
             </Border>
         </Grid>
+
+        <ProgressBar Grid.Row="2" Height="24" Opacity="0.9" IsIndeterminate="True"
+                     Visibility="{Binding SelectedMusicProvider.InProgress, Converter={StaticResource BoolToVisibilityConverter}}"/>
     </Grid>
 </Window>

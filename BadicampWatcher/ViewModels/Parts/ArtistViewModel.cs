@@ -1,21 +1,31 @@
-﻿using BandcampWatcher.ViewModels;
+﻿using BandcampWatcher.DataAccess;
+using BandcampWatcher.Infrastructure.Helpers;
+using BandcampWatcher.ViewModels;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace BandcampWatcher.ViewModels;
 
 public class ArtistViewModel : ViewModelBase
 {
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+
     public event Action<ArtistViewModel> OnArtistChanged;
 
     public int ArtistId { get; init; }
     public string Name { get; set; }
     public string Uri { get; set; }
     public string Image { get; set; }
+
+    public string CachedImage => GetCachedImage(Image);
 
     public DateTime LastAlbumDate
     {
@@ -58,27 +68,40 @@ public class ArtistViewModel : ViewModelBase
         set => Set(ref selectedAlbum, value);
     }
 
-    ObservableCollection<AlbumViewModel> albums;
-    public ObservableCollection<AlbumViewModel> Albums
-    {
-        get => albums;
-        set
-        {
-            Set(ref albums, value);
-            value.CollectionChanged += (o, e) =>
-            {
-                if (e.Action == NotifyCollectionChangedAction.Add)
-                {
-                    RaisePropertyChanged(nameof(LastAlbumDate));
-                }
-            };
-        }
-    }
+    public ObservableCollection<AlbumViewModel> Albums { get; init; } = new();
 
     public ICommand ArtistChangedCommand { get; }
 
-    public ArtistViewModel()
+    public ArtistViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory)
     {
-        ArtistChangedCommand = new LambdaCommand(e => OnArtistChanged?.Invoke(this));
+        ArtistChangedCommand = new LambdaCommand(async e => await ArtistChanged());
+        this.dbFactory = dbFactory;
+    }
+
+    private async Task ArtistChanged()
+    {
+        OnArtistChanged?.Invoke(this);
+
+        Albums.Clear();
+
+        using var db = await dbFactory.CreateDbContextAsync();
+
+        var albums = db
+            .Albums.Where(a => a.ArtistId == ArtistId)
+            .Select(i => new AlbumViewModel()
+            {
+                Title = i.Title,
+                Created = i.Created,
+                Image = i.Image,
+                Uri = i.Uri,
+                IsViewed = i.IsViewed,               
+            })
+            .OrderByDescending(a => a.Created)
+            .ToList();
+
+        foreach(var album in albums)
+        {
+            Albums.Add(album);
+        }
     }
 }

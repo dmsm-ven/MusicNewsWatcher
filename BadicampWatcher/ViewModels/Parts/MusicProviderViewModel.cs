@@ -16,7 +16,13 @@ public class MusicProviderViewModel : ViewModelBase
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
 
     public int MusicProviderId { get; init; }
-    public bool InProgress { get; private set; }
+
+    bool inProgress = false;
+    public bool InProgress
+    {
+        get => inProgress;
+        private set => Set(ref inProgress, value);
+    }
 
     bool isActiveProvider;
     public bool IsActiveProvider
@@ -40,7 +46,7 @@ public class MusicProviderViewModel : ViewModelBase
         set => Set(ref selectedArtist, value);
     }
 
-    public ObservableCollection<ArtistViewModel> TrackedArtists { get; }
+    public ObservableCollection<ArtistViewModel> TrackedArtists { get; } = new();
 
     public ICommand ChangeSelectedArtistCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
@@ -57,22 +63,16 @@ public class MusicProviderViewModel : ViewModelBase
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
         CheckUpdatesAllCommand = new LambdaCommand(e => CheckUpdates(null), e => !InProgress);
         CheckUpdatesSelectedCommand = new LambdaCommand(e => CheckUpdates(SelectedArtist), e => !InProgress && SelectedArtist != null);
-
-        TrackedArtists = new(Enumerable.Range(0, 12).Select(i => new ArtistViewModel
-        {
-            Name = $"Test artist name #{i}",
-            Image = "../../Assets/image-placeholder.jpg"
-        }));
     }
 
     public MusicProviderViewModel(
         MusicProviderBase musicProvider, 
         MusicManager musicManager,
-        IDbContextFactory<MusicWatcherDbContext> dbCotextFactory) : this()
+        IDbContextFactory<MusicWatcherDbContext> dbContextFactory) : this()
     {
         this.musicProvider = musicProvider;
         this.musicManager = musicManager;
-        this.dbCotextFactory = dbCotextFactory;
+        this.dbCotextFactory = dbContextFactory;
 
     }
 
@@ -84,8 +84,9 @@ public class MusicProviderViewModel : ViewModelBase
             .Where(a => a.MusicProviderId == MusicProviderId)
             .ToListAsync();
 
-        var artistsVm = artists.Select(artist => new ArtistViewModel()
+        var artistsVm = artists.Select(artist => new ArtistViewModel(dbCotextFactory)
         {
+            ArtistId = artist.ArtistId,
             Name = artist.Name,
             Image = artist.Image,
             Uri = artist.Uri,
@@ -113,13 +114,22 @@ public class MusicProviderViewModel : ViewModelBase
 
     private async void CheckUpdates(object? obj)
     {
-        if(obj is not null)
+        InProgress = true;
+        try
         {
-            await musicManager.CheckUpdatesForArtist(obj as ArtistEntity);
+            var artist = (obj as ArtistViewModel);
+            if (artist != null)
+            {
+                await musicManager.CheckUpdatesForArtist(this.musicProvider, artist.ArtistId);
+            }
+            else
+            {
+                await musicManager.CheckUpdatesForProvider(musicProvider);
+            }
         }
-        else
+        finally
         {
-            await musicManager.CheckUpdatesForProvider(musicProvider);
+            InProgress = false;
         }
     }
 

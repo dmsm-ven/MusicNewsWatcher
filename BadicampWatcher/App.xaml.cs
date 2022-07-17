@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,9 +20,20 @@ namespace BandcampWatcher;
 /// </summary>
 public partial class App : Application
 {
+    public static string CacheDirectory
+    {
+        get
+        {
+            string cacheDir = Path.Combine(Environment.CurrentDirectory, "cache");
+            if (!Directory.Exists(cacheDir))
+            {
+                Directory.CreateDirectory(cacheDir);
+            }
+            return cacheDir;
+        }
+    }
     readonly Mutex _mutex = new Mutex(false, "BandcampWatcherWpfApp");
     TaskbarIcon tbi;
-
     ISettingsStorage settingsStorage;
 
     protected override void OnStartup(StartupEventArgs e)

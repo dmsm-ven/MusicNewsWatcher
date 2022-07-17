@@ -9,7 +9,10 @@
              d:Background="White"
              d:DataContext="{d:DesignInstance Type=vm:MusicProviderViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="650">
-    <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Visible">
+    <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                  ScrollViewer.VerticalScrollBarVisibility="Visible"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center">
         <ItemsControl Grid.Row="1" 
                       ItemsSource="{Binding TrackedArtists}" 
                       Background="{StaticResource MainWindowTransparentBrush}">
@@ -31,20 +34,21 @@
                                 </beh:EventTrigger>
                             </beh:Interaction.Triggers>
 
-                            <Image Source="{Binding Image}" Width="200" Height="200" Stretch="Uniform"/>
+                            <Image Source="{Binding CachedImage}" Width="200" Height="200" Stretch="Uniform"/>
                             <Label Content="{Binding Name}"
-                                               Foreground="White"
-                                               FontSize="14"
-                                               FontWeight="Bold"
-                                               Background="#7f000000"
-                                               VerticalAlignment="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+                                   Foreground="White"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Margin="0"
+                                   Background="#7f000000"
+                                   VerticalAlignment="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
                         </Grid>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel IsItemsHost="True"  />
+                    <WrapPanel IsItemsHost="True" HorizontalAlignment="Center" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>

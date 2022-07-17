@@ -26,7 +26,8 @@ public class BandcampMusicProvider : MusicProviderBase
                 Title = li.SelectSingleNode(".//p[@class='title']")?.InnerText.Trim() ?? "<Нет названия>",
                 Created = DateTime.Now,
                 Uri = $"{artist.Uri.Trim('/')}{li.SelectSingleNode(".//a").GetAttributeValue("href", null)}",
-                Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null)
+                Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null),
+                ArtistId = artist.ArtistId
             })
             .ToList();
 

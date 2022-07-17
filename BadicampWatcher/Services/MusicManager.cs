@@ -53,29 +53,29 @@ public class MusicManager
 
         foreach (var artist in providerArtists)
         {
-            await CheckUpdatesForArtist(artist);
+            await CheckUpdatesForArtist(provider, artist.ArtistId);
         }
     }
 
-    public async Task CheckUpdatesForArtist(ArtistEntity artist)
-    {
-        var provider = musicProviders.FirstOrDefault(p => p.Id == artist.MusicProviderId);
-        var albums = await provider.GetAlbums(artist);
-
-        await SaveChangesIfNeed(artist, albums);
-    }
-
-    private async Task SaveChangesIfNeed(ArtistEntity artist, List<AlbumEntity> lastAlbums)
+    public async Task CheckUpdatesForArtist(MusicProviderBase provider, int artistId)
     {
         using var db = await dbContext.CreateDbContextAsync();
 
-        var dbArtist = await db.Artists.Include(a => a.Albums).SingleAsync(a => a.ArtistId == artist.ArtistId);
-        var notAddedAlbums = lastAlbums.Where(a => !dbArtist.Albums.Select(a => a.Uri).Contains(a.Uri)).ToList();
+        var artist = db.Artists.Find(artistId);
+        var albums = await provider.GetAlbums(artist);
+
+        await SaveChangesIfNeed(db, artist, albums);
+    }
+
+    private async Task SaveChangesIfNeed(MusicWatcherDbContext db, ArtistEntity artist, List<AlbumEntity> lastAlbums)
+    {
+        var notAddedAlbums = lastAlbums.Where(a => !artist.Albums.Select(a => a.Uri).Contains(a.Uri)).ToList();
+
         if (notAddedAlbums.Any())
         {
-            dbArtist.Albums.AddRange(notAddedAlbums);
+            artist.Albums.AddRange(notAddedAlbums);
             db.SaveChanges();
         }
-       
+      
     }
 }

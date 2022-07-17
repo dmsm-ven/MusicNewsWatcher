@@ -9,19 +9,46 @@
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:ArtistViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="800">
+    <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Visible">
+        <ItemsControl Grid.Row="1" 
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center"
+                      ItemsSource="{Binding Albums}" Background="{StaticResource MainWindowTransparentBrush}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="2 2 4 12" 
+                            BorderBrush="{Binding IsActiveAlbum, Converter={StaticResource BoolToForegroundColorConverter}, 
+                                    ConverterParameter='White;Gray'}" 
+                            BorderThickness="2" 
+                            CornerRadius="0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="LightGray"/>
+                        </Border.Effect>
+                        <Grid>
+                            <beh:Interaction.Triggers>
+                                <beh:EventTrigger EventName="PreviewMouseDown">
+                                    <beh:InvokeCommandAction Command="{Binding OnAlbumChangedCommand}" />
+                                </beh:EventTrigger>
+                            </beh:Interaction.Triggers>
 
-    <ItemsControl Grid.Row="1" ItemsSource="{Binding Albums}" Background="{StaticResource MainWindowTransparentBrush}">
-        <ItemsControl.ItemTemplate>
-            <DataTemplate>
-                <StackPanel Orientation="Horizontal">
-                    <Button Command="{Binding OpenInBrowserCommand}" Margin="2 2 6 2" Style="{StaticResource ToolButtonStyle}">
-                        <icons:PackIconFontAwesome Kind="LinkSolid"/>
-                    </Button>
-                    <TextBlock Text="{Binding Created, ConverterCulture=ru-RU, StringFormat='dd.MM.yyyy'}" Margin="2 2 8 2" 
-                                           Foreground="{Binding IsViewed, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Gray;Blue'}"/>
-                    <Label Content="{Binding DisplayName}" Foreground="Yellow" FontWeight="Bold" Background="Navy" Margin="2"/>
-                </StackPanel>
-            </DataTemplate>
-        </ItemsControl.ItemTemplate>
-    </ItemsControl>
+                            <Image Source="{Binding CachedImage}" Width="150" Height="150" Stretch="Uniform"/>
+                            <Label Content="{Binding DisplayName}"
+                                               Foreground="White"
+                                               FontSize="10"
+                                               MaxWidth="150"
+                                               Margin="0"
+                                               FontWeight="Bold"
+                                               Background="#7f000000"
+                                               VerticalAlignment="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel IsItemsHost="True" HorizontalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </ScrollViewer>
 </UserControl>
