@@ -8,7 +8,7 @@
         x:Name="addNewArtistDialogWindow"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance Type=vm:AddNewArtistDialogViewModel, IsDesignTimeCreatable=False}"
-        Title="Добавление артиста на отслеживание Bandcamp" Height="267" Width="400">
+        Title="Добавление артиста на отслеживание Bandcamp" Height="297" Width="400">
     <Grid>
         <Grid.Resources>
             <Style TargetType="TextBlock">
@@ -30,6 +30,10 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>        
         <StackPanel Margin="2" Grid.Row="0">
+            <TextBlock Text="Провайдер музыки" />
+            <ComboBox SelectedValue="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding MusicProviders}"/>
+
             <TextBlock Text="Артист" />
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 

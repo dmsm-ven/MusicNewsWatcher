@@ -6,11 +6,16 @@ using System.Threading.Tasks;
 
 namespace BandcampWatcher.DataAccess;
 
-public class Artist
+public class ArtistEntity
 {
+    [Key]
     public int ArtistId { get; set; }
+
+    public int MusicProviderId { get; set; }
     public string Name { get; set; }
     public string Uri { get; set; }
     public string Image { get; set; }
-    public List<Album> Albums { get; } = new List<Album>();
+
+    public List<AlbumEntity> Albums { get; } = new List<AlbumEntity>();
+    public MusicProviderEntity MusicProvider { get; set; }
 }

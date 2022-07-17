@@ -5,16 +5,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace BandcampWatcher.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class initialnewlast : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "MusicProviders",
+                columns: table => new
+                {
+                    MusicProviderId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Image = table.Column<string>(type: "TEXT", nullable: false),
+                    Uri = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MusicProviders", x => x.MusicProviderId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Artists",
                 columns: table => new
                 {
                     ArtistId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    MusicProviderId = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Uri = table.Column<string>(type: "TEXT", nullable: false),
                     Image = table.Column<string>(type: "TEXT", nullable: false)
@@ -22,6 +38,12 @@ namespace BandcampWatcher.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Artists", x => x.ArtistId);
+                    table.ForeignKey(
+                        name: "FK_Artists_MusicProviders_MusicProviderId",
+                        column: x => x.MusicProviderId,
+                        principalTable: "MusicProviders",
+                        principalColumn: "MusicProviderId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -33,7 +55,9 @@ namespace BandcampWatcher.Migrations
                     ArtistId = table.Column<int>(type: "INTEGER", nullable: false),
                     Title = table.Column<string>(type: "TEXT", nullable: false),
                     Created = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IsViewed = table.Column<bool>(type: "INTEGER", nullable: false)
+                    IsViewed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Image = table.Column<string>(type: "TEXT", nullable: true),
+                    Uri = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,6 +74,11 @@ namespace BandcampWatcher.Migrations
                 name: "IX_Albums_ArtistId",
                 table: "Albums",
                 column: "ArtistId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Artists_MusicProviderId",
+                table: "Artists",
+                column: "MusicProviderId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -59,6 +88,9 @@ namespace BandcampWatcher.Migrations
 
             migrationBuilder.DropTable(
                 name: "Artists");
+
+            migrationBuilder.DropTable(
+                name: "MusicProviders");
         }
     }
 }

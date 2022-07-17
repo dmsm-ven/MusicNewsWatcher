@@ -7,13 +7,24 @@ using System.Linq;
 
 namespace BandcampWatcher.Models;
 
-public class ArtistModel : ViewModelBase
+public class ArtistViewModel : ViewModelBase
 {
+    public int ArtistId { get; init; }
     public string Name { get; set; }
     public string Uri { get; set; }
     public string Image { get; set; }
 
-    public DateTime LastAlbumDate => Albums?.Max(a => a.Created) ?? DateTime.MinValue;
+    public DateTime LastAlbumDate
+    {
+        get
+        {
+            if (Albums?.Any() ?? false)
+            {
+                return Albums.Max(a => a.Created);
+            }
+            return DateTime.MinValue;
+        }
+    }
 
     bool hasNew;
     public bool HasNew
@@ -30,8 +41,8 @@ public class ArtistModel : ViewModelBase
         set => Set(ref checkInProgress, value);
     }
 
-    ObservableCollection<AlbumModel> albums;
-    public ObservableCollection<AlbumModel> Albums
+    ObservableCollection<AlbumViewModel> albums;
+    public ObservableCollection<AlbumViewModel> Albums
     {
         get => albums;
         set

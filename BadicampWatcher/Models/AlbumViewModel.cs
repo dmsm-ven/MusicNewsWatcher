@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace BandcampWatcher.Models;
 
-public class AlbumModel : ViewModelBase
+public class AlbumViewModel : ViewModelBase
 {
     string title;
 
@@ -29,7 +29,6 @@ public class AlbumModel : ViewModelBase
     public DateTime Created { get; set; }
 
     bool isViewed;
-    private readonly BandcampWatcherDbContext dbContext;
 
     public bool IsViewed
     {
@@ -41,10 +40,9 @@ public class AlbumModel : ViewModelBase
 
     public ICommand OpenInBrowserCommand { get; }
 
-    public AlbumModel(BandcampWatcherDbContext dbContext)
+    public AlbumViewModel()
     {
         OpenInBrowserCommand = new LambdaCommand(Album_OpenUrlClicked, e => true);
-        this.dbContext = dbContext;
     }
 
     private void Album_OpenUrlClicked(object o)
@@ -53,9 +51,5 @@ public class AlbumModel : ViewModelBase
         psi.UseShellExecute = true;
         psi.FileName = Uri;
         System.Diagnostics.Process.Start(psi);
-
-        var albumEntity = dbContext.Albums.Single(a => a.Uri == Uri);
-        albumEntity.IsViewed = IsViewed = true;
-        dbContext.SaveChanges();
     }
 }

@@ -6,10 +6,15 @@
         xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"
         xmlns:con="clr-namespace:BandcampWatcher.Infrastructure.Converters"
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"        
-        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=False}"
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
         Title="{Binding Title}" Height="300" Width="600">
+    <beh:Interaction.Triggers>
+        <beh:EventTrigger EventName="Loaded">
+            <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
+        </beh:EventTrigger>
+    </beh:Interaction.Triggers>
     <Window.Background>
         <ImageBrush TileMode="FlipXY" ViewportUnits="Absolute"
                             Viewport="0,0,200,200"
@@ -54,13 +59,49 @@
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="2">
+            <Grid.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                    <Setter Property="CornerRadius" Value="4"/>
+                    <Setter Property="Margin" Value="2"/>
+                </Style>
+            </Grid.Resources>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="4" Margin="2">
+            
+            <Border Grid.Column="0">
+                <ListBox ItemsSource="{Binding MusicProviders}"
+                         SelectedValue="{Binding SelectedMusicProvider}"
+                              Background="#FA553ED9"
+                              MinWidth="100">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource ToolButtonStyle}" 
+                                    Foreground="White"
+                                    Background="Transparent"
+                                    FontWeight="Bold"
+                                    FontSize="16"
+                                    Height="24"
+                                    Content="{Binding Name}"
+                                    Command="{Binding OnClickCommand}">
+                            </Button>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" IsItemsHost="True"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </Border>
 
-                <ListBox ItemsSource="{Binding TrackedArtists}" SelectedItem="{Binding SelectedArtist}" 
+            <Border Grid.Column="1" >
+
+                <ListBox ItemsSource="{Binding SelectedMusicProvider.TrackedArtists}" SelectedItem="{Binding SelectedArtist}" 
                          Background="{StaticResource MainWindowTransparentBrush}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
                     <ListBox.ItemTemplate>
@@ -93,8 +134,7 @@
                 </ListBox>
             </Border>
 
-            <Border BorderThickness="1" BorderBrush="Transparent" CornerRadius="4" Margin="2"
-                    Grid.Column="1" MinWidth="350" MaxWidth="350">
+            <Border Grid.Column="2" MinWidth="350">
                 <ListBox ItemsSource="{Binding SelectedArtist.Albums}" Background="{StaticResource MainWindowTransparentBrush}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -112,9 +152,10 @@
             </Border>
         </Grid>
         
-        <ProgressBar Grid.Row="2" Height="24" Margin="2"
+        <!--<ProgressBar Grid.Row="2" Height="24" Margin="2"
                      Opacity="0.4"
                      IsIndeterminate="True"
                      Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}}"></ProgressBar>
+        -->
     </Grid>
 </Window>

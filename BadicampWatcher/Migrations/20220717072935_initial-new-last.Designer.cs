@@ -10,16 +10,16 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BandcampWatcher.Migrations
 {
-    [DbContext(typeof(BandcampWatcherDbContext))]
-    [Migration("20220518101230_album_new_fields2")]
-    partial class album_new_fields2
+    [DbContext(typeof(MusicWatcherDbContext))]
+    [Migration("20220717072935_initial-new-last")]
+    partial class initialnewlast
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.5");
 
-            modelBuilder.Entity("BandcampWatcher.DataAccess.Album", b =>
+            modelBuilder.Entity("BandcampWatcher.DataAccess.AlbumEntity", b =>
                 {
                     b.Property<int>("AlbumId")
                         .ValueGeneratedOnAdd()
@@ -32,7 +32,6 @@ namespace BandcampWatcher.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Image")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsViewed")
@@ -53,9 +52,37 @@ namespace BandcampWatcher.Migrations
                     b.ToTable("Albums");
                 });
 
-            modelBuilder.Entity("BandcampWatcher.DataAccess.Artist", b =>
+            modelBuilder.Entity("BandcampWatcher.DataAccess.ArtistEntity", b =>
                 {
                     b.Property<int>("ArtistId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MusicProviderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Uri")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ArtistId");
+
+                    b.HasIndex("MusicProviderId");
+
+                    b.ToTable("Artists");
+                });
+
+            modelBuilder.Entity("BandcampWatcher.DataAccess.MusicProviderEntity", b =>
+                {
+                    b.Property<int>("MusicProviderId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -71,23 +98,41 @@ namespace BandcampWatcher.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("ArtistId");
+                    b.HasKey("MusicProviderId");
 
-                    b.ToTable("Artists");
+                    b.ToTable("MusicProviders");
                 });
 
-            modelBuilder.Entity("BandcampWatcher.DataAccess.Album", b =>
+            modelBuilder.Entity("BandcampWatcher.DataAccess.AlbumEntity", b =>
                 {
-                    b.HasOne("BandcampWatcher.DataAccess.Artist", null)
+                    b.HasOne("BandcampWatcher.DataAccess.ArtistEntity", "Artist")
                         .WithMany("Albums")
                         .HasForeignKey("ArtistId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Artist");
                 });
 
-            modelBuilder.Entity("BandcampWatcher.DataAccess.Artist", b =>
+            modelBuilder.Entity("BandcampWatcher.DataAccess.ArtistEntity", b =>
+                {
+                    b.HasOne("BandcampWatcher.DataAccess.MusicProviderEntity", "MusicProvider")
+                        .WithMany("Artists")
+                        .HasForeignKey("MusicProviderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MusicProvider");
+                });
+
+            modelBuilder.Entity("BandcampWatcher.DataAccess.ArtistEntity", b =>
                 {
                     b.Navigation("Albums");
+                });
+
+            modelBuilder.Entity("BandcampWatcher.DataAccess.MusicProviderEntity", b =>
+                {
+                    b.Navigation("Artists");
                 });
 #pragma warning restore 612, 618
         }

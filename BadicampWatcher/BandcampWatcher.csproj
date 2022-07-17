@@ -9,8 +9,10 @@
 
   <ItemGroup>
     <None Remove="Assets\background-texture.jpg" />
+    <None Remove="Assets\bandcamp-logo.png" />
     <None Remove="Assets\bricks.jpg" />
     <None Remove="Assets\cosmos-texture.jpg" />
+    <None Remove="Assets\musify-logo.png" />
     <None Remove="logo.ico" />
   </ItemGroup>
 
@@ -22,7 +24,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	 <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
   </ItemGroup>
@@ -31,11 +35,17 @@
     <Resource Include="Assets\background-texture.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Assets\bandcamp-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\bricks.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\cosmos-texture.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\musify-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="logo.ico" />
   </ItemGroup>

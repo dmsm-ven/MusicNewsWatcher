@@ -1,6 +1,9 @@
 ﻿using BandcampWatcher.DataAccess;
 using BandcampWatcher.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -8,12 +11,39 @@ namespace BandcampWatcher.ViewModels;
 
 public class AddNewArtistDialogViewModel : ViewModelBase
 {
-    public ArtistModel NewArtist { get; private set; }
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbContext;
+
+    public ArtistViewModel NewArtist { get; private set; }
 
     public string SubmitCommandTitle { get; private set; }
 
+    public IReadOnlyList<MusicProviderModel> MusicProviders
+    {
+        get => dbContext
+            .CreateDbContext()
+            .MusicProviders
+            .Select(mp => new MusicProviderModel()
+            {
+                MusicProviderId = mp.MusicProviderId,
+                Name = mp.Name,
+                Uri = mp.Uri
+            })
+            .ToList();
+    }
+
+    MusicProviderModel selectedMusicProvider;
+    public MusicProviderModel SelectedMusicProvider
+    {
+        get => selectedMusicProvider;
+        set => Set(ref selectedMusicProvider, value);
+    }
+
     string name;
-    public string Name { get => name; set => Set(ref name, value); }
+    public string Name 
+    { 
+        get => name; 
+        set => Set(ref name, value); 
+    }
 
     string image;
     public string Image 
@@ -27,7 +57,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public ICommand SubmitCommand { get; }
 
-    public AddNewArtistDialogViewModel(ArtistModel artist) : this()
+    public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
     {
         Name = artist.Name;
         Uri = artist.Uri;
@@ -35,23 +65,41 @@ public class AddNewArtistDialogViewModel : ViewModelBase
         SubmitCommandTitle = "Изменить";
     }
 
-    public AddNewArtistDialogViewModel()
+    public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory)
     {
         SubmitCommand = new LambdaCommand(Submit, e =>
             !string.IsNullOrWhiteSpace(Name) &&
             !string.IsNullOrWhiteSpace(Image) &&
             !string.IsNullOrWhiteSpace(Uri));
         SubmitCommandTitle = "Добавить";
+        this.dbContext = contextFactory;
     }
 
     private void Submit(object obj)
     {
-        NewArtist = new ArtistModel()
+
+
+        using (var db = dbContext.CreateDbContext())
         {
-            Name = Name,
-            Uri = Uri,
-            Image = Image
-        };
+            var entity = new ArtistEntity()
+            {
+                Name = Name,
+                Image = Image,
+                Uri = Uri,
+                MusicProviderId = SelectedMusicProvider.MusicProviderId
+            };
+
+            db.Artists.Add(entity);
+            db.SaveChanges();
+
+            NewArtist = new ArtistViewModel()
+            {
+                Name = Name,
+                Uri = Uri,
+                Image = Image,
+                ArtistId = entity.ArtistId
+            };
+        }
 
         (obj as Window).DialogResult = true;
     }

@@ -1,8 +1,13 @@
-﻿using BandcampWatcher.Models;
+﻿using BandcampWatcher.DataAccess;
+using BandcampWatcher.Models;
 using BandcampWatcher.Services;
 using BandcampWatcher.ViewModels;
 using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Windows;
@@ -17,7 +22,7 @@ public partial class App : Application
     readonly Mutex _mutex = new Mutex(false, "BandcampWatcherWpfApp");
     TaskbarIcon tbi;
 
-    ISettingsStorage settingsStorage = new JsonSettingsStorage("app_settings.json");
+    ISettingsStorage settingsStorage;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -26,17 +31,29 @@ public partial class App : Application
             Application.Current.Shutdown();
         }
 
-        var settingsRoot = settingsStorage.Load();
+        
 
-        var vm = new MainWindowViewModel(settingsStorage);
+        IHost host = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddDbContextFactory<MusicWatcherDbContext>();
 
+                services.AddSingleton<ISettingsStorage>(x => new JsonSettingsStorage("app_settings.json"));
+                services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
+                services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+                services.AddSingleton<MainWindowViewModel>();
+            })
+            .Build();
+
+        settingsStorage = host.Services.GetRequiredService<ISettingsStorage>();
+        SettingsRoot settingsRoot = settingsStorage.Load();
         var mainWindow = new MainWindow();
         mainWindow.Closing += (o, e) => { e.Cancel = true; mainWindow.Hide(); };
         mainWindow.Top = settingsRoot.MainWindowRectangle.Y;
         mainWindow.Left = settingsRoot.MainWindowRectangle.X;
         mainWindow.Width = settingsRoot.MainWindowRectangle.Width;
         mainWindow.Height = settingsRoot.MainWindowRectangle.Height;
-        mainWindow.DataContext = vm;
+        mainWindow.DataContext = host.Services.GetRequiredService<MainWindowViewModel>();
         mainWindow.Show();
 
         ConfigureNotifyIcon();
