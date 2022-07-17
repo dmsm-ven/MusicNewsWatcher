@@ -4,28 +4,24 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"
+        xmlns:vp="clr-namespace:BandcampWatcher.Views.Parts"
         xmlns:con="clr-namespace:BandcampWatcher.Infrastructure.Converters"
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"        
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-        Title="{Binding Title}" Height="300" Width="600">
+        Title="Music News Watcher" Height="300" Width="600">
     <beh:Interaction.Triggers>
         <beh:EventTrigger EventName="Loaded">
             <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
         </beh:EventTrigger>
     </beh:Interaction.Triggers>
+    
     <Window.Background>
         <ImageBrush TileMode="FlipXY" ViewportUnits="Absolute"
                             Viewport="0,0,200,200"
                             Stretch="Fill" ImageSource="../Assets/bricks.jpg" />
     </Window.Background>
-    <Window.Resources>
-        <SolidColorBrush x:Key="MainWindowTransparentBrush" Opacity="0.9" Color="WhiteSmoke"/>
-        <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>
-        <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
-        <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter"></con:BoolToForegroundColorConverter>
-    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -33,30 +29,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="5 2 5 2" Background="{StaticResource MainWindowTransparentBrush}">
-            <Button Command="{Binding CheckUpdatesSelectedCommand}"
-                    ToolTip="Обновить выбраного исполнителя"
-                    Style="{StaticResource ToolButtonStyle}">
-                <icons:PackIconFontAwesome Kind="HandPointerSolid"/>
-            </Button>
-
-            <Button Command="{Binding CheckUpdatesAllCommand}" 
-                    ToolTip="Обновить всех"
-                    Style="{StaticResource ToolButtonStyle}">
-                <icons:PackIconFontAwesome Kind="TableSolid"/>
-            </Button>
-            <Rectangle Width="1" VerticalAlignment="Stretch" Fill="LightBlue" Margin="4 2"/>
-
-            <Button Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-                <icons:PackIconFontAwesome Kind="PlusCircleSolid"/>
-            </Button>
-            <Button Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-                <icons:PackIconFontAwesome Kind="PencilAltSolid"/>
-            </Button>
-            <Button Command="{Binding DeleteArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-                <icons:PackIconFontAwesome Kind="TrashSolid"/>
-            </Button>
-        </StackPanel>
+        <vp:MainMenuView DataContext="{Binding SelectedMusicProvider}" />
+        
 
         <Grid Grid.Row="1" Margin="2">
             <Grid.Resources>
@@ -66,96 +40,79 @@
                     <Setter Property="CornerRadius" Value="4"/>
                     <Setter Property="Margin" Value="2"/>
                 </Style>
+                <Style TargetType="ListBox">
+                    <Setter Property="Background" Value="{StaticResource MainWindowTransparentBrush}" />
+                </Style>
+                <Style TargetType="Label">
+                    <Setter Property="Foreground" Value="#7777EF"/>
+                    <Setter Property="Background" Value="{StaticResource MainWindowTransparentBrush}" />
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="Margin" Value="0 0 0 6"/>
+                    <Setter Property="FontSize" Value="15"/>
+                </Style>
             </Grid.Resources>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            
+
+            <!-- TODO: Вынести каждый блок меню в отдельный UserControl -->
+            <!-- Provider Menu -->
             <Border Grid.Column="0">
-                <ListBox ItemsSource="{Binding MusicProviders}"
-                         SelectedValue="{Binding SelectedMusicProvider}"
-                              Background="#FA553ED9"
-                              MinWidth="100">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Button Style="{StaticResource ToolButtonStyle}" 
-                                    Foreground="White"
-                                    Background="Transparent"
-                                    FontWeight="Bold"
-                                    FontSize="16"
-                                    Height="24"
-                                    Content="{Binding Name}"
-                                    Command="{Binding OnClickCommand}">
-                            </Button>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" IsItemsHost="True"/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Label>Провайдер музыки</Label>
+                    <vp:ProvidersMenuView Grid.Row="1" DataContext="{Binding}" />
+                </Grid>
             </Border>
 
+            <!-- Artist Menu -->
             <Border Grid.Column="1" >
-
-                <ListBox ItemsSource="{Binding SelectedMusicProvider.TrackedArtists}" SelectedItem="{Binding SelectedArtist}" 
-                         Background="{StaticResource MainWindowTransparentBrush}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="2 2 4 12" BorderBrush="Gray" BorderThickness="2" CornerRadius="0">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="LightGray"/>
-                                </Border.Effect>
-                                <Grid >
-                                    <Image Source="{Binding Image}" Width="200" Height="200" Stretch="Uniform"/>
-                                    <Label Content="{Binding Name}"
-                                           Foreground="{Binding HasNew, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Yellow;White'}"
-                                           FontSize="14"
-                                           FontWeight="Bold"
-                                           Background="#7f000000"
-                                           VerticalAlignment="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"/>
-                                    <ProgressBar IsIndeterminate="True" 
-                                                 Panel.ZIndex="999"
-                                                 Opacity="0.25"
-                                                 Visibility="{Binding CheckInProgress, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
+                <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Label>Отслеживаемые исполнители</Label>
+                    <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider}" />
+                </Grid>
             </Border>
 
-            <Border Grid.Column="2" MinWidth="350">
-                <ListBox ItemsSource="{Binding SelectedArtist.Albums}" Background="{StaticResource MainWindowTransparentBrush}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Command="{Binding OpenInBrowserCommand}" Margin="2 2 6 2" Style="{StaticResource ToolButtonStyle}">
-                                    <icons:PackIconFontAwesome Kind="LinkSolid"/>
-                                </Button>
-                                <TextBlock Text="{Binding Created, ConverterCulture=ru-RU, StringFormat='dd.MM.yyyy'}" Margin="2 2 8 2" 
-                                           Foreground="{Binding IsViewed, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Gray;Blue'}"/>
-                                <Label Content="{Binding DisplayName}" Foreground="Yellow" FontWeight="Bold" Background="Navy" Margin="2"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+            <!-- Albums Menu -->
+            <Border Grid.Column="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Label>Альбомы исполнителя</Label>
+                    <vp:ArtistAlbumsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider.SelectedArtist}" />
+
+                </Grid>
+            </Border>
+
+            <!-- Tacks Menu -->
+            <Border Grid.Column="3">
+                <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Label>Треки альбома</Label>
+                    <vp:AlbumTracksView Grid.Row="1" DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
+                </Grid>
+
             </Border>
         </Grid>
-        
-        <!--<ProgressBar Grid.Row="2" Height="24" Margin="2"
-                     Opacity="0.4"
-                     IsIndeterminate="True"
-                     Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}}"></ProgressBar>
-        -->
     </Grid>
 </Window>

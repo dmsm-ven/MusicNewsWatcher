@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -12,16 +13,24 @@ namespace BandcampWatcher.ViewModels;
 
 public class MusicProviderViewModel : ViewModelBase
 {
-    public event Action OnClick;
+    public event Action<MusicProviderViewModel> OnMusicProviderChanged;
 
     public int MusicProviderId { get; init; }
     public bool InProgress { get; private set; }
+
+    bool isActiveProvider;
+    public bool IsActiveProvider
+    {
+        get => isActiveProvider;
+        set => Set(ref isActiveProvider, value);
+    }
 
     public string Name { get; init; }
     public string Image { get; init; }
     public string Uri { get; init; }
 
     private readonly MusicProviderBase musicProvider;
+    private readonly MusicManager musicManager;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
 
     ArtistViewModel? selectedArtist;
@@ -33,59 +42,85 @@ public class MusicProviderViewModel : ViewModelBase
 
     public ObservableCollection<ArtistViewModel> TrackedArtists { get; }
 
-    public ICommand OnClickCommand { get; }
+    public ICommand ChangeSelectedArtistCommand { get; }
+    public ICommand CheckUpdatesAllCommand { get; }
+    public ICommand CheckUpdatesSelectedCommand { get; }
     public ICommand AddArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
-    public ICommand CheckUpdatesAllCommand { get; }
-    public ICommand CheckUpdatesSelectedCommand { get; }
 
-    public MusicProviderViewModel(MusicProviderBase musicProvider, IDbContextFactory<MusicWatcherDbContext> dbCotextFactory)
+    public MusicProviderViewModel()
     {
-        this.musicProvider = musicProvider;
-        this.dbCotextFactory = dbCotextFactory;
-
-        OnClickCommand = new LambdaCommand(e => OnClick?.Invoke());
+        ChangeSelectedArtistCommand = new LambdaCommand(e => OnMusicProviderChanged?.Invoke(this));
         AddArtistCommand = new LambdaCommand(AddArtist);
         DeleteArtistCommand = new LambdaCommand(DeleteArtist, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
         CheckUpdatesAllCommand = new LambdaCommand(e => CheckUpdates(null), e => !InProgress);
         CheckUpdatesSelectedCommand = new LambdaCommand(e => CheckUpdates(SelectedArtist), e => !InProgress && SelectedArtist != null);
 
-        TrackedArtists = new ObservableCollection<ArtistViewModel>();
+        TrackedArtists = new(Enumerable.Range(0, 12).Select(i => new ArtistViewModel
+        {
+            Name = $"Test artist name #{i}",
+            Image = "../../Assets/image-placeholder.jpg"
+        }));
     }
 
-    public void LoadAllArtists(object o)
+    public MusicProviderViewModel(
+        MusicProviderBase musicProvider, 
+        MusicManager musicManager,
+        IDbContextFactory<MusicWatcherDbContext> dbCotextFactory) : this()
+    {
+        this.musicProvider = musicProvider;
+        this.musicManager = musicManager;
+        this.dbCotextFactory = dbCotextFactory;
+
+    }
+
+    public async Task LoadAllArtists(MusicWatcherDbContext db)
     {
         TrackedArtists.Clear();
 
-        using var db = dbCotextFactory.CreateDbContext();
-
-            db.Artists
+        var artists = await db.Artists
             .Where(a => a.MusicProviderId == MusicProviderId)
-            .ToList()
-            .Select(artist => new ArtistViewModel()
+            .ToListAsync();
+
+        var artistsVm = artists.Select(artist => new ArtistViewModel()
+        {
+            Name = artist.Name,
+            Image = artist.Image,
+            Uri = artist.Uri,
+            Albums = new ObservableCollection<AlbumViewModel>(artist.Albums.Select(a => new AlbumViewModel
             {
-                Name = artist.Name,
-                Image = artist.Image,
-                Uri = artist.Uri,
-                Albums = new ObservableCollection<AlbumViewModel>(artist.Albums.Select(a => new AlbumViewModel
-                {
-                    Image = a.Image,
-                    Uri = a.Uri,
-                    Created = a.Created,
-                    IsViewed = a.IsViewed,
-                    Title = a.Title
-                })) 
-            })
-            .OrderByDescending(a => a.LastAlbumDate)
-            .ToList()
-            .ForEach(a => TrackedArtists.Add(a));
+                Image = a.Image,
+                Uri = a.Uri,
+                Created = a.Created,
+                IsViewed = a.IsViewed,
+                Title = a.Title
+            }))
+        });
+
+        foreach(var artist in artistsVm.OrderByDescending(a => a.LastAlbumDate))
+        {
+            TrackedArtists.Add(artist);
+            artist.OnArtistChanged += (e) =>
+            {
+                TrackedArtists.ToList().ForEach(ta => ta.IsActiveArtist = false);
+                e.IsActiveArtist = true;
+                SelectedArtist = e;
+            };
+        }
     }
 
-    private void CheckUpdates(object? obj)
+    private async void CheckUpdates(object? obj)
     {
-        throw new NotImplementedException();
+        if(obj is not null)
+        {
+            await musicManager.CheckUpdatesForArtist(obj as ArtistEntity);
+        }
+        else
+        {
+            await musicManager.CheckUpdatesForProvider(musicProvider);
+        }
     }
 
     private void AddArtist(object obj)
@@ -122,4 +157,5 @@ public class MusicProviderViewModel : ViewModelBase
             SelectedArtist = null;
         }
     }
+
 }

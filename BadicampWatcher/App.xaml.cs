@@ -41,6 +41,7 @@ public partial class App : Application
                 services.AddSingleton<ISettingsStorage>(x => new JsonSettingsStorage("app_settings.json"));
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+                services.AddSingleton<MusicManager>();
                 services.AddSingleton<MainWindowViewModel>();
             })
             .Build();

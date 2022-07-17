@@ -1,0 +1,51 @@
+﻿<UserControl x:Class="BandcampWatcher.Views.Parts.ProvidersMenuView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"            
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+             d:DesignHeight="200" d:DesignWidth="200">
+    <ItemsControl Grid.Row="1" 
+                  Padding="4 8 8 4"
+                  ItemsSource="{Binding MusicProviders}"
+                  Background="{StaticResource ProvidersMenuBackground}"
+                  HorizontalContentAlignment="Stretch"
+                  MinWidth="100">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <DockPanel LastChildFill="True" HorizontalAlignment="Right">
+                    <Grid DockPanel.Dock="Right">
+                        <Ellipse  Width="20" Height="20" Stroke="LightGray" StrokeThickness="1"/>
+                        <TextBlock d:Text="4" 
+                                   Text="{Binding TrackedArtists.Count}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"                                               
+                                   FontFamily="Consolas"                                            
+                                   Foreground="White" 
+                                   FontWeight="Bold"/>
+                    </Grid>
+                    
+                    <Button DockPanel.Dock="Left"
+                            Command="{Binding ChangeSelectedArtistCommand}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource ToolButtonStyle}" 
+                            Foreground="{Binding IsActiveProvider, ConverterParameter='Yellow;White', Converter={StaticResource BoolToForegroundColorConverter}}"
+                            Background="Transparent"
+                            FontWeight="Bold"
+                            FontSize="16"
+                            Height="24"
+                            Content="{Binding Name}">
+                    </Button>
+
+                </DockPanel>
+
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel IsItemsHost="True" Margin="2"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+    </ItemsControl>
+</UserControl>

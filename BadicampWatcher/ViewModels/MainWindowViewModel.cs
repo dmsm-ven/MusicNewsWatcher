@@ -18,23 +18,13 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
-
-    public string Title
-    {
-        get => "Music News Watcher";
-    }
+    private readonly MusicManager musicManager;
 
     MusicProviderViewModel selectedMusicProvider;
     public MusicProviderViewModel SelectedMusicProvider
     {
         get => selectedMusicProvider;
-        set 
-        { 
-            if(Set(ref selectedMusicProvider, value))
-            {
-                selectedMusicProvider.LoadAllArtists(null);
-            }
-        }
+        set => Set(ref selectedMusicProvider, value);
     }
 
     public ObservableCollection<MusicProviderViewModel> MusicProviders { get; }    
@@ -42,14 +32,15 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        LoadedCommand = new LambdaCommand(Loaded);
+        LoadedCommand = new LambdaCommand(async e => await RefreshSource());
+        
         MusicProviders = new ObservableCollection<MusicProviderViewModel>()
         {
-            new MusicProviderViewModel(new MusifyMusicProvider(), null)
+            new MusicProviderViewModel(new MusifyMusicProvider(), null, null)
             {
                 Name = "Musify"
             },
-            new MusicProviderViewModel(new BandcampMusicProvider(), null)
+            new MusicProviderViewModel(new BandcampMusicProvider(), null, null)
             {
                 Name = "Bandcamp"
             },
@@ -58,21 +49,27 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IEnumerable<MusicProviderBase> musicProviders, 
-        IDbContextFactory<MusicWatcherDbContext> dbCotextFactory) : this()
+        IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
+        MusicManager musicManager) : this()
     {
 
         this.musicProviders = musicProviders;
         this.dbCotextFactory = dbCotextFactory;
+        this.musicManager = musicManager;
+
+        musicManager.OnUpdate += () => LoadedCommand.Execute(null);
     }
 
-    private void Loaded(object obj)
+
+    private async Task RefreshSource()
     {
         MusicProviders.Clear();
 
         Dictionary<int, MusicProviderBase> dic = musicProviders.ToDictionary(i => i.Id, i => i);
+        var db = await dbCotextFactory.CreateDbContextAsync();
 
-        dbCotextFactory.CreateDbContext().MusicProviders
-            .Select(mp => new MusicProviderViewModel(dic[mp.MusicProviderId], dbCotextFactory)
+        db.MusicProviders.Include(p => p.Artists)
+            .Select(mp => new MusicProviderViewModel(dic[mp.MusicProviderId], musicManager, dbCotextFactory)
             {
                 Name = mp.Name,
                 Image = mp.Image,
@@ -80,11 +77,18 @@ public class MainWindowViewModel : ViewModelBase
                 MusicProviderId = mp.MusicProviderId
             })
             .ToList()
-            .ForEach(mp => 
+            .ForEach(async mp => 
             { 
                 MusicProviders.Add(mp);
-                mp.OnClick += () => SelectedMusicProvider = mp;
+                await mp.LoadAllArtists(db);
+                mp.OnMusicProviderChanged += Mp_OnSelectionChanged;
             });
     }
 
+    private void Mp_OnSelectionChanged(MusicProviderViewModel mp)
+    {
+        MusicProviders.ToList().ForEach(mpe => mpe.IsActiveProvider = false);
+        mp.IsActiveProvider = true;
+        SelectedMusicProvider = mp;
+    }
 }

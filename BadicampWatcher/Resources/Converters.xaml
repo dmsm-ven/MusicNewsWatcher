@@ -1,0 +1,7 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:con="clr-namespace:BandcampWatcher.Infrastructure.Converters">
+    <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>
+    <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
+    <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter"></con:BoolToForegroundColorConverter>
+</ResourceDictionary>

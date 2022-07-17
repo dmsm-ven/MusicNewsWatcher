@@ -3,6 +3,7 @@ using BandcampWatcher.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -17,22 +18,10 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public string SubmitCommandTitle { get; private set; }
 
-    public IReadOnlyList<MusicProviderModel> MusicProviders
-    {
-        get => dbContext
-            .CreateDbContext()
-            .MusicProviders
-            .Select(mp => new MusicProviderModel()
-            {
-                MusicProviderId = mp.MusicProviderId,
-                Name = mp.Name,
-                Uri = mp.Uri
-            })
-            .ToList();
-    }
+    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } = new ();
 
-    MusicProviderModel selectedMusicProvider;
-    public MusicProviderModel SelectedMusicProvider
+    MusicProviderViewModel selectedMusicProvider;
+    public MusicProviderViewModel SelectedMusicProvider
     {
         get => selectedMusicProvider;
         set => Set(ref selectedMusicProvider, value);
@@ -57,7 +46,9 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public ICommand SubmitCommand { get; }
 
-    public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
+    public AddNewArtistDialogViewModel(
+        IDbContextFactory<MusicWatcherDbContext> contextFactory, 
+        ArtistViewModel artist) : this(contextFactory)
     {
         Name = artist.Name;
         Uri = artist.Uri;
@@ -72,13 +63,23 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             !string.IsNullOrWhiteSpace(Image) &&
             !string.IsNullOrWhiteSpace(Uri));
         SubmitCommandTitle = "Добавить";
-        this.dbContext = contextFactory;
+        dbContext = contextFactory;
+
+        using var db = dbContext.CreateDbContext();
+
+        db.MusicProviders
+            .Select(mp => new MusicProviderViewModel()
+            {
+                MusicProviderId = mp.MusicProviderId,
+                Name = mp.Name,
+                Uri = mp.Uri
+            })
+            .ToList()
+            .ForEach(item => MusicProviders.Add(item));
     }
 
     private void Submit(object obj)
     {
-
-
         using (var db = dbContext.CreateDbContext())
         {
             var entity = new ArtistEntity()

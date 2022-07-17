@@ -1,0 +1,35 @@
+﻿<UserControl x:Class="BandcampWatcher.Views.Parts.MainMenuView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
+             mc:Ignorable="d" 
+             d:DesignHeight="200" d:DesignWidth="600">
+    <StackPanel DataContext="{Binding SelectedMusicProvider}" Orientation="Horizontal" 
+                    Grid.Row="0" Margin="5 2 5 2" 
+                    Background="{StaticResource MainWindowTransparentBrush}">
+        <Button Command="{Binding CheckUpdatesSelectedCommand}"
+                    ToolTip="Обновить выбраного исполнителя"
+                    Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="HandPointerSolid"/>
+        </Button>
+
+        <Button Command="{Binding CheckUpdatesAllCommand}" 
+                    ToolTip="Обновить всех"
+                    Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="TableSolid"/>
+        </Button>
+        <Rectangle Width="1" VerticalAlignment="Stretch" Fill="LightBlue" Margin="4 2"/>
+
+        <Button Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="PlusCircleSolid"/>
+        </Button>
+        <Button Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="PencilAltSolid"/>
+        </Button>
+        <Button Command="{Binding DeleteArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="TrashSolid"/>
+        </Button>
+    </StackPanel>
+</UserControl>

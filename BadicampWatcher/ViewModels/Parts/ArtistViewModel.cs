@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Windows.Input;
 
-namespace BandcampWatcher.Models;
+namespace BandcampWatcher.ViewModels;
 
 public class ArtistViewModel : ViewModelBase
 {
+    public event Action<ArtistViewModel> OnArtistChanged;
+
     public int ArtistId { get; init; }
     public string Name { get; set; }
     public string Uri { get; set; }
@@ -33,12 +36,26 @@ public class ArtistViewModel : ViewModelBase
         set => Set(ref hasNew, value);
     }
 
+    bool isActiveArtist;
+    public bool IsActiveArtist
+    {
+        get => isActiveArtist;
+        set => Set(ref isActiveArtist, value);
+    }
+
     bool checkInProgress;
 
     public bool CheckInProgress
     {
         get => checkInProgress;
         set => Set(ref checkInProgress, value);
+    }
+
+    AlbumViewModel selectedAlbum;
+    public AlbumViewModel SelectedAlbum
+    {
+        get => selectedAlbum;
+        set => Set(ref selectedAlbum, value);
     }
 
     ObservableCollection<AlbumViewModel> albums;
@@ -56,5 +73,12 @@ public class ArtistViewModel : ViewModelBase
                 }
             };
         }
+    }
+
+    public ICommand ArtistChangedCommand { get; }
+
+    public ArtistViewModel()
+    {
+        ArtistChangedCommand = new LambdaCommand(e => OnArtistChanged?.Invoke(this));
     }
 }

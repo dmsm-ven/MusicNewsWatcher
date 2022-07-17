@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="BandcampWatcher.Views.Parts.ArtistAlbumsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:ArtistViewModel, IsDesignTimeCreatable=True}"
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <ItemsControl Grid.Row="1" ItemsSource="{Binding Albums}" Background="{StaticResource MainWindowTransparentBrush}">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding OpenInBrowserCommand}" Margin="2 2 6 2" Style="{StaticResource ToolButtonStyle}">
+                        <icons:PackIconFontAwesome Kind="LinkSolid"/>
+                    </Button>
+                    <TextBlock Text="{Binding Created, ConverterCulture=ru-RU, StringFormat='dd.MM.yyyy'}" Margin="2 2 8 2" 
+                                           Foreground="{Binding IsViewed, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Gray;Blue'}"/>
+                    <Label Content="{Binding DisplayName}" Foreground="Yellow" FontWeight="Bold" Background="Navy" Margin="2"/>
+                </StackPanel>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>
