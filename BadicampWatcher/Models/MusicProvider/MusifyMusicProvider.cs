@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Models;
 
-public class MusifyMusicProvider : MusicProviderBase
+public sealed class MusifyMusicProvider : MusicProviderBase
 {
     const string HOST = "https://musify.club";
     const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
@@ -31,6 +31,8 @@ public class MusifyMusicProvider : MusicProviderBase
                     Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty),
                     Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty)
                 }).ToArray();
+
+            return albums;
         }
 
         return Enumerable.Empty<AlbumEntity>().ToArray();

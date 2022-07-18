@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Models;
 
-public class BandcampMusicProvider : MusicProviderBase
+public sealed class BandcampMusicProvider : MusicProviderBase
 {
     const string albumsXPath = "//ol[@id='music-grid']/li";
 

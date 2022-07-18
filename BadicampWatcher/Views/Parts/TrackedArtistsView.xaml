@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
              mc:Ignorable="d" 
              d:Background="White"
@@ -19,14 +20,14 @@
 
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Margin="2 2 4 12" 
-                            BorderBrush="{Binding IsActiveArtist, Converter={StaticResource BoolToForegroundColorConverter}, 
-                                    ConverterParameter='White;Gray'}" 
-                            BorderThickness="2" 
+                    <Border Margin="2 2 4 12"                             
+                            BorderBrush="{Binding IsActiveArtist, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Yellow;Gray'}" 
+                            BorderThickness="2"                            
                             CornerRadius="0">
                         <Border.Effect>
                             <DropShadowEffect Color="LightGray"/>
                         </Border.Effect>
+                        
                         <Grid>
                             <beh:Interaction.Triggers>
                                 <beh:EventTrigger EventName="PreviewMouseDown">
@@ -34,7 +35,16 @@
                                 </beh:EventTrigger>
                             </beh:Interaction.Triggers>
 
-                            <Image Source="{Binding CachedImage}" Width="200" Height="200" Stretch="Uniform"/>
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                    Command="{Binding OpenInBrowserCommand}"
+                                    CommandParameter="{Binding Uri}"
+                                    Panel.ZIndex="99"
+                                HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <icons:PackIconFontAwesome Kind="LinkSolid"  Style="{StaticResource LinkIconSize}"/>
+                            </Button>
+
+                            <Image Source="{Binding CachedImage}"                                   
+                                   Width="200" Height="200" Stretch="Uniform"/>
                             <Label Content="{Binding Name}"
                                    Foreground="White"
                                    FontSize="14"

@@ -15,7 +15,7 @@ public class MusicProviderViewModel : ViewModelBase
 {
     private readonly MusicProviderBase musicProvider;
     private readonly MusicManager musicManager;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
 
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
     public ObservableCollection<ArtistViewModel> TrackedArtists { get; } = new();
@@ -25,11 +25,18 @@ public class MusicProviderViewModel : ViewModelBase
     public string Image { get; init; }
     public string Uri { get; init; }
 
+    int trackedArtistsCount;
+    public int TrackedArtistsCount
+    {
+        get => TrackedArtists.Count > 0 ? TrackedArtists.Count : trackedArtistsCount;
+        set => Set(ref trackedArtistsCount, value);
+    }
+
     bool inProgress = false;
     public bool InProgress
     {
         get => inProgress;
-        private set => Set(ref inProgress, value);
+        set => Set(ref inProgress, value);
     }
 
     bool isActiveProvider;
@@ -52,15 +59,18 @@ public class MusicProviderViewModel : ViewModelBase
     public ICommand AddArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
+    
 
     public MusicProviderViewModel()
     {
         ChangeSelectedArtistCommand = new LambdaCommand(e => OnMusicProviderChanged?.Invoke(this));
-        AddArtistCommand = new LambdaCommand(AddArtist);
+        AddArtistCommand = new LambdaCommand(async e => await AddArtist());
         DeleteArtistCommand = new LambdaCommand(DeleteArtist, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
         CheckUpdatesAllCommand = new LambdaCommand(e => CheckUpdates(null), e => !InProgress);
         CheckUpdatesSelectedCommand = new LambdaCommand(e => CheckUpdates(SelectedArtist), e => !InProgress && SelectedArtist != null);
+
+        TrackedArtists.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(TrackedArtistsCount));
     }
 
     public MusicProviderViewModel(
@@ -70,50 +80,47 @@ public class MusicProviderViewModel : ViewModelBase
     {
         this.musicProvider = musicProvider;
         this.musicManager = musicManager;
-        this.dbCotextFactory = dbContextFactory;
+        this.dbContextFactory = dbContextFactory;
 
     }
 
-    public async Task LoadAllArtists(MusicWatcherDbContext db)
+    public async Task LoadAllArtists(bool forced = false)
     {
-        if(TrackedArtists.Count > 0) { return; }
+        if (TrackedArtists.Count > 0 && !forced) { return; }
+     
+        InProgress = true;
 
-        TrackedArtists.Clear();
 
-        var artists = await db.Artists
+        using var db = await dbContextFactory.CreateDbContextAsync();
+        
+        var dbArtists = await db.Artists
             .Where(a => a.MusicProviderId == MusicProviderId)
             .ToListAsync();
 
-        var artistsVm = artists.Select(artist => new ArtistViewModel(dbCotextFactory, musicManager, musicProvider)
+        if (TrackedArtists.Count != dbArtists.Count)
         {
-            ArtistId = artist.ArtistId,
-            MusicProviderId = artist.MusicProviderId,
-            Name = artist.Name,
-            Image = artist.Image,
-            Uri = artist.Uri,
-            Albums = new ObservableCollection<AlbumViewModel>(artist.Albums
-                .Select(a => new AlbumViewModel(dbCotextFactory, musicManager, musicProvider)
+            var artistsVm = dbArtists
+            .Select(artist => new ArtistViewModel(dbContextFactory, musicManager, musicProvider)
             {
-                Image = a.Image,
-                Uri = a.Uri,
-                Created = a.Created,
-                IsViewed = a.IsViewed,
-                Title = a.Title,
-                AlbumId = a.AlbumId,
-            }))
-        })
-        .OrderByDescending(a => a.LastAlbumDate);
+                ArtistId = artist.ArtistId,
+                MusicProviderId = artist.MusicProviderId,
+                Name = artist.Name,
+                Image = artist.Image,
+                Uri = artist.Uri
+            })
+            .OrderByDescending(a => a.LastAlbumDate);
 
-        foreach(var artist in artistsVm)
-        {
-            TrackedArtists.Add(artist);
-            artist.OnArtistChanged += (e) =>
+            TrackedArtists.ToList().ForEach(artist => artist.OnArtistChanged -= Artist_OnArtistChanged);
+            TrackedArtists.Clear();
+
+            foreach (var artist in artistsVm)
             {
-                TrackedArtists.ToList().ForEach(ta => ta.IsActiveArtist = false);
-                e.IsActiveArtist = true;
-                SelectedArtist = e;
-            };
+                TrackedArtists.Add(artist);
+                artist.OnArtistChanged += Artist_OnArtistChanged;
+            }
         }
+        
+        InProgress = false;
     }
 
     private async void CheckUpdates(object? obj)
@@ -137,20 +144,21 @@ public class MusicProviderViewModel : ViewModelBase
         }
     }
 
-    private void AddArtist(object obj)
+    private async Task AddArtist()
     {
-        var dialogVm = new AddNewArtistDialogViewModel(dbCotextFactory);
+        var dialogVm = new AddNewArtistDialogViewModel(dbContextFactory);
         var dialogWindow = new AddNewArtistDialog();
         dialogWindow.DataContext = dialogVm;
         if (dialogWindow.ShowDialog() == true)
         {
-            TrackedArtists.Add(dialogVm.NewArtist);
+            await LoadAllArtists(forced: true);
+            Artist_OnArtistChanged(TrackedArtists.LastOrDefault()!);
         }
     }
 
     private void EditArtist(object obj)
     {
-        var dialogVm = new AddNewArtistDialogViewModel(dbCotextFactory, SelectedArtist!);
+        var dialogVm = new AddNewArtistDialogViewModel(dbContextFactory, SelectedArtist!);
         var dialogWindow = new AddNewArtistDialog();
         dialogWindow.DataContext = dialogVm;
         dialogWindow.ShowDialog();
@@ -161,7 +169,7 @@ public class MusicProviderViewModel : ViewModelBase
         var dialogResult = MessageBox.Show($"Удалить '{SelectedArtist!.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (dialogResult == MessageBoxResult.Yes)
         {
-            using (var db = dbCotextFactory.CreateDbContext())
+            using (var db = dbContextFactory.CreateDbContext())
             {
                 db.Artists.Remove(db.Artists.Find(SelectedArtist.ArtistId)!);
                 db.SaveChanges();
@@ -172,4 +180,14 @@ public class MusicProviderViewModel : ViewModelBase
         }
     }
 
+    private void Artist_OnArtistChanged(ArtistViewModel e)
+    {
+        if(SelectedArtist != null)
+        {
+            SelectedArtist.IsActiveArtist = false;           
+        }
+     
+        SelectedArtist = e;
+        GC.Collect(2);
+    }
 }

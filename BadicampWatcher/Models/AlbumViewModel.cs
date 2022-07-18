@@ -11,6 +11,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -35,7 +36,12 @@ public class AlbumViewModel : ViewModelBase
         }
     }
     public string DisplayName => Regex.Replace(Title, @"\s{2,}", " ").Trim();
-    public string CachedImage => GetCachedImage(Image);
+
+    string cachedImage;
+    public string CachedImage
+    {
+        get => cachedImage ??= GetCachedImage(Image);
+    }
 
     public DateTime Created { get; init; }
     public int AlbumId { get; init; }
@@ -47,12 +53,24 @@ public class AlbumViewModel : ViewModelBase
         set => Set(ref isActiveAlbum, value);
     }
 
-    bool isViewed;   
-    public bool IsViewed
+    bool inProgress;
+    public bool InProgress
     {
-        get => isViewed;
-        set => Set(ref isViewed, value);
+        get => inProgress;
+        set
+        {
+            if(Set(ref inProgress, value))
+            {
+                RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
+            }
+        }
     }
+
+    public bool IsUpdateTracksButtonVisibile
+    {
+        get => Tracks.Count == 0 && !InProgress;
+    }
+
     public string? Image { get; set; }
     public string Uri { get; set; }
 
@@ -77,14 +95,35 @@ public class AlbumViewModel : ViewModelBase
 
     private async Task RefreshTracks()
     {
-        await manager.CheckUpdatesForAlbumAsync(provider, AlbumId);
-        await RefreshTracksSource();
+        InProgress = true;
+        try
+        {
+            await manager.CheckUpdatesForAlbumAsync(provider, AlbumId);
+            await RefreshTracksSource();
+        }
+        finally
+        {
+            InProgress = false;
+        }
     }
 
     private async Task AlbumChanged()
     {
-        OnAlbumChanged?.Invoke(this);
-        await RefreshTracksSource();
+        if (!IsActiveAlbum)
+        {
+            OnAlbumChanged?.Invoke(this);
+            IsActiveAlbum = true;
+
+            InProgress = true;
+            try
+            {
+                await RefreshTracksSource();
+            }
+            finally
+            {
+                InProgress = false;
+            }
+        }
     }
 
     private async Task RefreshTracksSource()
@@ -102,7 +141,7 @@ public class AlbumViewModel : ViewModelBase
                 Name = i.Name,
                 DownloadUri = i.DownloadUri,
             })
-            .OrderByDescending(a => a.Id)
+            .OrderBy(a => a.Id)
             .ToList();
 
         foreach (var track in tracks)

@@ -5,21 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:ss="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:AlbumViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <Button Style="{StaticResource ToolButtonStyle}" 
                 Background="Transparent"
-                Visibility="{Binding Tracks.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter='inverse'}"
+                Visibility="{Binding IsUpdateTracksButtonVisibile, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
                 Command="{Binding RefreshTracksCommand}"
-                Panel.ZIndex="99"
-                HorizontalContentAlignment="Right"
-                VerticalContentAlignment="Top"
+                Panel.ZIndex="98"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch">
-            <icons:PackIconFontAwesome Kind="DownloadSolid" Foreground="#7474B6" Width="32" Height="32"/>
-            </Button>
+            <icons:PackIconFontAwesome Kind="DownloadSolid" />
+        </Button>
+
+        <ss:LoadingSpinner Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" 
+                           Panel.ZIndex="99" />
+
         <ItemsControl Grid.Row="1" ItemsSource="{Binding Tracks}" Background="{StaticResource MainWindowTransparentBrush}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
@@ -27,8 +32,9 @@
                         <Button Style="{StaticResource ToolButtonStyle}" 
                                 Command="{Binding OpenInBrowserCommand}"
                                 CommandParameter="{Binding DownloadUri}"
+                                Panel.ZIndex="99"
                                 DockPanel.Dock="Left">
-                            <icons:PackIconFontAwesome Kind="LinkSolid" Width="20" Height="20"/>
+                            <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource LinkIconSize}"/>
                         </Button>
                         <Label Content="{Binding Name}" 
                                Foreground="Navy"

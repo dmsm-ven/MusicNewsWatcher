@@ -14,8 +14,6 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> contextFactory;
 
-    public ArtistViewModel NewArtist { get; private set; }
-
     public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } = new ();
 
     MusicProviderViewModel? selectedMusicProvider;
@@ -77,14 +75,6 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
             db.Artists.Add(entity);
             db.SaveChanges();
-
-            NewArtist = new ArtistViewModel(contextFactory, null, null)
-            {
-                Name = ContextArtist.Name,
-                Uri = ContextArtist.Uri,
-                Image = ContextArtist.Image,
-                ArtistId = entity.ArtistId
-            };
         }
 
         (obj as Window).DialogResult = true;

@@ -5,8 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
         xmlns:vp="clr-namespace:MusicNewsWatcher.Views.Parts"
-        xmlns:con="clr-namespace:MusicNewsWatcher.Infrastructure.Converters"
-        xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:ss="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
         xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"        
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -26,11 +25,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <vp:MainMenuView DataContext="{Binding SelectedMusicProvider}" />
-        
+
         <Grid Grid.Row="1" Margin="2">
             <Grid.Resources>
                 <Style TargetType="Border">
@@ -66,7 +64,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <Label>Провайдер музыки</Label>
                     <vp:ProvidersMenuView Grid.Row="1" DataContext="{Binding}" />
                 </Grid>
@@ -79,7 +77,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <Label>Отслеживаемые исполнители</Label>
                     <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider}" />
                 </Grid>
@@ -92,7 +90,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <Label>Альбомы исполнителя</Label>
                     <vp:ArtistAlbumsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider.SelectedArtist}" />
 
@@ -106,7 +104,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
+
                     <Label>Треки альбома</Label>
                     <vp:AlbumTracksView Grid.Row="1" 
                                         DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
@@ -114,8 +112,5 @@
 
             </Border>
         </Grid>
-
-        <ProgressBar Grid.Row="2" Height="24" Opacity="0.9" IsIndeterminate="True"
-                     Visibility="{Binding SelectedMusicProvider.InProgress, Converter={StaticResource BoolToVisibilityConverter}}"/>
     </Grid>
 </Window>

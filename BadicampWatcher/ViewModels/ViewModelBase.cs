@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace MusicNewsWatcher.ViewModels;
 

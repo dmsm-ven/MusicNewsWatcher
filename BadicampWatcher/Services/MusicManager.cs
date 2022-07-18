@@ -35,6 +35,14 @@ public class MusicManager
         OnUpdate?.Invoke();
     }
 
+    public async Task<Dictionary<int,int>> GetProviderTrackedArtistsCount()
+    {
+        using(var db = dbContext.CreateDbContext())
+        {
+            return db.Artists.GroupBy(a => a.MusicProviderId).ToDictionary(a => a.Key, a => a.Count());
+        }
+    }
+
     public async Task CheckUpdatesAllAsync()
     {
         foreach (var provider in musicProviders)

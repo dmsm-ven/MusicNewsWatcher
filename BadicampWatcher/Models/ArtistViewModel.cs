@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -24,7 +25,11 @@ public class ArtistViewModel : ViewModelBase
     public string Uri { get; set; }
     public string Image { get; set; }
 
-    public string CachedImage => GetCachedImage(Image);
+    string cachedImage;
+    public string CachedImage
+    {
+        get => cachedImage ??= GetCachedImage(Image);
+    }
 
     public DateTime LastAlbumDate
     {
@@ -52,12 +57,22 @@ public class ArtistViewModel : ViewModelBase
         set => Set(ref isActiveArtist, value);
     }
 
-    bool checkInProgress;
-
-    public bool CheckInProgress
+    public bool IsUpdateAlbumsButtonVisibile
     {
-        get => checkInProgress;
-        set => Set(ref checkInProgress, value);
+        get => Albums.Count == 0 && !InProgress;
+    }
+
+    bool inProgress;
+    public bool InProgress
+    {
+        get => inProgress;
+        set
+        {
+            if(Set(ref inProgress, value))
+            {
+                RaisePropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
+            }
+        }
     }
 
     AlbumViewModel selectedAlbum;
@@ -70,10 +85,20 @@ public class ArtistViewModel : ViewModelBase
     public ObservableCollection<AlbumViewModel> Albums { get; init; } = new();
 
     public ICommand ArtistChangedCommand { get; }
+    public ICommand DownloadAlbumsCommand { get; }
 
     public ArtistViewModel()
     {
         ArtistChangedCommand = new LambdaCommand(async e => await ArtistChanged());
+        DownloadAlbumsCommand = new LambdaCommand(async e => await DownloadAlbums());
+    }
+
+    private async Task DownloadAlbums()
+    {
+        InProgress = true;
+        await manager.CheckUpdatesForArtistAsync(provider, ArtistId);
+        await RefreshSource();
+        InProgress = false;
     }
 
     public ArtistViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, 
@@ -87,20 +112,22 @@ public class ArtistViewModel : ViewModelBase
 
     private async Task ArtistChanged()
     {
-        OnArtistChanged?.Invoke(this);
-        if(Albums.Count == 0)
+        if (!IsActiveArtist)
         {
+            OnArtistChanged?.Invoke(this);
+            IsActiveArtist = true;
             await RefreshSource();
         }
     }
 
+    //TODO: исправить утечку памяти при загрузке (превью не выгружаются из ItemsControl)
     private async Task RefreshSource()
     {
-        Albums.Clear();
+        InProgress = true;
 
         using var db = await dbFactory.CreateDbContextAsync();
 
-        var albums = db
+        var dbAlbums = db
             .Albums.Where(a => a.ArtistId == ArtistId)
             .Select(i => new AlbumViewModel(dbFactory, manager, provider)
             {
@@ -108,21 +135,34 @@ public class ArtistViewModel : ViewModelBase
                 Created = i.Created,
                 Image = i.Image,
                 Uri = i.Uri,
-                IsViewed = i.IsViewed,
                 AlbumId = i.AlbumId,
             })
             .OrderByDescending(a => a.Created)
             .ToList();
 
-        foreach (var album in albums)
+        if (Albums.Count != dbAlbums.Count)
         {
-            album.OnAlbumChanged += (e) =>
+            Albums.ToList().ForEach(a => a.OnAlbumChanged -= Album_OnAlbumChanged);
+            Albums.Clear();
+
+            foreach (var album in dbAlbums)
             {
-                Albums.ToList().ForEach(a => a.IsActiveAlbum = false);
-                e.IsActiveAlbum = true;
-                SelectedAlbum = e;
-            };
-            Albums.Add(album);
+                album.OnAlbumChanged += Album_OnAlbumChanged;
+                Albums.Add(album);
+            }
         }
+
+        InProgress = false;
+    }
+
+    public void Album_OnAlbumChanged(AlbumViewModel e)
+    {
+        if(SelectedAlbum != null)
+        {
+            SelectedAlbum.IsActiveAlbum = false;
+        }
+        SelectedAlbum = e;
+
+        GC.Collect(2);
     }
 }
