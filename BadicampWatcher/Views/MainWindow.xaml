@@ -1,11 +1,11 @@
-﻿<Window x:Class="BandcampWatcher.MainWindow"
+﻿<Window x:Class="MusicNewsWatcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"
-        xmlns:vp="clr-namespace:BandcampWatcher.Views.Parts"
-        xmlns:con="clr-namespace:BandcampWatcher.Infrastructure.Converters"
+        xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
+        xmlns:vp="clr-namespace:MusicNewsWatcher.Views.Parts"
+        xmlns:con="clr-namespace:MusicNewsWatcher.Infrastructure.Converters"
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"        
@@ -108,7 +108,8 @@
                     </Grid.RowDefinitions>
                     
                     <Label>Треки альбома</Label>
-                    <vp:AlbumTracksView Grid.Row="1" DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
+                    <vp:AlbumTracksView Grid.Row="1" 
+                                        DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
                 </Grid>
 
             </Border>

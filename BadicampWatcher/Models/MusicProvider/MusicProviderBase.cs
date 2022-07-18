@@ -1,9 +1,10 @@
-﻿using BandcampWatcher.DataAccess;
+﻿using MusicNewsWatcher.DataAccess;
+using HtmlAgilityPack;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace BandcampWatcher.Models;
+namespace MusicNewsWatcher.Models;
 
 public abstract class MusicProviderBase
 {
@@ -11,7 +12,8 @@ public abstract class MusicProviderBase
     public string Name { get; init; }
     protected HttpClient client;
 
-    public abstract Task<List<AlbumEntity>> GetAlbums(ArtistEntity artist);
+    public abstract Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist);
+    public abstract Task<TrackEntity[]> GetTracksAsync(AlbumEntity album);
 
     protected MusicProviderBase(int id, string name)
     {
@@ -24,5 +26,20 @@ public abstract class MusicProviderBase
             UseCookies = true
         });
 
+    }
+
+    protected async Task<HtmlDocument> GetDocument(string uri)
+    {
+        try
+        {
+            var page = await client.GetStringAsync(uri);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(page);
+            return doc;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

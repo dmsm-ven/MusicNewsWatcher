@@ -1,4 +1,4 @@
-﻿using BandcampWatcher.Models;
+﻿using MusicNewsWatcher.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BandcampWatcher.Services;
+namespace MusicNewsWatcher.Services;
 
 public class JsonSettingsStorage : ISettingsStorage
 {

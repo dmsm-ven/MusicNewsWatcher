@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BandcampWatcher.DataAccess;
+namespace MusicNewsWatcher.DataAccess;
 
 public class ArtistEntity
 {
@@ -16,6 +16,6 @@ public class ArtistEntity
     public string Uri { get; set; }
     public string Image { get; set; }
 
-    public List<AlbumEntity> Albums { get; } = new List<AlbumEntity>();
+    public List<AlbumEntity> Albums { get; set; } = new List<AlbumEntity>();
     public MusicProviderEntity MusicProvider { get; set; }
 }

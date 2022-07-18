@@ -1,4 +1,4 @@
-﻿using BandcampWatcher.DataAccess;
+﻿using MusicNewsWatcher.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Input;
 
-namespace BandcampWatcher.Models;
+namespace MusicNewsWatcher.Models;
 
 public class MusicManager
 {
@@ -26,25 +26,24 @@ public class MusicManager
 
         autoUpdateTimer = new Timer((int)TimeSpan.FromHours(1).TotalMilliseconds);
         autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
-        autoUpdateTimer.Start();
-        
+        autoUpdateTimer.Start();      
     }
 
     private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
-        await CheckUpdatesAll();
+        await CheckUpdatesAllAsync();
         OnUpdate?.Invoke();
     }
 
-    public async Task CheckUpdatesAll()
+    public async Task CheckUpdatesAllAsync()
     {
         foreach (var provider in musicProviders)
         {
-            await CheckUpdatesForProvider(provider);
+            await CheckUpdatesForProviderAsync(provider);
         }
     }
 
-    public async Task CheckUpdatesForProvider(MusicProviderBase provider)
+    public async Task CheckUpdatesForProviderAsync(MusicProviderBase provider)
     {
         var providerArtists = dbContext.CreateDbContext()
             .MusicProviders.Include(p => p.Artists)
@@ -53,29 +52,40 @@ public class MusicManager
 
         foreach (var artist in providerArtists)
         {
-            await CheckUpdatesForArtist(provider, artist.ArtistId);
+            await CheckUpdatesForArtistAsync(provider, artist.ArtistId);
         }
     }
 
-    public async Task CheckUpdatesForArtist(MusicProviderBase provider, int artistId)
+    public async Task CheckUpdatesForArtistAsync(MusicProviderBase provider, int artistId)
     {
         using var db = await dbContext.CreateDbContextAsync();
 
         var artist = db.Artists.Find(artistId);
-        var albums = await provider.GetAlbums(artist);
+        var albums = await provider.GetAlbumsAsync(artist);
 
-        await SaveChangesIfNeed(db, artist, albums);
+        await SaveChangesIfNeedAsync(db, artist, albums);
     }
 
-    private async Task SaveChangesIfNeed(MusicWatcherDbContext db, ArtistEntity artist, List<AlbumEntity> lastAlbums)
+    public async Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId)
+    {
+        using var db = await dbContext.CreateDbContextAsync();
+
+        var album = db.Albums.Find(albumId);       
+        var tracks = await provider.GetTracksAsync(album);
+
+        album.Tracks.Clear();
+        album.Tracks.AddRange(tracks);
+        db.SaveChanges();
+    }
+
+    private async Task SaveChangesIfNeedAsync(MusicWatcherDbContext db, ArtistEntity artist, IEnumerable<AlbumEntity> lastAlbums)
     {
         var notAddedAlbums = lastAlbums.Where(a => !artist.Albums.Select(a => a.Uri).Contains(a.Uri)).ToList();
 
         if (notAddedAlbums.Any())
-        {
+        {            
             artist.Albums.AddRange(notAddedAlbums);
             db.SaveChanges();
         }
-      
     }
 }

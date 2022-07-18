@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BandcampWatcher.Infrastructure.Helpers;
+namespace MusicNewsWatcher.Infrastructure.Helpers;
 
 public static class StringExtensions
 {

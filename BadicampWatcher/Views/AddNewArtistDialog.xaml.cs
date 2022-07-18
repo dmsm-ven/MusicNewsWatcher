@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace BandcampWatcher.Views;
+namespace MusicNewsWatcher.Views;
 /// <summary>
 /// Interaction logic for AddNewArtistDialog.xaml
 /// </summary>

@@ -5,15 +5,23 @@ using System.Windows.Data;
 
 namespace MusicNewsWatcher.Infrastructure.Converters;
 
-public class BoolToVisibilityConverter : IValueConverter
+public class IntToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is bool? || value is bool)
+        Visibility result = Visibility.Collapsed;
+
+        if (value is int v)
         {
-            return (bool)value ? Visibility.Visible : Visibility.Collapsed;
+            result = (v == 0 ? Visibility.Collapsed : Visibility.Visible);
         }
-        return Visibility.Collapsed;
+
+        if(parameter is string par && par == "inverse")
+        {
+            result = (result == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed);
+        }
+
+        return result;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

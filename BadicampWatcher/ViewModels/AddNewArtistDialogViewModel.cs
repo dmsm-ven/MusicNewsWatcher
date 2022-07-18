@@ -1,5 +1,5 @@
-﻿using BandcampWatcher.DataAccess;
-using BandcampWatcher.Models;
+﻿using MusicNewsWatcher.DataAccess;
+using MusicNewsWatcher.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BandcampWatcher.ViewModels;
+namespace MusicNewsWatcher.ViewModels;
 
 public class AddNewArtistDialogViewModel : ViewModelBase
 {
@@ -16,12 +16,10 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public ArtistViewModel NewArtist { get; private set; }
 
-    public string SubmitCommandTitle { get; private set; }
-
     public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } = new ();
 
-    MusicProviderViewModel selectedMusicProvider;
-    public MusicProviderViewModel SelectedMusicProvider
+    MusicProviderViewModel? selectedMusicProvider;
+    public MusicProviderViewModel? SelectedMusicProvider
     {
         get => selectedMusicProvider;
         set => Set(ref selectedMusicProvider, value);
@@ -36,20 +34,17 @@ public class AddNewArtistDialogViewModel : ViewModelBase
     {
         LoadedCommand = new LambdaCommand(Loaded);
         SubmitCommand = new LambdaCommand(Submit);
-        
     }
 
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory) : this()
     {
         this.contextFactory = contextFactory;
-        SubmitCommandTitle = "Добавить";
-        ContextArtist = new ArtistViewModel(contextFactory);
+        ContextArtist = new ArtistViewModel(contextFactory, null, null);
     }
 
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
-    {
-        SubmitCommandTitle = "Изменить";
-        ContextArtist = artist;
+    {       
+        ContextArtist = artist;    
     }
     private void Loaded(object obj)
     {
@@ -64,6 +59,8 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             })
             .ToList()
             .ForEach(item => MusicProviders.Add(item));
+
+        SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.MusicProviderId ?? 0));
     }
 
     private void Submit(object obj)
@@ -81,7 +78,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             db.Artists.Add(entity);
             db.SaveChanges();
 
-            NewArtist = new ArtistViewModel(contextFactory)
+            NewArtist = new ArtistViewModel(contextFactory, null, null)
             {
                 Name = ContextArtist.Name,
                 Uri = ContextArtist.Uri,

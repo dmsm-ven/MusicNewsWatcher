@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 
-namespace BandcampWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Infrastructure.Converters;
 
 public class NotNullToVisibilityConverter : IValueConverter
 {

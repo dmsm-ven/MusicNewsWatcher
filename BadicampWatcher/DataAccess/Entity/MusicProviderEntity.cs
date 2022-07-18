@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace BandcampWatcher.DataAccess;
+namespace MusicNewsWatcher.DataAccess;
 
 public class MusicProviderEntity
 {

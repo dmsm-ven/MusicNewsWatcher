@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace BandcampWatcher.DataAccess;
+namespace MusicNewsWatcher.DataAccess;
 
 public class AlbumEntity
 {
@@ -16,4 +17,5 @@ public class AlbumEntity
     public string Uri { get; set; }
 
     public ArtistEntity Artist { get; set; }
+    public List<TrackEntity> Tracks { get; set; } = new List<TrackEntity>();
 }

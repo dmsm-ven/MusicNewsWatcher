@@ -1,7 +1,7 @@
-﻿using BandcampWatcher.DataAccess;
-using BandcampWatcher.Models;
-using BandcampWatcher.Services;
-using BandcampWatcher.Views;
+﻿using MusicNewsWatcher.DataAccess;
+using MusicNewsWatcher.Models;
+using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Views;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BandcampWatcher.ViewModels;
+namespace MusicNewsWatcher.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
@@ -86,8 +86,8 @@ public class MainWindowViewModel : ViewModelBase
                 await mp.LoadAllArtists(db);
                 mp.OnMusicProviderChanged += Mp_OnSelectionChanged;
             });
-
-        SelectedMusicProvider = SelectedMusicProvider ?? MusicProviders.FirstOrDefault();
+        SelectedMusicProvider = MusicProviders.FirstOrDefault();
+        SelectedMusicProvider.IsActiveProvider = true;
     }
 
     private void Mp_OnSelectionChanged(MusicProviderViewModel mp)

@@ -1,7 +1,7 @@
-﻿using BandcampWatcher.DataAccess;
-using BandcampWatcher.Models;
-using BandcampWatcher.Services;
-using BandcampWatcher.ViewModels;
+﻿using MusicNewsWatcher.DataAccess;
+using MusicNewsWatcher.Models;
+using MusicNewsWatcher.Services;
+using MusicNewsWatcher.ViewModels;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace BandcampWatcher;
+namespace MusicNewsWatcher;
 /// <summary>
 /// Interaction logic for App.xaml
 /// </summary>
@@ -32,7 +32,7 @@ public partial class App : Application
             return cacheDir;
         }
     }
-    readonly Mutex _mutex = new Mutex(false, "BandcampWatcherWpfApp");
+    readonly Mutex _mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
     TaskbarIcon tbi;
     ISettingsStorage settingsStorage;
 

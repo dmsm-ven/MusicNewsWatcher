@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace BandcampWatcher.Views.Parts;
+namespace MusicNewsWatcher.Views.Parts;
 /// <summary>
 /// Interaction logic for ArtistAlbumsView.xaml
 /// </summary>

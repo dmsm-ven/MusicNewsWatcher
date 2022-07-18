@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace BandcampWatcher;
+namespace MusicNewsWatcher;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>

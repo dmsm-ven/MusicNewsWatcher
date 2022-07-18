@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace BandcampWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Infrastructure.Converters;
 
 public class BoolToForegroundColorConverter : IValueConverter
 {

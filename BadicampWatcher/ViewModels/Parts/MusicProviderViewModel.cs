@@ -1,6 +1,6 @@
-﻿using BandcampWatcher.DataAccess;
-using BandcampWatcher.Models;
-using BandcampWatcher.Views;
+﻿using MusicNewsWatcher.DataAccess;
+using MusicNewsWatcher.Models;
+using MusicNewsWatcher.Views;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
@@ -9,13 +9,21 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
-namespace BandcampWatcher.ViewModels;
+namespace MusicNewsWatcher.ViewModels;
 
 public class MusicProviderViewModel : ViewModelBase
 {
+    private readonly MusicProviderBase musicProvider;
+    private readonly MusicManager musicManager;
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
+
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
+    public ObservableCollection<ArtistViewModel> TrackedArtists { get; } = new();
 
     public int MusicProviderId { get; init; }
+    public string Name { get; init; }
+    public string Image { get; init; }
+    public string Uri { get; init; }
 
     bool inProgress = false;
     public bool InProgress
@@ -31,22 +39,12 @@ public class MusicProviderViewModel : ViewModelBase
         set => Set(ref isActiveProvider, value);
     }
 
-    public string Name { get; init; }
-    public string Image { get; init; }
-    public string Uri { get; init; }
-
-    private readonly MusicProviderBase musicProvider;
-    private readonly MusicManager musicManager;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
-
     ArtistViewModel? selectedArtist;
     public ArtistViewModel? SelectedArtist
     {
         get => selectedArtist;
         set => Set(ref selectedArtist, value);
     }
-
-    public ObservableCollection<ArtistViewModel> TrackedArtists { get; } = new();
 
     public ICommand ChangeSelectedArtistCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
@@ -78,29 +76,35 @@ public class MusicProviderViewModel : ViewModelBase
 
     public async Task LoadAllArtists(MusicWatcherDbContext db)
     {
+        if(TrackedArtists.Count > 0) { return; }
+
         TrackedArtists.Clear();
 
         var artists = await db.Artists
             .Where(a => a.MusicProviderId == MusicProviderId)
             .ToListAsync();
 
-        var artistsVm = artists.Select(artist => new ArtistViewModel(dbCotextFactory)
+        var artistsVm = artists.Select(artist => new ArtistViewModel(dbCotextFactory, musicManager, musicProvider)
         {
             ArtistId = artist.ArtistId,
+            MusicProviderId = artist.MusicProviderId,
             Name = artist.Name,
             Image = artist.Image,
             Uri = artist.Uri,
-            Albums = new ObservableCollection<AlbumViewModel>(artist.Albums.Select(a => new AlbumViewModel
+            Albums = new ObservableCollection<AlbumViewModel>(artist.Albums
+                .Select(a => new AlbumViewModel(dbCotextFactory, musicManager, musicProvider)
             {
                 Image = a.Image,
                 Uri = a.Uri,
                 Created = a.Created,
                 IsViewed = a.IsViewed,
-                Title = a.Title
+                Title = a.Title,
+                AlbumId = a.AlbumId,
             }))
-        });
+        })
+        .OrderByDescending(a => a.LastAlbumDate);
 
-        foreach(var artist in artistsVm.OrderByDescending(a => a.LastAlbumDate))
+        foreach(var artist in artistsVm)
         {
             TrackedArtists.Add(artist);
             artist.OnArtistChanged += (e) =>
@@ -120,11 +124,11 @@ public class MusicProviderViewModel : ViewModelBase
             var artist = (obj as ArtistViewModel);
             if (artist != null)
             {
-                await musicManager.CheckUpdatesForArtist(this.musicProvider, artist.ArtistId);
+                await musicManager.CheckUpdatesForArtistAsync(this.musicProvider, artist.ArtistId);
             }
             else
             {
-                await musicManager.CheckUpdatesForProvider(musicProvider);
+                await musicManager.CheckUpdatesForProviderAsync(musicProvider);
             }
         }
         finally

@@ -1,15 +1,16 @@
-﻿<UserControl x:Class="BandcampWatcher.Views.Parts.ArtistAlbumsView"
+﻿<UserControl x:Class="MusicNewsWatcher.Views.Parts.ArtistAlbumsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:vm="clr-namespace:BandcampWatcher.ViewModels"
+             xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:ArtistViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="800">
-    <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Visible">
+    <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                  ScrollViewer.VerticalScrollBarVisibility="Auto">
         <ItemsControl Grid.Row="1" 
                       HorizontalAlignment="Stretch"
                       HorizontalContentAlignment="Center"
@@ -17,8 +18,7 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border Margin="2 2 4 12" 
-                            BorderBrush="{Binding IsActiveAlbum, Converter={StaticResource BoolToForegroundColorConverter}, 
-                                    ConverterParameter='White;Gray'}" 
+                            BorderBrush="{Binding IsActiveAlbum, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='White;Gray'}" 
                             BorderThickness="2" 
                             CornerRadius="0">
                         <Border.Effect>
@@ -27,11 +27,19 @@
                         <Grid>
                             <beh:Interaction.Triggers>
                                 <beh:EventTrigger EventName="PreviewMouseDown">
-                                    <beh:InvokeCommandAction Command="{Binding OnAlbumChangedCommand}" />
+                                    <beh:InvokeCommandAction Command="{Binding OnChangedCommand}" />
                                 </beh:EventTrigger>
                             </beh:Interaction.Triggers>
 
                             <Image Source="{Binding CachedImage}" Width="150" Height="150" Stretch="Uniform"/>
+
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                    Command="{Binding OpenInBrowserCommand}"
+                                    CommandParameter="{Binding Uri}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <icons:PackIconFontAwesome Kind="LinkSolid"  Width="16" Height="16"/>
+                            </Button>
+                            
                             <Label Content="{Binding DisplayName}"
                                                Foreground="White"
                                                FontSize="10"

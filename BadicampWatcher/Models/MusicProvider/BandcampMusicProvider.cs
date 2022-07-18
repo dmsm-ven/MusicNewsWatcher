@@ -1,36 +1,52 @@
-﻿using BandcampWatcher.DataAccess;
+﻿using MusicNewsWatcher.DataAccess;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BandcampWatcher.Models;
+namespace MusicNewsWatcher.Models;
 
 public class BandcampMusicProvider : MusicProviderBase
 {
+    const string albumsXPath = "//ol[@id='music-grid']/li";
+
     public BandcampMusicProvider() : base(1, "Bandcamp") { }
 
-    public override async Task<List<AlbumEntity>> GetAlbums(ArtistEntity artist)
+    public override async Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist)
     {
-        var page = await client.GetStringAsync(artist.Uri + "/music");
+        var doc = await GetDocument(artist.Uri + "/music");
+      
+        if (doc != null && doc.DocumentNode.SelectSingleNode(albumsXPath) != null)
+        {
+            var albums = doc.DocumentNode.SelectNodes(albumsXPath)
+                .Select(li => new AlbumEntity()
+                {
+                    Title = li.SelectSingleNode(".//p[@class='title']")?.InnerText.Trim() ?? "<Нет названия>",
+                    Created = DateTime.Now,
+                    Uri = $"{artist.Uri.Trim('/')}{li.SelectSingleNode(".//a").GetAttributeValue("href", null)}",
+                    Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null),
+                    ArtistId = artist.ArtistId
+                })
+                .ToArray();
 
-        var doc = new HtmlDocument();
-        doc.LoadHtml(page);
+            return albums;
+        }
+        return Enumerable.Empty<AlbumEntity>().ToArray();
+    }
 
-        int beforeCount = artist.Albums.Count;
+    public override async Task<TrackEntity[]> GetTracksAsync(AlbumEntity album)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2));
 
-        var albums = doc.DocumentNode.SelectNodes("//ol[@id='music-grid']/li")
-            .Select(li => new AlbumEntity()
+        var testData = Enumerable.Range(1, 12)
+            .Select(i => new TrackEntity()
             {
-                Title = li.SelectSingleNode(".//p[@class='title']")?.InnerText.Trim() ?? "<Нет названия>",
-                Created = DateTime.Now,
-                Uri = $"{artist.Uri.Trim('/')}{li.SelectSingleNode(".//a").GetAttributeValue("href", null)}",
-                Image = li.SelectSingleNode(".//img").GetAttributeValue("src", null),
-                ArtistId = artist.ArtistId
+                Name = $"Track name {i}",
+                AlbumId = album.AlbumId
             })
-            .ToList();
+            .ToArray();
 
-        return albums;
+        return testData;
     }
 }

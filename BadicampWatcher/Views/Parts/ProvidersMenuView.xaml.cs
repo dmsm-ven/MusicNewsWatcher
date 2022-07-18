@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace BandcampWatcher.Views.Parts;
+namespace MusicNewsWatcher.Views.Parts;
 /// <summary>
 /// Interaction logic for ProvidersMenuView.xaml
 /// </summary>
