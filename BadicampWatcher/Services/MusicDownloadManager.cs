@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -16,6 +17,8 @@ public class MusicDownloadManager
 {
     private readonly string DOWNLOAD_DIRECTORY;
     private readonly HttpClient client;
+
+    
 
     public MusicDownloadManager(string downloadDirectory)
     {
@@ -31,16 +34,42 @@ public class MusicDownloadManager
         this.DOWNLOAD_DIRECTORY = downloadDirectory;
     }
 
-    public async Task<string> DownloadFullAlbum(AlbumViewModel album, Action<TrackViewModel> progressChanged, CancellationToken token)
+    public async Task<string> DownloadFullAlbum(AlbumViewModel album,
+        IProgress<ValueTuple<TrackViewModel, bool>> indicator, 
+        CancellationToken token)
     {
-        string authorClear = album.ParentArtistName;
-        string albumClear = album.DisplayName;
-        string albumDirectory = Path.Combine(DOWNLOAD_DIRECTORY, authorClear, albumClear);
+        // Скорее всего нельзя ставить больше 2х,
+        // т.к. многие сайты не позволяют закачивать больше чем в 2 потока
+        const int PARALLEL_DOWNLOADS = 2;
+        string albumDirectory = Path.Combine(DOWNLOAD_DIRECTORY, album.ParentArtistName, album.DisplayName);       
+        IList<TrackViewModel> source = album.Tracks;
+        int currentPage = 0;
 
-
-        foreach (var track in album.Tracks)
+        for(int i = 0; i < source.Count; i+= PARALLEL_DOWNLOADS)
         {
-            progressChanged?.Invoke(track);
+            var chunk = source.Skip(currentPage * PARALLEL_DOWNLOADS).Take(PARALLEL_DOWNLOADS)
+                .Select(t => CreateDownloadTrackTask(t, albumDirectory, indicator))
+                .ToArray();
+
+            await Task.WhenAll(chunk);
+
+            if (token.IsCancellationRequested)
+            {
+                break;
+            }
+
+            currentPage++;
+        }
+
+        return albumDirectory;
+    }
+
+    private async Task CreateDownloadTrackTask(TrackViewModel track,
+        string albumDirectory,
+        IProgress<ValueTuple<TrackViewModel, bool>> indicator)
+        {
+            indicator.Report(ValueTuple.Create(track, false));
+
             bool isLoaded = await DownloadTrack(albumDirectory, track);
 
             if (isLoaded)
@@ -48,16 +77,8 @@ public class MusicDownloadManager
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
-            progressChanged?.Invoke(track);
-
-            if (token.IsCancellationRequested)
-            {
-                break;
-            }
+            indicator.Report(ValueTuple.Create(track, true));
         }
-
-        return albumDirectory;
-    }
 
     private async Task<bool> DownloadTrack(string albumDirectory, TrackViewModel track)
     {

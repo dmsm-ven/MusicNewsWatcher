@@ -11,6 +11,14 @@ public class TrackViewModel : ViewModelBase
     public string DisplayName => Name.ToDisplayName();
     public string? DownloadUri { get; set; }
 
+
+    bool isDownloaded;
+    public bool IsDownloaded
+    {
+        get => isDownloaded;
+        set => Set(ref isDownloaded, value);
+    }
+
     bool isDownloading;
     public bool IsDownloading
     {

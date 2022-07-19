@@ -5,11 +5,13 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/ToastNotifications.Messages;component/Themes/Default.xaml" />
-                <ResourceDictionary Source="Resources/Animations.xaml"></ResourceDictionary>
                 <ResourceDictionary Source="Resources/Brushes.xaml"></ResourceDictionary>
+                <ResourceDictionary Source="Resources/Animations.xaml"></ResourceDictionary>
+                <ResourceDictionary Source="Resources/Other.xaml"></ResourceDictionary>
                 <ResourceDictionary Source="Resources/Converters.xaml"></ResourceDictionary>
                 <ResourceDictionary Source="Resources/Buttons.xaml"></ResourceDictionary>
+
+                <ResourceDictionary Source="pack://application:,,,/ToastNotifications.Messages;component/Themes/Default.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

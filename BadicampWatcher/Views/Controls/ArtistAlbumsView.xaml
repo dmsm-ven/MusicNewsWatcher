@@ -22,7 +22,7 @@
                 VerticalContentAlignment="Center"
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch">
-                <icons:PackIconFontAwesome Kind="EyeSolid" />
+                <icons:PackIconFontAwesome Kind="EyeSolid" Style="{StaticResource LargeIconSize}"/>
             </Button>
             
             <ss:LoadingSpinner 
@@ -31,7 +31,7 @@
             
             <ItemsControl HorizontalAlignment="Stretch"
                       HorizontalContentAlignment="Center"
-                      ItemsSource="{Binding Albums}" Background="{StaticResource MainWindowTransparentBrush}">
+                      ItemsSource="{Binding Albums}" >
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="2 2 4 12" 

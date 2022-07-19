@@ -132,7 +132,7 @@ public class ArtistViewModel : ViewModelBase
 
         var dbAlbums = db
             .Albums.Where(a => a.ArtistId == ArtistId)
-            .Select(i => new AlbumViewModel(dbFactory)
+            .Select(i => new AlbumViewModel(dbFactory, provider)
             {
                 Title = i.Title,
                 Created = i.Created,
@@ -155,6 +155,8 @@ public class ArtistViewModel : ViewModelBase
                 Albums.Add(album);
             }
         }
+
+        Albums.ToList().ForEach(async a => await a.InvalidateCacheImage());
 
         InProgress = false;
     }

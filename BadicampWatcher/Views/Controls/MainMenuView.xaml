@@ -5,31 +5,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
              mc:Ignorable="d" 
-             d:DesignHeight="200" d:DesignWidth="600">
+             d:DesignHeight="100" d:DesignWidth="600">
     <StackPanel Orientation="Horizontal" 
                     Grid.Row="0" Margin="5 2 5 2" 
                     Background="{StaticResource MainWindowTransparentBrush}">
         <Button Command="{Binding CheckUpdatesSelectedCommand}"
                     ToolTip="Обновить выбраного исполнителя"
                     Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="HandPointerSolid"/>
+            <icons:PackIconFontAwesome Kind="HandPointerSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
 
         <Button Command="{Binding CheckUpdatesAllCommand}" 
                     ToolTip="Обновить всех"
                     Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="TableSolid"/>
+            <icons:PackIconFontAwesome Kind="TableSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
+        
         <Rectangle Width="1" VerticalAlignment="Stretch" Fill="LightBlue" Margin="4 2"/>
-
-        <Button Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="PlusCircleSolid"/>
+        
+        <Button Command="{Binding SettingsCommand}" 
+                    ToolTip="Настройки"
+                    Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
-        <Button Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="PencilAltSolid"/>
-        </Button>
-        <Button Command="{Binding DeleteArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="TrashSolid"/>
-        </Button>
+        
     </StackPanel>
 </UserControl>

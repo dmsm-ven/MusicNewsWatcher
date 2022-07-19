@@ -95,7 +95,7 @@ public partial class App : Application
         mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
         mainWindow.Show();
 
-        ConfigureNotifyIcon();
+        //ConfigureNotifyIcon();
     }
 
     private void ConfigureNotifyIcon()
@@ -150,9 +150,11 @@ public static class DIExtensions
                 offsetX: 25,
                 offsetY: 25);
 
+            cfg.DisplayOptions.Width = 200;
+
             cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
-                notificationLifetime: TimeSpan.FromSeconds(5),
-                maximumNotificationCount: MaximumNotificationCount.FromCount(3));
+                notificationLifetime: TimeSpan.FromSeconds(60),
+                maximumNotificationCount: MaximumNotificationCount.FromCount(4));
 
             cfg.Dispatcher = Application.Current.Dispatcher;
         });

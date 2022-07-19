@@ -9,13 +9,8 @@
              d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="200" d:DesignWidth="200">
     <Grid>
-        <ss:LoadingSpinner Panel.ZIndex="99" 
-                           Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
-        
-        <ItemsControl Grid.Row="1" 
-                  Padding="4 8 8 4"
+        <ItemsControl Padding="8 0"                     
                   ItemsSource="{Binding MusicProviders}"
-                  Background="{StaticResource ProvidersMenuBackground}"
                   HorizontalContentAlignment="Stretch"
                   MinWidth="100">
             <ItemsControl.ItemTemplate>

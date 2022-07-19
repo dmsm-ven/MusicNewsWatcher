@@ -9,7 +9,7 @@
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:AlbumViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Background="{StaticResource MainWindowTransparentBrush}">
+    <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -27,72 +27,61 @@
                 VerticalContentAlignment="Center"
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch">
-                <icons:PackIconFontAwesome Kind="EyeSolid" />
+                <icons:PackIconFontAwesome Kind="EyeSolid" Style="{StaticResource LargeIconSize}" />
             </Button>
-
-            <ss:LoadingSpinner Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" 
-                           Panel.ZIndex="99" />
 
             <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Tracks}" >
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <DockPanel LastChildFill="True">
-                            <Button Style="{StaticResource ToolButtonStyle}" 
-                                Command="{Binding OpenInBrowserCommand}"
-                                CommandParameter="{Binding DownloadUri}"
-                                Visibility="{Binding Path=DataContext.InProgress, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter='inverse'}"
-                                Panel.ZIndex="99"
-                                DockPanel.Dock="Left">
-                                <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource LinkIconSize}"/>
-                            </Button>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="8 0 2 0">
 
-                            <Grid>
-                                <Label Content="{Binding DisplayName}" 
-                                   Foreground="Navy"
-                                   FontSize="13"
-                                   HorizontalAlignment="Stretch" 
-                                   VerticalAlignment="Stretch" 
-                                   HorizontalContentAlignment="Right" 
-                                   VerticalContentAlignment="Center"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Style="{StaticResource ToolButtonStyle}"
+                                        Grid.Column="0"
+                                        Command="{Binding OpenInBrowserCommand}"
+                                        CommandParameter="{Binding DownloadUri}"
+                                        Visibility="{Binding Path=DataContext.InProgress, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter='inverse'}"
+                                        Panel.ZIndex="99"
+                                        DockPanel.Dock="Left">
+                                    <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource LinkIconSize}"/>
+                                </Button>
                                 
+                                <icons:PackIconFontAwesome Kind="CheckSolid" Foreground="#4E7AE4"
+                                                           Grid.Column="1"
+                                                           Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                                           Style="{StaticResource LinkIconSize}"/>
+
+                                <Label Content="{Binding DisplayName}" 
+                                           Grid.Column="2"
+                                           Foreground="Navy"
+                                           FontSize="13"
+                                           HorizontalAlignment="Stretch" 
+                                           VerticalAlignment="Stretch" 
+                                           HorizontalContentAlignment="Right" 
+                                           VerticalContentAlignment="Center"/>
+
                                 <ProgressBar Panel.ZIndex="99" 
-                                             IsIndeterminate="True"
-                                             Opacity="0.75"
-                                             BorderThickness="0"
-                                             BorderBrush="Transparent"
-                                             Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibilityConverter}}">
-                                    
+                                                    IsIndeterminate="True"
+                                                    Grid.ColumnSpan="3"
+                                                    Opacity="0.4"
+                                                    Foreground="#4226AB"
+                                                    BorderThickness="0"
+                                                    BorderBrush="Transparent"
+                                                    Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibilityConverter}}">
+
                                 </ProgressBar>
                             </Grid>
-
-                        </DockPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </ScrollViewer>
         </Grid>
-
-        <Button Style="{StaticResource ToolButtonStyle}" 
-                Command="{Binding DownloadAlbumCommand}"
-                Visibility="{Binding Tracks.Count, Converter={StaticResource IntToVisibilityConverter}, FallbackValue=Hidden}"
-                Grid.Row="1"
-                ToolTip="Скачать весь альбом"
-                Panel.ZIndex="99"
-                DockPanel.Dock="Left">
-            <icons:PackIconFontAwesome Kind="DownloadSolid"/>
-        </Button>
-
-        <Button Style="{StaticResource ToolButtonStyle}" 
-                Command="{Binding CancelDownloadingCommand}"
-                Opacity="0.5"
-                Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                Grid.Row="1"
-                ToolTip="Отменить загрузку"
-                Panel.ZIndex="99"
-                DockPanel.Dock="Left">
-            <icons:PackIconFontAwesome Kind="TimesSolid"/>
-        </Button>
 
     </Grid>
 

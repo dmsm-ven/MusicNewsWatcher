@@ -61,6 +61,11 @@ public class AlbumViewModel : ViewModelBase
         set => Set(ref isActiveAlbum, value);
     }
 
+    public bool CanDownloadAlbum
+    {
+        get => Tracks.Count > 0 && !InProgress;
+    }
+
     bool inProgress;
     public bool InProgress
     {
@@ -71,6 +76,7 @@ public class AlbumViewModel : ViewModelBase
             {
                 RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
                 RaisePropertyChanged(nameof(Tracks));
+                RaisePropertyChanged(nameof(CanDownloadAlbum));
             }
         }
     }
@@ -95,7 +101,7 @@ public class AlbumViewModel : ViewModelBase
     public AlbumViewModel()
     {
         CancelDownloadingCommand = new LambdaCommand(CancelDownloading, e => InProgress);
-        DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(), e => !InProgress);
+        DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(), e => CanDownloadAlbum);
         RefreshTracksCommand = new LambdaCommand(async e => await RefreshTracks());
         OnChangedCommand = new LambdaCommand(async e => await AlbumChanged());
         Tracks = new();
@@ -104,13 +110,13 @@ public class AlbumViewModel : ViewModelBase
     private void CancelDownloading(object obj)
     {
         App.HostContainer.Services.GetRequiredService<Notifier>().ShowError("Загрузка альбома отменена ...");
-        cts.Cancel();
-       
+        cts.Cancel();       
     }
 
-    public AlbumViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory) : this()
+    public AlbumViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, MusicProviderBase provider) : this()
     {
         this.dbFactory = dbFactory;
+        this.provider = provider;
     }
 
     private async Task DownloadAlbum()
@@ -121,15 +127,12 @@ public class AlbumViewModel : ViewModelBase
         MusicDownloadManager downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
         Notifier toasts = App.HostContainer.Services.GetRequiredService<Notifier>();
         Stopwatch sw = Stopwatch.StartNew();
-        
-        Action<TrackViewModel> indicator = (e) =>
+
+        var indicator = new Progress<ValueTuple<TrackViewModel, bool>>(v =>
         {
-            e.IsDownloading = !e.IsDownloading;
-            if (!e.IsDownloading)
-            {
-                toasts.ShowInformation($"'[{DateTime.Now.ToShortTimeString()}] Трек '{e.Name}' загружен");
-            }
-        };
+            v.Item1.IsDownloading = !v.Item2;
+            v.Item1.IsDownloaded = v.Item2;
+        });
 
         string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, indicator, cts.Token);
 
@@ -151,7 +154,9 @@ public class AlbumViewModel : ViewModelBase
         InProgress = true;
         try
         {
-            await manager.CheckUpdatesForAlbumAsync(provider, AlbumId);
+            MusicUpdateManager updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
+
+            await updateManager.CheckUpdatesForAlbumAsync(provider, AlbumId);
             await RefreshTracksSource();
         }
         finally
@@ -201,6 +206,12 @@ public class AlbumViewModel : ViewModelBase
         {
             Tracks.Add(track);
         }
+
+        CommandManager.InvalidateRequerySuggested();
     }
 
+    public async Task InvalidateCacheImage()
+    {
+        await Task.Run(() => cachedImage ??= this.GetCachedImage(Image));
+    }
 }

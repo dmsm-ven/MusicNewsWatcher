@@ -21,6 +21,25 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
     private readonly MusicUpdateManager musicManager;
 
+    public string Title
+    {
+        get
+        {
+            string title = "Music News Watcher";
+            if(SelectedMusicProvider != null)
+            {
+                title += $" | {SelectedMusicProvider.Name}";
+
+                if(SelectedMusicProvider.SelectedArtist != null)
+                {
+                    title += $" | исполнитель {SelectedMusicProvider.SelectedArtist.DisplayName}";
+                }
+            }
+
+            return title;
+        }
+    }
+
     bool isLoading;
     public bool IsLoading
     {
@@ -32,7 +51,13 @@ public class MainWindowViewModel : ViewModelBase
     public MusicProviderViewModel SelectedMusicProvider
     {
         get => selectedMusicProvider;
-        set => Set(ref selectedMusicProvider, value);
+        set
+        {
+            if (Set(ref selectedMusicProvider, value))
+            {
+                RaisePropertyChanged(nameof(Title));
+            }
+        }
     }
 
     public ObservableCollection<MusicProviderViewModel> MusicProviders { get; }    
@@ -83,6 +108,11 @@ public class MainWindowViewModel : ViewModelBase
                 {
                     MusicProviders.Add(mp);                    
                     mp.OnMusicProviderChanged += Mp_OnSelectionChanged;
+                    mp.PropertyChanged += (o, e) =>
+                    {
+                        if (e.PropertyName == nameof(mp.SelectedArtist))
+                            RaisePropertyChanged(nameof(Title)); 
+                    };
                 });
         }
         finally

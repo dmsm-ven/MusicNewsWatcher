@@ -15,8 +15,7 @@
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center">
         <ItemsControl Grid.Row="1" 
-                      ItemsSource="{Binding TrackedArtists}" 
-                      Background="{StaticResource MainWindowTransparentBrush}">
+                      ItemsSource="{Binding TrackedArtists}">
 
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
