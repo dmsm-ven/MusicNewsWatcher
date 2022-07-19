@@ -18,8 +18,6 @@ public class MusicDownloadManager
     private readonly string DOWNLOAD_DIRECTORY;
     private readonly HttpClient client;
 
-    
-
     public MusicDownloadManager(string downloadDirectory)
     {
         client = new HttpClient(new HttpClientHandler()
@@ -41,14 +39,17 @@ public class MusicDownloadManager
         // Скорее всего нельзя ставить больше 2х,
         // т.к. многие сайты не позволяют закачивать больше чем в 2 потока
         const int PARALLEL_DOWNLOADS = 2;
-        string albumDirectory = Path.Combine(DOWNLOAD_DIRECTORY, album.ParentArtistName, album.DisplayName);       
+        string albumDirectory = Path.Combine(DOWNLOAD_DIRECTORY, 
+            album.ParentArtistName.RemoveInvalidCharacters(), 
+            album.DisplayName.RemoveInvalidCharacters());  
+        
         IList<TrackViewModel> source = album.Tracks;
         int currentPage = 0;
 
         for(int i = 0; i < source.Count; i+= PARALLEL_DOWNLOADS)
         {
             var chunk = source.Skip(currentPage * PARALLEL_DOWNLOADS).Take(PARALLEL_DOWNLOADS)
-                .Select(t => CreateDownloadTrackTask(t, albumDirectory, indicator))
+                .Select(t => CreateDownloadTrackTask(t, albumDirectory, indicator, token))
                 .ToArray();
 
             await Task.WhenAll(chunk);
@@ -64,13 +65,12 @@ public class MusicDownloadManager
         return albumDirectory;
     }
 
-    private async Task CreateDownloadTrackTask(TrackViewModel track,
-        string albumDirectory,
-        IProgress<ValueTuple<TrackViewModel, bool>> indicator)
+    private async Task CreateDownloadTrackTask(TrackViewModel track,string albumDirectory,
+        IProgress<ValueTuple<TrackViewModel, bool>> indicator, CancellationToken token)
         {
             indicator.Report(ValueTuple.Create(track, false));
 
-            bool isLoaded = await DownloadTrack(albumDirectory, track);
+            bool isLoaded = await DownloadTrack(albumDirectory, track, token);
 
             if (isLoaded)
             {
@@ -80,7 +80,7 @@ public class MusicDownloadManager
             indicator.Report(ValueTuple.Create(track, true));
         }
 
-    private async Task<bool> DownloadTrack(string albumDirectory, TrackViewModel track)
+    private async Task<bool> DownloadTrack(string albumDirectory, TrackViewModel track, CancellationToken token)
     {
         if (!Directory.Exists(albumDirectory))
         {
@@ -104,13 +104,22 @@ public class MusicDownloadManager
 
         try
         {
-            var bytes = await client.GetByteArrayAsync(track.DownloadUri);
+            var bytes = await client.GetByteArrayAsync(track.DownloadUri, token);
             await File.WriteAllBytesAsync(localName, bytes);
             return true;
+        }
+        catch (TaskCanceledException)
+        {
+            if (File.Exists(localName))
+            {
+                File.Delete(localName);
+            }
         }
         catch(Exception ex)
         {
             return false;
         }
+
+        return false;
     }
 }

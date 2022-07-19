@@ -146,7 +146,9 @@ public class AlbumViewModel : ViewModelBase
 
         await Task.Delay(TimeSpan.FromSeconds(2));
 
-        Process.Start("explorer.exe", downloadedFilesDirectory);
+        App.OpenFolderInFileBrowser(downloadedFilesDirectory);
+
+        
     }
 
     private async Task RefreshTracks()

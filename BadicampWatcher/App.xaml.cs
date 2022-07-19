@@ -6,6 +6,7 @@ using MusicNewsWatcher.Models;
 using MusicNewsWatcher.Services;
 using MusicNewsWatcher.ViewModels;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading;
@@ -131,8 +132,20 @@ public partial class App : Application
         settingsStorage.SetValue(nameof(SettingsRoot.MainWindowRectangle), rect);
     }
 
+    public static void OpenFolderInFileBrowser(string downloadedFilesDirectory)
+    {
+        var ps = new ProcessStartInfo()
+        {
+            FileName = downloadedFilesDirectory,
+            UseShellExecute = true,
+            Verb = "open"
+        };
+        Process.Start(ps);
+    }
+
     protected override async void OnExit(ExitEventArgs e)
     {
+        HostContainer.Services.GetRequiredService<Notifier>().Dispose();
         await HostContainer.StopAsync();
         base.OnExit(e);
     }

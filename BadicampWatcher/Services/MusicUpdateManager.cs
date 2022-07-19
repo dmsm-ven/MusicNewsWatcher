@@ -68,7 +68,7 @@ public class MusicUpdateManager
     {
         using var db = await dbContext.CreateDbContextAsync();
 
-        var artist = db.Artists.Find(artistId);
+        var artist = db.Artists.Include(x => x.Albums).Single(a => a.ArtistId == artistId);
         var albums = await provider.GetAlbumsAsync(artist);
 
         await SaveChangesIfNeedAsync(db, artist, albums);
@@ -88,12 +88,14 @@ public class MusicUpdateManager
 
     private async Task SaveChangesIfNeedAsync(MusicWatcherDbContext db, ArtistEntity artist, IEnumerable<AlbumEntity> lastAlbums)
     {
-        var notAddedAlbums = lastAlbums.Where(a => !artist.Albums.Select(a => a.Uri).Contains(a.Uri)).ToList();
+        var notAddedAlbums = lastAlbums
+            .Where(album => artist.Albums.FirstOrDefault(a => a.Uri.Equals(album.Uri, StringComparison.OrdinalIgnoreCase)) == null)
+            .ToList();
 
         if (notAddedAlbums.Any())
         {            
             artist.Albums.AddRange(notAddedAlbums);
-            db.SaveChanges();
+            await db.SaveChangesAsync();
         }
     }
 }

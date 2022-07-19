@@ -8,6 +8,8 @@ namespace MusicNewsWatcher.Infrastructure.Helpers;
 
 public static class StringExtensions
 {
+    readonly static char[] invad_characters = Path.GetInvalidFileNameChars().Concat(Path.GetInvalidPathChars()).Distinct().ToArray();
+
     public static string ToDisplayName(this string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -15,21 +17,24 @@ public static class StringExtensions
             return "<Нет данных>";
         }
 
-        
+
         string step1 = HttpUtility.HtmlDecode(input);
         string step2 = Regex.Replace(step1, @"\s{2,}", " ").Trim();
 
         return step2;
     }
 
-    public static string WitoutInvalidCharacters(this string input)
+    public static string RemoveInvalidCharacters(this string input)
     {
-        if(input == null) { return null; }
+        if(string.IsNullOrWhiteSpace(input)) { return input; }
 
-        var clearName = new string(input.ToArray().Except(Path.InvalidPathChars).ToArray());
-        if (clearName.Length != input.Length)
+        if (input.IndexOfAny(invad_characters) != -1)
         {
-            return clearName;
+            foreach (char c in invad_characters)
+            {
+                string clearName = input.Replace(c.ToString(), "_");
+                return clearName;
+            }
         }
         return input;
     }
