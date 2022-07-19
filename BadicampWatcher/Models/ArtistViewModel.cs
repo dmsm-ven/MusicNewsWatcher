@@ -7,13 +7,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using MusicNewsWatcher.Infrastructure.Helpers;
 
 namespace MusicNewsWatcher.ViewModels;
 
 public class ArtistViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-    private readonly MusicManager manager;
+    private readonly MusicUpdateManager manager;
     private readonly MusicProviderBase provider;
 
     public event Action<ArtistViewModel> OnArtistChanged;
@@ -22,6 +23,8 @@ public class ArtistViewModel : ViewModelBase
     public int MusicProviderId { get; init; }
 
     public string Name { get; set; }
+    public string DisplayName => Name.ToDisplayName();
+
     public string Uri { get; set; }
     public string Image { get; set; }
 
@@ -102,7 +105,7 @@ public class ArtistViewModel : ViewModelBase
     }
 
     public ArtistViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, 
-        MusicManager manager, 
+        MusicUpdateManager manager, 
         MusicProviderBase provider) : this()
     {      
         this.dbFactory = dbFactory;
@@ -129,13 +132,14 @@ public class ArtistViewModel : ViewModelBase
 
         var dbAlbums = db
             .Albums.Where(a => a.ArtistId == ArtistId)
-            .Select(i => new AlbumViewModel(dbFactory, manager, provider)
+            .Select(i => new AlbumViewModel(dbFactory)
             {
                 Title = i.Title,
                 Created = i.Created,
                 Image = i.Image,
                 Uri = i.Uri,
                 AlbumId = i.AlbumId,
+                ParentArtistName = Name
             })
             .OrderByDescending(a => a.Created)
             .ToList();

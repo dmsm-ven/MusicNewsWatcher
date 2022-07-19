@@ -14,7 +14,7 @@ namespace MusicNewsWatcher.ViewModels;
 public class MusicProviderViewModel : ViewModelBase
 {
     private readonly MusicProviderBase musicProvider;
-    private readonly MusicManager musicManager;
+    private readonly MusicUpdateManager musicManager;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
 
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
@@ -75,7 +75,7 @@ public class MusicProviderViewModel : ViewModelBase
 
     public MusicProviderViewModel(
         MusicProviderBase musicProvider, 
-        MusicManager musicManager,
+        MusicUpdateManager musicManager,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory) : this()
     {
         this.musicProvider = musicProvider;
@@ -97,7 +97,7 @@ public class MusicProviderViewModel : ViewModelBase
             .Where(a => a.MusicProviderId == MusicProviderId)
             .ToListAsync();
 
-        if (TrackedArtists.Count != dbArtists.Count)
+        if (TrackedArtists.Count != dbArtists.Count || forced)
         {
             var artistsVm = dbArtists
             .Select(artist => new ArtistViewModel(dbContextFactory, musicManager, musicProvider)
@@ -156,12 +156,16 @@ public class MusicProviderViewModel : ViewModelBase
         }
     }
 
-    private void EditArtist(object obj)
+    private async void EditArtist(object obj)
     {
         var dialogVm = new AddNewArtistDialogViewModel(dbContextFactory, SelectedArtist!);
         var dialogWindow = new AddNewArtistDialog();
         dialogWindow.DataContext = dialogVm;
-        dialogWindow.ShowDialog();
+        if (dialogWindow.ShowDialog() == true)
+        {
+            await LoadAllArtists(forced: true);
+            Artist_OnArtistChanged(SelectedArtist);
+        }
     }
 
     private void DeleteArtist(object obj)
@@ -180,7 +184,7 @@ public class MusicProviderViewModel : ViewModelBase
         }
     }
 
-    private void Artist_OnArtistChanged(ArtistViewModel e)
+    private void Artist_OnArtistChanged(ArtistViewModel? e)
     {
         if(SelectedArtist != null)
         {

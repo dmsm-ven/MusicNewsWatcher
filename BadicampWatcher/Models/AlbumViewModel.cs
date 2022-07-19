@@ -12,13 +12,20 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using Microsoft.Extensions.DependencyInjection;
+using MusicNewsWatcher.Services;
+using ToastNotifications;
+using ToastNotifications.Messages;
+using System.Diagnostics;
+using System.Web;
+using System.Threading;
 
 namespace MusicNewsWatcher.ViewModels;
 
 public class AlbumViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-    private readonly MusicManager manager;
+    private readonly MusicUpdateManager manager;
     private readonly MusicProviderBase provider;
 
     public event Action<AlbumViewModel> OnAlbumChanged;
@@ -35,7 +42,7 @@ public class AlbumViewModel : ViewModelBase
             }
         }
     }
-    public string DisplayName => Regex.Replace(Title, @"\s{2,}", " ").Trim();
+    public string DisplayName => Title.ToDisplayName();
 
     string cachedImage;
     public string CachedImage
@@ -45,6 +52,7 @@ public class AlbumViewModel : ViewModelBase
 
     public DateTime Created { get; init; }
     public int AlbumId { get; init; }
+    public string ParentArtistName { get; init; }
 
     bool isActiveAlbum;
     public bool IsActiveAlbum
@@ -62,6 +70,7 @@ public class AlbumViewModel : ViewModelBase
             if(Set(ref inProgress, value))
             {
                 RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
+                RaisePropertyChanged(nameof(Tracks));
             }
         }
     }
@@ -78,19 +87,63 @@ public class AlbumViewModel : ViewModelBase
 
     public ICommand RefreshTracksCommand { get; }
     public ICommand OnChangedCommand { get; }
+    public ICommand DownloadAlbumCommand { get; }
+    public ICommand CancelDownloadingCommand { get; }
 
+    CancellationTokenSource cts;
+    
     public AlbumViewModel()
     {
+        CancelDownloadingCommand = new LambdaCommand(CancelDownloading, e => InProgress);
+        DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(), e => !InProgress);
         RefreshTracksCommand = new LambdaCommand(async e => await RefreshTracks());
         OnChangedCommand = new LambdaCommand(async e => await AlbumChanged());
         Tracks = new();
     }
 
-    public AlbumViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, MusicManager manager, MusicProviderBase provider) : this()
+    private void CancelDownloading(object obj)
+    {
+        App.HostContainer.Services.GetRequiredService<Notifier>().ShowError("Загрузка альбома отменена ...");
+        cts.Cancel();
+       
+    }
+
+    public AlbumViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory) : this()
     {
         this.dbFactory = dbFactory;
-        this.manager = manager;
-        this.provider = provider;
+    }
+
+    private async Task DownloadAlbum()
+    {
+        InProgress = true;
+        cts = new CancellationTokenSource();
+
+        MusicDownloadManager downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
+        Notifier toasts = App.HostContainer.Services.GetRequiredService<Notifier>();
+        Stopwatch sw = Stopwatch.StartNew();
+        
+        Action<TrackViewModel> indicator = (e) =>
+        {
+            e.IsDownloading = !e.IsDownloading;
+            if (!e.IsDownloading)
+            {
+                toasts.ShowInformation($"'[{DateTime.Now.ToShortTimeString()}] Трек '{e.Name}' загружен");
+            }
+        };
+
+        string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, indicator, cts.Token);
+
+        InProgress = false;
+
+        if (!cts.IsCancellationRequested)
+        {
+            string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{this.DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
+            toasts.ShowSuccess(msg);
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        Process.Start("explorer.exe", downloadedFilesDirectory);
     }
 
     private async Task RefreshTracks()

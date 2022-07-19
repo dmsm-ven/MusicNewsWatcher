@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace MusicNewsWatcher.Models;
 
-public class MusicManager
+public class MusicUpdateManager
 {
     public event Action OnUpdate;
 
@@ -19,7 +19,7 @@ public class MusicManager
     private readonly Timer autoUpdateTimer;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContext;
 
-    public MusicManager(IEnumerable<MusicProviderBase> musicProviders, IDbContextFactory<MusicWatcherDbContext> dbContext)
+    public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders, IDbContextFactory<MusicWatcherDbContext> dbContext)
     {
         this.musicProviders = musicProviders.ToList();
         this.dbContext = dbContext;

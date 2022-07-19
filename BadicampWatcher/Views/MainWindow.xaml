@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
         xmlns:vp="clr-namespace:MusicNewsWatcher.Views.Parts"
-        xmlns:ss="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
+        xmlns:icons="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
         xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"        
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -105,9 +105,9 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Label>Треки альбома</Label>
-                    <vp:AlbumTracksView Grid.Row="1" 
-                                        DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
+                        <Label>Треки альбома</Label>
+                        <vp:AlbumTracksView Grid.Row="1" 
+                                    DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}" />
                 </Grid>
 
             </Border>

@@ -22,7 +22,7 @@
                 VerticalContentAlignment="Center"
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch">
-                <icons:PackIconFontAwesome Kind="DownloadSolid" />
+                <icons:PackIconFontAwesome Kind="EyeSolid" />
             </Button>
             
             <ss:LoadingSpinner 

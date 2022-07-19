@@ -19,7 +19,7 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
-    private readonly MusicManager musicManager;
+    private readonly MusicUpdateManager musicManager;
 
     bool isLoading;
     public bool IsLoading
@@ -47,7 +47,7 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         IEnumerable<MusicProviderBase> musicProviders, 
         IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
-        MusicManager musicManager) : this()
+        MusicUpdateManager musicManager) : this()
     {
 
         this.musicProviders = musicProviders;

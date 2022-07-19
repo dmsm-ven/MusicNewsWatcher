@@ -7,17 +7,17 @@
         xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         x:Name="addNewArtistDialogWindow"
-        SizeToContent="WidthAndHeight"
+        SizeToContent="Height"
         MaxWidth="1200"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance Type=vm:AddNewArtistDialogViewModel, IsDesignTimeCreatable=False}"
-        Title="Добавление/редактирование исполнителя" Height="296" Width="379">
+        Title="Добавление/редактирование исполнителя" Height="400" Width="600">
     <beh:Interaction.Triggers>
         <beh:EventTrigger EventName="Loaded">
             <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
         </beh:EventTrigger>
     </beh:Interaction.Triggers>
-    <Grid>
+    <Grid >
         <Grid.Resources>
             <Style TargetType="TextBlock">
                 <Setter Property="Foreground" Value="Navy"/>

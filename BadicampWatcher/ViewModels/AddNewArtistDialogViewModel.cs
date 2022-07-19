@@ -23,6 +23,8 @@ public class AddNewArtistDialogViewModel : ViewModelBase
         set => Set(ref selectedMusicProvider, value);
     }
 
+    public bool IsEdit { get; private set; }
+
     public ArtistViewModel ContextArtist { get; private set; }
 
     public ICommand SubmitCommand { get; }
@@ -42,8 +44,10 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
     {       
-        ContextArtist = artist;    
+        ContextArtist = artist;
+        IsEdit = true;
     }
+    
     private void Loaded(object obj)
     {
         using var db = contextFactory.CreateDbContext();
@@ -70,11 +74,25 @@ public class AddNewArtistDialogViewModel : ViewModelBase
                 Name = ContextArtist.Name,
                 Image = ContextArtist.Image,
                 Uri = ContextArtist.Uri,
-                MusicProviderId = SelectedMusicProvider.MusicProviderId
+                MusicProviderId = SelectedMusicProvider.MusicProviderId,
+                ArtistId = ContextArtist.ArtistId
             };
 
-            db.Artists.Add(entity);
-            db.SaveChanges();
+            if (IsEdit)
+            {
+                if (ContextArtist.ArtistId != 0)
+                {
+                    db.Artists.Remove(db.Artists.Find(ContextArtist.ArtistId));
+                    db.Artists.Add(entity);
+                    db.SaveChanges();
+                }
+            }
+            else // add
+            {
+                db.Artists.Add(entity);
+                db.SaveChanges();
+            }         
+            
         }
 
         (obj as Window).DialogResult = true;

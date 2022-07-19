@@ -1,9 +1,39 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace MusicNewsWatcher.Infrastructure.Helpers;
 
 public static class StringExtensions
 {
+    public static string ToDisplayName(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return "<Нет данных>";
+        }
+
+        
+        string step1 = HttpUtility.HtmlDecode(input);
+        string step2 = Regex.Replace(step1, @"\s{2,}", " ").Trim();
+
+        return step2;
+    }
+
+    public static string WitoutInvalidCharacters(this string input)
+    {
+        if(input == null) { return null; }
+
+        var clearName = new string(input.ToArray().Except(Path.InvalidPathChars).ToArray());
+        if (clearName.Length != input.Length)
+        {
+            return clearName;
+        }
+        return input;
+    }
+
     public static string GetMD5(this string input)
     {
         return CreateMD5(input ?? string.Empty);

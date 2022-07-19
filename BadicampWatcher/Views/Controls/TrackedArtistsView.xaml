@@ -45,7 +45,7 @@
 
                             <Image Source="{Binding CachedImage}"                                   
                                    Width="200" Height="200" Stretch="Uniform"/>
-                            <Label Content="{Binding Name}"
+                            <Label Content="{Binding DisplayName}"
                                    Foreground="White"
                                    FontSize="14"
                                    FontWeight="Bold"
