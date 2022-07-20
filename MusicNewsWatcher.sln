@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher", "BadicampWatcher\MusicNewsWatcher.csproj", "{669F6DD8-C6E4-4BE3-B724-3ED2733FB922}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.TelegramBot", "MusicNewWatcher.TelegramBotClient\MusicNewsWatcher.TelegramBot.csproj", "{D489C84D-CB86-4939-BBE5-25A955C77DD9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.TelegramBotConsole", "MusicNewsWatcher.TelegramBotConsole\MusicNewsWatcher.TelegramBotConsole.csproj", "{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{669F6DD8-C6E4-4BE3-B724-3ED2733FB922}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{669F6DD8-C6E4-4BE3-B724-3ED2733FB922}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{669F6DD8-C6E4-4BE3-B724-3ED2733FB922}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D489C84D-CB86-4939-BBE5-25A955C77DD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D489C84D-CB86-4939-BBE5-25A955C77DD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D489C84D-CB86-4939-BBE5-25A955C77DD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D489C84D-CB86-4939-BBE5-25A955C77DD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
