@@ -1,20 +1,14 @@
-﻿using MusicNewsWatcher.DataAccess;
-using MusicNewsWatcher.Models;
-using MusicNewsWatcher.Services;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MusicNewsWatcher.Views;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Media;
 using System.Threading.Tasks;
-using System.Timers;
-using System.Windows;
 using System.Windows.Input;
 using ToastNotifications;
 using ToastNotifications.Messages;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicNewsWatcher.ViewModels;
 

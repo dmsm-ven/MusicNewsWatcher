@@ -7,7 +7,7 @@ using MusicNewsWatcher.DataAccess;
 
 #nullable disable
 
-namespace MusicNewsWatcher.Migrations
+namespace MusicNewsWatcher.Core.Migrations
 {
     [DbContext(typeof(MusicWatcherDbContext))]
     partial class MusicWatcherDbContextModelSnapshot : ModelSnapshot

@@ -1,47 +1,35 @@
-﻿using MusicNewsWatcher.DataAccess;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Timers;
-using System.Windows.Input;
-using MusicNewsWatcher.TelegramBot;
-using System.Text;
-using MusicNewsWatcher.Services;
 
-namespace MusicNewsWatcher.Models;
+namespace MusicNewsWatcher.Core;
 
-public class MusicUpdateManager
+public class MusicUpdateManager : IDisposable
 {
-    public event Action<AlbumEntity[]> OnUpdate;
+    public event EventHandler<NewAlbumsFoundEventArgs> OnNewAlbumsFound;
 
     public bool InProgress { get; private set; }
 
     private readonly List<MusicProviderBase> musicProviders;
-    private readonly Timer autoUpdateTimer;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbContext;
-    private readonly Func<MusicNewsWatcherTelegramBot> telegramBotFactory;
-    private readonly IMusicNewsMessageFormatter telegramBotMessageFormatter;
+    private readonly System.Timers.Timer autoUpdateTimer;
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbContext;  
 
-    public MusicUpdateManager(
-        IEnumerable<MusicProviderBase> musicProviders, 
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
-        Func<MusicNewsWatcherTelegramBot> telegramBotFactory,
-        IMusicNewsMessageFormatter telegramBotMessageFormatter)
+    public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders, 
+        IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
     {
         this.musicProviders = musicProviders.ToList();
         this.dbContext = dbContextFactory;
-        this.telegramBotFactory = telegramBotFactory;
-        this.telegramBotMessageFormatter = telegramBotMessageFormatter;
-        autoUpdateTimer = new Timer((int)TimeSpan.FromMinutes(30).TotalMilliseconds);
-        autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
-        autoUpdateTimer.Start();
+        autoUpdateTimer = new System.Timers.Timer();
+        autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;       
     }
 
-    private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    public void Start(TimeSpan interval)
     {
-        await CheckUpdatesAllAsync();       
+        if(interval <= TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(interval), "cannot update often than 1 min.");
+        }
+        autoUpdateTimer.Interval = (int)interval.TotalMilliseconds;
+        autoUpdateTimer.Start();
     }
 
     public async Task CheckUpdatesAllAsync()
@@ -84,12 +72,12 @@ public class MusicUpdateManager
             artist.Albums.AddRange(notAddedAlbums);
             await db.SaveChangesAsync();
 
-            OnUpdate?.Invoke(notAddedAlbums);
-
-            if (!isFirstUpdate)
+            OnNewAlbumsFound?.Invoke(this, new NewAlbumsFoundEventArgs()
             {
-                await SendMessageToTelegramBot(provider, artist, notAddedAlbums);
-            }
+                Provider = provider.Name,
+                Artist = new ArtistDto(artist.Name, artist.Uri),
+                NewAlbums = notAddedAlbums.Select(a => new AlbumDto(a.Title, a.Uri)).ToArray()
+            });
         }
     }
 
@@ -105,19 +93,20 @@ public class MusicUpdateManager
         await db.SaveChangesAsync();
     }
 
-    private async Task SendMessageToTelegramBot(MusicProviderBase provider, ArtistEntity artist, IEnumerable<AlbumEntity> notAddedAlbums)
+    public void Dispose()
     {
-        string message = telegramBotMessageFormatter.NewAlbumsFoundMessage(
-            provider.Name,
-            ValueTuple.Create(artist.Name, artist.Uri),
-            notAddedAlbums.Select(a => ValueTuple.Create(a.Title, a.Uri)));
+        autoUpdateTimer.Elapsed -= AutoUpdateTimer_Elapsed;
+        autoUpdateTimer.Stop();
+        autoUpdateTimer.Dispose();
+    }
 
-        using (var tgBot = telegramBotFactory())
-        {
-            await tgBot.SendAsBot(message);
-        }
+    private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    {
+        await CheckUpdatesAllAsync();
     }
 }
+
+
 
 
 

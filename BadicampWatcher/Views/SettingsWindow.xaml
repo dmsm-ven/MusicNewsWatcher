@@ -58,12 +58,26 @@
                 <UniformGrid Columns="2">
                     <TextBlock Style="{StaticResource SettingsLineName}" Text="Количество потоков загрузки"/>
                     <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="1"
                              Text="{Binding DownloadThreadsNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Интервал обхода (минут)"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="30"
+                             Text="{Binding UpdateManagerIntervalInMinutes, UpdateSourceTrigger=PropertyChanged}"/>
                 </UniformGrid>
                 <UniformGrid Columns="2">
                     <TextBlock Style="{StaticResource SettingsLineName}" Text="Telegram API Token"/>
                     <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="5126228910:AAEpsrsmxtbcgZro96fbQGyHrVaXqslcLsA"
                              Text="{Binding TelegramApiToken, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Telegram API ChatId"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}"
+                             d:Text="123456789"
+                             Text="{Binding TelegramChatId, UpdateSourceTrigger=PropertyChanged}"/>
                 </UniformGrid>
             </StackPanel>
 

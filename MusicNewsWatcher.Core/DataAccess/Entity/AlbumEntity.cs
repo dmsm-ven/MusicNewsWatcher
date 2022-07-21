@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace MusicNewsWatcher.DataAccess;
+namespace MusicNewsWatcher.Core;
 
 public class AlbumEntity
 {

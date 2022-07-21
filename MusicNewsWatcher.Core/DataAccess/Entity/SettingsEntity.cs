@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.DataAccess;
+namespace MusicNewsWatcher.Core;
 
 public class SettingsEntity
 {

@@ -1,5 +1,4 @@
-﻿using MusicNewsWatcher.DataAccess;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Models;
+namespace MusicNewsWatcher.Core;
 
 public sealed class MusifyMusicProvider : MusicProviderBase
 {

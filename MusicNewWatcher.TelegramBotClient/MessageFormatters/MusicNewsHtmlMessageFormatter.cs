@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace MusicNewsWatcher.Services;
+namespace MusicNewsWatcher.TelegramBot;
 
 public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 {

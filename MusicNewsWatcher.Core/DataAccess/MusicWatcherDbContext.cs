@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Design;
 using System;
 
-namespace MusicNewsWatcher.DataAccess;
+namespace MusicNewsWatcher.Core;
 
 public class MusicWatcherDbContext : DbContext
 {
@@ -16,16 +16,9 @@ public class MusicWatcherDbContext : DbContext
     {
         Database.Migrate();
     }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-    {
-        options.UseSqlite("Data Source=settings.db");
-        options.LogTo(Console.WriteLine);
-    }
-
 }
 
-public class MusicWatcherDbContextFactory : IDesignTimeDbContextFactory<MusicWatcherDbContext>
+/*public class MusicWatcherDbContextFactory : IDesignTimeDbContextFactory<MusicWatcherDbContext>
 {
     public MusicWatcherDbContext CreateDbContext(string[] args)
     {
@@ -34,4 +27,4 @@ public class MusicWatcherDbContextFactory : IDesignTimeDbContextFactory<MusicWat
 
         return new MusicWatcherDbContext(optionsBuilder.Options);
     }
-}
+}*/

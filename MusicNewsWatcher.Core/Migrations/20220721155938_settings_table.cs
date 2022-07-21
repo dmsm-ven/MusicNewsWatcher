@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MusicNewsWatcher.Migrations
+namespace MusicNewsWatcher.Core.Migrations
 {
     public partial class settings_table : Migration
     {

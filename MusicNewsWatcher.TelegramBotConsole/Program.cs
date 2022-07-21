@@ -1,72 +1,68 @@
-﻿using MusicNewsWatcher.TelegramBot;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.Core;
+using MusicNewsWatcher.TelegramBot;
 
 public static class Program
 {
     static MusicNewsWatcherTelegramBot bot;
+    static MusicUpdateManager updateManager;
+    static IHost host;
 
     public static async Task Main(string[] args)
     {
-        bot = new MusicNewsWatcherTelegramBot(args[0], long.Parse(args[1]));
+        ConfigureServices();
 
-        bot.Start();
+        await StartBot();
+        await StartUpdateManager();
 
-        await ListenConsoleCommands();
+        Console.Write("press any key to stop");
     }
 
-    private static async Task ListenConsoleCommands()
+    private static void ConfigureServices()
     {
-        string enteredCommand = string.Empty;
-        ShowAvailableCommands();
-
-        do
-        {
-            enteredCommand = Console.ReadLine() ?? string.Empty;
-
-            if (enteredCommand.StartsWith("send"))
+        host = Host.CreateDefaultBuilder()
+            .ConfigureServices((context, services) =>
             {
-                await SendCommand(enteredCommand);
-            }
-            else if(enteredCommand == "exit")
-            {
-                break;
-            }
-            
-        } while (true);
+                services.AddDbContextFactory<MusicWatcherDbContext>(options =>
+                {
+                    string connectionString = context.Configuration["ConnectionStrings:default"];
+                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                });
+
+                services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+                services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
+                services.AddSingleton<MusicUpdateManager>();
+                services.AddSingleton<MusicNewsWatcherTelegramBot>();
+            })
+            .Build();
     }
 
-    private static async Task SendCommand(string enteredCommand)
+    private static async Task StartBot()
     {
-        string message = enteredCommand.Substring(enteredCommand.IndexOf(" ") + 1);
-        if (message.StartsWith("\"") && message.EndsWith("\""))
-        {
-            message = message.Trim('"');
-            try
-            {
-                await bot.SendAsBot(message);
-            }
-            catch (Exception ex)
-            {
-                WriteErrorMessage(ex.Message);
-            }
-        }
+        string apiToken = string.Empty;
+        long consumerId = 0;
+        bot = host.Services.GetRequiredService<MusicNewsWatcherTelegramBot>();
+        await bot.Start();
+        Console.WriteLine($"Telegram bot listening, account @{bot.AccountName}");
     }
 
-    private static void WriteErrorMessage(string message)
+    private static async Task StartUpdateManager()
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine(message);
-        Console.ResetColor();
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        TimeSpan updateInterval = TimeSpan.FromMinutes(30);
+        //получаем интервал обновления
+        updateManager = host.Services.GetRequiredService<MusicUpdateManager>();
+        updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
+        updateManager.Start(updateInterval);
+        Console.WriteLine($"Auto-update enabled, interval: {(int)updateInterval.TotalMinutes} min.");
     }
 
-    private static void ShowAvailableCommands()
+    private static async void UpdateManager_OnNewAlbumsFound(object? sender, NewAlbumsFoundEventArgs e)
     {
-        Console.ForegroundColor = ConsoleColor.Yellow;
-
-        Console.WriteLine("Available Commands: ");
-        Console.WriteLine("1. exit");
-        Console.WriteLine("2. send \"message from bot\"");
-        Console.ResetColor();
-        Console.WriteLine(new String('-', Console.WindowWidth));
+        await bot.NotifyAboutNewAlbums(e.Provider, e.Artist, e.NewAlbums);
     }
 }
 

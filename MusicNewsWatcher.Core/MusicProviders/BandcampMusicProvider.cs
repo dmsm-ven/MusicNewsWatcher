@@ -1,13 +1,10 @@
-﻿using MusicNewsWatcher.DataAccess;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
-using Newtonsoft.Json;
-
-namespace MusicNewsWatcher.Models;
+namespace MusicNewsWatcher.Core;
 
 public sealed class BandcampMusicProvider : MusicProviderBase
 {
@@ -62,8 +59,8 @@ public sealed class BandcampMusicProvider : MusicProviderBase
                     var attributeData = HttpUtility.HtmlDecode(script.GetAttributeValue("data-tralbum", string.Empty));
                     if (!string.IsNullOrWhiteSpace(attributeData))
                     {
-                        var jsonRoot = JsonConvert.DeserializeObject<dynamic>(attributeData);
-                        var trackInfo = jsonRoot.trackinfo;
+                        //var jsonRoot = JsonConvert.DeserializeObject<dynamic>(attributeData);
+                        //var trackInfo = jsonRoot.trackinfo;
                     }
                 }
 

@@ -1,6 +1,8 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.DataAccess;
 using MusicNewsWatcher.Services;
 using MusicNewsWatcher.TelegramBot;
 using System;
@@ -18,11 +20,15 @@ public static class ConfigureServicesAppExtensions
     public static void AddTelegramBot(this IServiceCollection services, HostBuilderContext context)
     {
         services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+        services.AddTransient<MusicNewsWatcherTelegramBot>(x =>
+        {            
+            using var db = x.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>().CreateDbContext();
+            string apiToken = (db.Settings?.Find("TelegramApiToken")?.Value) ?? context.Configuration["Telegram:API_TOKEN"];
+            long consumerId = long.Parse(context.Configuration["Telegram:ConsumerChatId"]);
 
-        string apiToken = context.Configuration["Telegram:API_TOKEN"];
-        long consumerId = long.Parse(context.Configuration["Telegram:ConsumerChatId"]);
-
-        services.AddTransient<MusicNewsWatcherTelegramBot>(x => new MusicNewsWatcherTelegramBot(apiToken, consumerId, createStarted: true));
+            var bot = new MusicNewsWatcherTelegramBot(apiToken, consumerId, createStarted: true);
+            return bot;
+        });
         services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
     }
 

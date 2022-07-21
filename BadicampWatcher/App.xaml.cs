@@ -1,17 +1,19 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿global using Microsoft.EntityFrameworkCore;
+global using MusicNewsWatcher.Core;
+global using System.Collections.Generic;
+global using System;
+global using System.Linq;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.DataAccess;
-using MusicNewsWatcher.Models;
 using MusicNewsWatcher.Services;
 using MusicNewsWatcher.ViewModels;
-using MusicNewsWatcher.TelegramBot;
-using System;
-using System.Drawing;
+using MusicNewsWatcher.Views;
 using System.Threading;
 using System.Windows;
 using ToastNotifications;
-using Microsoft.Extensions.Configuration;
-using MusicNewsWatcher.Views;
+
 
 namespace MusicNewsWatcher;
 /// <summary>

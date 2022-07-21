@@ -41,11 +41,11 @@ public class MusicDownloadManager
         }
 
         string albumDirectory = GetAlbumLocalPath(album); 
-        
         IList<TrackViewModel> source = album.Tracks;
         int currentPage = 0;
+        source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
 
-        for(int i = 0; i < source.Count; i+= parallelDownloads)
+        for (int i = 0; i < source.Count; i+= parallelDownloads)
         {
             var chunk = source.Skip(currentPage * parallelDownloads).Take(parallelDownloads)
                 .Select(t => CreateDownloadTrackTask(t, albumDirectory, token))
@@ -53,7 +53,15 @@ public class MusicDownloadManager
 
             await Task.WhenAll(chunk);
 
-            if (token.IsCancellationRequested) break;
+            if (token.IsCancellationRequested)
+            {
+                source
+                    .Where(i => i.DownloadResult == TrackDownloadResult.None)
+                    .ToList()
+                    .ForEach(i => i.DownloadResult = TrackDownloadResult.Skipped);
+
+                break;
+            }
 
             currentPage++;
         }

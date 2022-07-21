@@ -1,10 +1,9 @@
-﻿using MusicNewsWatcher.DataAccess;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Models;
+namespace MusicNewsWatcher.Core;
 
 public abstract class MusicProviderBase
 {

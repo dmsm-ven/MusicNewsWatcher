@@ -1,17 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Windows.Input;
 
 namespace MusicNewsWatcher.ViewModels;
 
 public class SettingsWindowViewModel : ViewModelBase
 {
-
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+
+    int updateManagerIntervalInMinutes;
+    public int UpdateManagerIntervalInMinutes
+    {
+        get => updateManagerIntervalInMinutes;
+        set
+        {
+            bool inBounds = value >= 5;
+            int actualValue = inBounds ? value : 5;
+
+            if (Set(ref updateManagerIntervalInMinutes, actualValue) && IsLoaded)
+            {
+                settingsChanges[nameof(UpdateManagerIntervalInMinutes)] = actualValue.ToString();
+                RaisePropertyChanged(nameof(HasChanges));
+            }
+        }
+    }
 
     int downloadThreadsNumber;
     public int DownloadThreadsNumber
@@ -39,6 +50,20 @@ public class SettingsWindowViewModel : ViewModelBase
             if (Set(ref telegramApiToken, value) && IsLoaded)
             {
                 settingsChanges[nameof(TelegramApiToken)] = value;
+                RaisePropertyChanged(nameof(HasChanges));
+            }
+        }
+    }
+
+    string telegramChatId;
+    public string TelegramChatId
+    {
+        get => telegramChatId;
+        set
+        {
+            if (Set(ref telegramChatId, value) && IsLoaded)
+            {
+                settingsChanges[nameof(TelegramChatId)] = value;
                 RaisePropertyChanged(nameof(HasChanges));
             }
         }
