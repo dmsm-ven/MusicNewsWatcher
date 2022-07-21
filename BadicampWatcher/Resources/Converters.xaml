@@ -6,4 +6,5 @@
     <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
     <con:IntToVisibilityConverter x:Key="IntToVisibilityConverter"></con:IntToVisibilityConverter>
     <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter"></con:BoolToForegroundColorConverter>
+    <con:TrackDownloadResultToIconKind x:Key="TrackDownloadResultToIconKind"></con:TrackDownloadResultToIconKind>
 </ResourceDictionary>

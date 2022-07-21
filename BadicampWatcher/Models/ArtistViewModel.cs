@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using MusicNewsWatcher.Infrastructure.Helpers;
+using ToastNotifications;
+using ToastNotifications.Messages;
+using System.Collections.Generic;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -16,6 +19,7 @@ public class ArtistViewModel : ViewModelBase
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly MusicUpdateManager manager;
     private readonly MusicProviderBase provider;
+    private readonly Notifier tosts;
 
     public event Action<ArtistViewModel> OnArtistChanged;
 
@@ -106,11 +110,13 @@ public class ArtistViewModel : ViewModelBase
 
     public ArtistViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, 
         MusicUpdateManager manager, 
-        MusicProviderBase provider) : this()
+        MusicProviderBase provider,
+        Notifier tosts) : this()
     {      
         this.dbFactory = dbFactory;
         this.manager = manager;
         this.provider = provider;
+        this.tosts = tosts;
     }
 
     private async Task ArtistChanged()
@@ -128,6 +134,33 @@ public class ArtistViewModel : ViewModelBase
     {
         InProgress = true;
 
+        List<AlbumViewModel> dbAlbums = await GetMappedAlbums();
+
+        if (Albums.Count != dbAlbums.Count)
+        {
+            if(Albums.Count != 0)
+            {
+                tosts.ShowSuccess($"Найден новый альбом исполнителя '{DisplayName}'");
+            }
+
+            Albums.ToList().ForEach(a => a.OnAlbumChanged -= Album_OnAlbumChanged);
+            Albums.Clear();
+
+            foreach (var album in dbAlbums)
+            {
+                album.OnAlbumChanged += Album_OnAlbumChanged;
+                Albums.Add(album);
+            }
+
+            Albums.ToList().ForEach(async a => await a.InvalidateCacheImage());            
+        }
+
+        CommandManager.InvalidateRequerySuggested();
+        InProgress = false;
+    }
+
+    private async Task<List<AlbumViewModel>> GetMappedAlbums()
+    {
         using var db = await dbFactory.CreateDbContextAsync();
 
         var dbAlbums = db
@@ -142,23 +175,10 @@ public class ArtistViewModel : ViewModelBase
                 ParentArtistName = Name
             })
             .OrderByDescending(a => a.Created)
+            .ThenBy(a => a.AlbumId)
             .ToList();
 
-        if (Albums.Count != dbAlbums.Count)
-        {
-            Albums.ToList().ForEach(a => a.OnAlbumChanged -= Album_OnAlbumChanged);
-            Albums.Clear();
-
-            foreach (var album in dbAlbums)
-            {
-                album.OnAlbumChanged += Album_OnAlbumChanged;
-                Albums.Add(album);
-            }
-        }
-
-        Albums.ToList().ForEach(async a => await a.InvalidateCacheImage());
-
-        InProgress = false;
+        return dbAlbums;
     }
 
     public void Album_OnAlbumChanged(AlbumViewModel e)

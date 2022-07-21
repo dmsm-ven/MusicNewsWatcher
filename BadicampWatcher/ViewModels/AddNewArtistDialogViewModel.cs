@@ -39,7 +39,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory) : this()
     {
         this.contextFactory = contextFactory;
-        ContextArtist = new ArtistViewModel(contextFactory, null, null);
+        ContextArtist = new ArtistViewModel(contextFactory, null, null, null);
     }
 
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)

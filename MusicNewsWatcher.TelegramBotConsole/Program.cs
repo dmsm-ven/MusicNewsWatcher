@@ -1,4 +1,4 @@
-﻿using MusicNewWatcher.TelegramBot;
+﻿using MusicNewsWatcher.TelegramBot;
 
 public static class Program
 {
@@ -6,12 +6,11 @@ public static class Program
 
     public static async Task Main(string[] args)
     {
-        bot = new MusicNewsWatcherTelegramBot(args[0]);
+        bot = new MusicNewsWatcherTelegramBot(args[0], long.Parse(args[1]));
 
-        await bot.StartAsync();
+        bot.Start();
 
-        //await ListenConsoleCommands();
-        Console.ReadLine();
+        await ListenConsoleCommands();
     }
 
     private static async Task ListenConsoleCommands()
@@ -27,17 +26,36 @@ public static class Program
             {
                 await SendCommand(enteredCommand);
             }
-        } while (enteredCommand != "exit");
+            else if(enteredCommand == "exit")
+            {
+                break;
+            }
+            
+        } while (true);
     }
 
     private static async Task SendCommand(string enteredCommand)
     {
-        string message = string.Join(" ", enteredCommand.Split(' ').Skip(1));
+        string message = enteredCommand.Substring(enteredCommand.IndexOf(" ") + 1);
         if (message.StartsWith("\"") && message.EndsWith("\""))
         {
             message = message.Trim('"');
-            await bot.SendTextMessageAsync(message);
+            try
+            {
+                await bot.SendAsBot(message);
+            }
+            catch (Exception ex)
+            {
+                WriteErrorMessage(ex.Message);
+            }
         }
+    }
+
+    private static void WriteErrorMessage(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(message);
+        Console.ResetColor();
     }
 
     private static void ShowAvailableCommands()
@@ -46,7 +64,7 @@ public static class Program
 
         Console.WriteLine("Available Commands: ");
         Console.WriteLine("1. exit");
-        Console.WriteLine("2. send \"message to bot\"");
+        Console.WriteLine("2. send \"message from bot\"");
         Console.ResetColor();
         Console.WriteLine(new String('-', Console.WindowWidth));
     }

@@ -11,7 +11,7 @@ public class AlbumEntity
 
     public int ArtistId { get; set; }
     public string Title { get; set; }
-    public DateTime Created { get; set; }
+    public DateTime Created { get; set; } = DateTime.Now.Date;
     public bool IsViewed { get; set; }
     public string? Image { get; set; }
     public string Uri { get; set; }

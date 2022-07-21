@@ -8,6 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using ToastNotifications;
+using ToastNotifications.Messages;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -15,6 +17,7 @@ public class MusicProviderViewModel : ViewModelBase
 {
     private readonly MusicProviderBase musicProvider;
     private readonly MusicUpdateManager musicManager;
+    private readonly Notifier toasts;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
 
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
@@ -54,7 +57,6 @@ public class MusicProviderViewModel : ViewModelBase
     }
 
     public ICommand ChangeSelectedArtistCommand { get; }
-    public ICommand CheckUpdatesAllCommand { get; }
     public ICommand CheckUpdatesSelectedCommand { get; }
     public ICommand AddArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
@@ -67,21 +69,19 @@ public class MusicProviderViewModel : ViewModelBase
         AddArtistCommand = new LambdaCommand(async e => await AddArtist());
         DeleteArtistCommand = new LambdaCommand(DeleteArtist, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
-        CheckUpdatesAllCommand = new LambdaCommand(e => CheckUpdates(null), e => !InProgress);
-        CheckUpdatesSelectedCommand = new LambdaCommand(e => CheckUpdates(SelectedArtist), e => !InProgress && SelectedArtist != null);
-
         TrackedArtists.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(TrackedArtistsCount));
     }
 
     public MusicProviderViewModel(
         MusicProviderBase musicProvider, 
         MusicUpdateManager musicManager,
+        Notifier toasts,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory) : this()
     {
         this.musicProvider = musicProvider;
         this.musicManager = musicManager;
+        this.toasts = toasts;
         this.dbContextFactory = dbContextFactory;
-
     }
 
     public async Task LoadAllArtists(bool forced = false)
@@ -100,7 +100,7 @@ public class MusicProviderViewModel : ViewModelBase
         if (TrackedArtists.Count != dbArtists.Count || forced)
         {
             var artistsVm = dbArtists
-            .Select(artist => new ArtistViewModel(dbContextFactory, musicManager, musicProvider)
+            .Select(artist => new ArtistViewModel(dbContextFactory, musicManager, musicProvider, toasts)
             {
                 ArtistId = artist.ArtistId,
                 MusicProviderId = artist.MusicProviderId,
@@ -121,27 +121,6 @@ public class MusicProviderViewModel : ViewModelBase
         }
         
         InProgress = false;
-    }
-
-    private async void CheckUpdates(object? obj)
-    {
-        InProgress = true;
-        try
-        {
-            var artist = (obj as ArtistViewModel);
-            if (artist != null)
-            {
-                await musicManager.CheckUpdatesForArtistAsync(this.musicProvider, artist.ArtistId);
-            }
-            else
-            {
-                await musicManager.CheckUpdatesForProviderAsync(musicProvider);
-            }
-        }
-        finally
-        {
-            InProgress = false;
-        }
     }
 
     private async Task AddArtist()
@@ -165,6 +144,7 @@ public class MusicProviderViewModel : ViewModelBase
         {
             await LoadAllArtists(forced: true);
             Artist_OnArtistChanged(SelectedArtist);
+            toasts.ShowSuccess($"Данные обновлены");
         }
     }
 
@@ -178,7 +158,7 @@ public class MusicProviderViewModel : ViewModelBase
                 db.Artists.Remove(db.Artists.Find(SelectedArtist.ArtistId)!);
                 db.SaveChanges();
             }
-
+            toasts.ShowSuccess($"Исполнитель удален из списка на отслеживание");
             TrackedArtists.Remove(SelectedArtist);
             SelectedArtist = null;
         }

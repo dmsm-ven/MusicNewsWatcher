@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher", "Badicam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.TelegramBot", "MusicNewWatcher.TelegramBotClient\MusicNewsWatcher.TelegramBot.csproj", "{D489C84D-CB86-4939-BBE5-25A955C77DD9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.TelegramBotConsole", "MusicNewsWatcher.TelegramBotConsole\MusicNewsWatcher.TelegramBotConsole.csproj", "{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.ConsoleClient", "MusicNewsWatcher.TelegramBotConsole\MusicNewsWatcher.ConsoleClient.csproj", "{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

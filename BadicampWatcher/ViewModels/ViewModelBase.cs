@@ -55,7 +55,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
 
         if (!VALID_EXT.Contains(ext.ToLower())) { ext = VALID_EXT[0]; }
 
-        string cachedName = Path.Combine(App.CacheDirectory, originalSourceUri.GetMD5() + ext);
+        string cachedName = Path.Combine(FileBrowserHelper.CacheDirectory, originalSourceUri.GetMD5() + ext);
         if (!File.Exists(cachedName))
         {
             try

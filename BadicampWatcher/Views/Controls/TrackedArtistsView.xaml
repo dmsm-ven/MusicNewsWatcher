@@ -7,7 +7,6 @@
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
              mc:Ignorable="d" 
-             d:Background="White"
              d:DataContext="{d:DesignInstance Type=vm:MusicProviderViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="650">
     <ScrollViewer ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
@@ -43,7 +42,7 @@
                             </Button>
 
                             <Image Source="{Binding CachedImage}"                                   
-                                   Width="200" Height="200" Stretch="Uniform"/>
+                                   Width="160" Height="160" Stretch="Uniform"/>
                             <Label Content="{Binding DisplayName}"
                                    Foreground="White"
                                    FontSize="14"

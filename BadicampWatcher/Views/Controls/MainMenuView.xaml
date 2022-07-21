@@ -3,31 +3,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels" 
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
              mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="100" d:DesignWidth="600">
-    <StackPanel Orientation="Horizontal" 
-                    Grid.Row="0" Margin="5 2 5 2" 
-                    Background="{StaticResource MainWindowTransparentBrush}">
-        <Button Command="{Binding CheckUpdatesSelectedCommand}"
-                    ToolTip="Обновить выбраного исполнителя"
-                    Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="HandPointerSolid" Style="{StaticResource LargeIconSize}"/>
-        </Button>
+    <StackPanel Orientation="Horizontal" Background="{StaticResource MainWindowTransparentBrush}">
 
         <Button Command="{Binding CheckUpdatesAllCommand}" 
-                    ToolTip="Обновить всех"
-                    Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="TableSolid" Style="{StaticResource LargeIconSize}"/>
+                DockPanel.Dock="Right"
+                HorizontalAlignment="Right"
+                ToolTip="Проверить альбомы для всех провайдеров/артистов"
+                Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="CircleNotchSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
         
-        <Rectangle Width="1" VerticalAlignment="Stretch" Fill="LightBlue" Margin="4 2"/>
+        <Button Command="{Binding OpenDownloadsFolderCommand}" 
+                DockPanel.Dock="Right"
+                HorizontalAlignment="Right"
+                ToolTip="Папка с загруженными альбомами"
+                Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="FolderOpenSolid" Style="{StaticResource LargeIconSize}"/>
+        </Button>
         
         <Button Command="{Binding SettingsCommand}" 
-                    ToolTip="Настройки"
-                    Style="{StaticResource ToolButtonStyle}">
+                DockPanel.Dock="Right"
+                HorizontalAlignment="Right"
+                ToolTip="Настройки"
+                Style="{StaticResource ToolButtonStyle}">
             <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
-        
+
+
+
     </StackPanel>
 </UserControl>

@@ -2,25 +2,31 @@
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using static MusicNewWatcher.TelegramBot.UpdateHandlers;
+using static MusicNewsWatcher.TelegramBot.UpdateHandlers;
 
-namespace MusicNewWatcher.TelegramBot;
+namespace MusicNewsWatcher.TelegramBot;
 
 public class MusicNewsWatcherTelegramBot : IDisposable
 {
     private readonly TelegramBotClient bot;
     private readonly CancellationTokenSource cts;
+    private readonly long consumerId;
 
-    public MusicNewsWatcherTelegramBot(string apiToken)
+    private User? BotInfo { get; set; }
+
+    public MusicNewsWatcherTelegramBot(string apiToken, long consumerId, bool createStarted = false)
     {
         bot = new TelegramBotClient(apiToken);
         cts = new CancellationTokenSource();
+        this.consumerId = consumerId;
+        if (createStarted)
+        {
+            Start();
+        }
     }
 
-    public async Task StartAsync()
+    public void Start()
     {
-        var me = await bot.GetMeAsync();
-
         // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
         var receiverOptions = new ReceiverOptions()
         {
@@ -31,13 +37,12 @@ public class MusicNewsWatcherTelegramBot : IDisposable
         bot.StartReceiving(updateHandler: UpdateHandlers.HandleUpdateAsync,
                            pollingErrorHandler: UpdateHandlers.PollingErrorHandler,
                            cancellationToken: cts.Token);
-
-        Console.WriteLine($"Bot Entered as @{me.Username}");
+       
     }
 
-    public async Task SendTextMessageAsync(string message)
+    public async Task SendAsBot(string message)
     {
-        await bot.SendTextMessageAsync(null, message);
+        var answer = await bot.SendTextMessageAsync(consumerId, message, ParseMode.Html);
     }
 
     public void Stop()
@@ -47,6 +52,7 @@ public class MusicNewsWatcherTelegramBot : IDisposable
 
     public void Dispose()
     {
+        cts?.Cancel();
         cts?.Dispose();
     }
 }

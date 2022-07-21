@@ -26,17 +26,15 @@ public static class StringExtensions
 
     public static string RemoveInvalidCharacters(this string input)
     {
-        if(string.IsNullOrWhiteSpace(input)) { return input; }
+        if (string.IsNullOrWhiteSpace(input)) { return input; }
+        if (input.IndexOfAny(invad_characters) == -1) { return input; }
 
-        if (input.IndexOfAny(invad_characters) != -1)
+        string clearName = input;
+        foreach (char c in invad_characters)
         {
-            foreach (char c in invad_characters)
-            {
-                string clearName = input.Replace(c.ToString(), "_");
-                return clearName;
-            }
+            clearName = clearName.Replace(c.ToString(), "_");
         }
-        return input;
+        return clearName;
     }
 
     public static string GetMD5(this string input)

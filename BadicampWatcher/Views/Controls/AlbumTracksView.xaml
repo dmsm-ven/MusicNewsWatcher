@@ -48,17 +48,21 @@
                                         CommandParameter="{Binding DownloadUri}"
                                         Visibility="{Binding Path=DataContext.InProgress, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter='inverse'}"
                                         Panel.ZIndex="99"
+                                        VerticalAlignment="Center"
                                         DockPanel.Dock="Left">
                                     <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource LinkIconSize}"/>
                                 </Button>
-                                
-                                <icons:PackIconFontAwesome Kind="CheckSolid" Foreground="#4E7AE4"
+
+                                <icons:PackIconFontAwesome Kind="{Binding DownloadResult, Converter={StaticResource TrackDownloadResultToIconKind}}" 
+                                                           Foreground="#FF6262"
+                                                           VerticalAlignment="Center"
                                                            Grid.Column="1"
                                                            Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
                                                            Style="{StaticResource LinkIconSize}"/>
 
                                 <Label Content="{Binding DisplayName}" 
                                            Grid.Column="2"
+                                       Margin="6 0 4 0"
                                            Foreground="Navy"
                                            FontSize="13"
                                            HorizontalAlignment="Stretch" 

@@ -19,6 +19,7 @@ using ToastNotifications.Messages;
 using System.Diagnostics;
 using System.Web;
 using System.Threading;
+using System.Windows;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -122,33 +123,34 @@ public class AlbumViewModel : ViewModelBase
     private async Task DownloadAlbum()
     {
         InProgress = true;
-        cts = new CancellationTokenSource();
-
+        
         MusicDownloadManager downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
         Notifier toasts = App.HostContainer.Services.GetRequiredService<Notifier>();
         Stopwatch sw = Stopwatch.StartNew();
 
-        var indicator = new Progress<ValueTuple<TrackViewModel, bool>>(v =>
+        try
         {
-            v.Item1.IsDownloading = !v.Item2;
-            v.Item1.IsDownloaded = v.Item2;
-        });
+            cts = new CancellationTokenSource();
+            string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, parallelDownloads: 1, cts.Token);
+          
+            if (!cts.IsCancellationRequested)
+            {
+                string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{this.DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
+                toasts.ShowSuccess(msg);
+            }
 
-        string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, indicator, cts.Token);
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
-        InProgress = false;
-
-        if (!cts.IsCancellationRequested)
-        {
-            string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{this.DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
-            toasts.ShowSuccess(msg);
+            FileBrowserHelper.OpenFolderInFileBrowser(downloadedFilesDirectory);
         }
-
-        await Task.Delay(TimeSpan.FromSeconds(2));
-
-        App.OpenFolderInFileBrowser(downloadedFilesDirectory);
-
-        
+        catch(Exception ex)
+        {
+            toasts.ShowError($"Ошибка загрузки альбома '{DisplayName}'\r\n{ex.Message}");
+        }
+        finally
+        {
+            InProgress = false;
+        }
     }
 
     private async Task RefreshTracks()
@@ -174,15 +176,7 @@ public class AlbumViewModel : ViewModelBase
             OnAlbumChanged?.Invoke(this);
             IsActiveAlbum = true;
 
-            InProgress = true;
-            try
-            {
-                await RefreshTracksSource();
-            }
-            finally
-            {
-                InProgress = false;
-            }
+            await RefreshTracksSource();
         }
     }
 

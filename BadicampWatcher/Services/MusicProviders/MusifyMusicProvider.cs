@@ -29,7 +29,8 @@ public sealed class MusifyMusicProvider : MusicProviderBase
                     ArtistId = artist.ArtistId,
                     Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty),
                     Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty),
-                    Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty)
+                    Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty),
+                    Created = DateTime.Parse(div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim())
                 }).ToArray();
 
             return albums;

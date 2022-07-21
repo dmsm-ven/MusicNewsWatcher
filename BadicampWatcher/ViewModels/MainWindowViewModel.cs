@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
+using ToastNotifications;
+using ToastNotifications.Messages;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -19,7 +21,8 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
-    private readonly MusicUpdateManager musicManager;
+    private readonly MusicUpdateManager updateManager;
+    private readonly Notifier toasts;
 
     public string Title
     {
@@ -60,42 +63,66 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; }    
+    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } 
+    
     public ICommand LoadedCommand { get; }
+    public ICommand CheckUpdatesAllCommand { get; }
+    public ICommand SettingsCommand { get; }
+    public ICommand OpenDownloadsFolderCommand { get; }
 
     public MainWindowViewModel()
     {
-        LoadedCommand = new LambdaCommand(async e => await RefreshSource());       
+        CheckUpdatesAllCommand = new LambdaCommand(async e => await CheckUpdatesAll(), e => !IsLoading);
+        OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());       
+        SettingsCommand = new LambdaCommand(e => { });       
+        LoadedCommand = new LambdaCommand(async e => await RefreshProviders());       
         MusicProviders = new ObservableCollection<MusicProviderViewModel>();
     }
 
     public MainWindowViewModel(
         IEnumerable<MusicProviderBase> musicProviders, 
         IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
-        MusicUpdateManager musicManager) : this()
+        MusicUpdateManager updateManager,
+        Notifier toasts) : this()
     {
 
         this.musicProviders = musicProviders;
         this.dbCotextFactory = dbCotextFactory;
-        this.musicManager = musicManager;
-
-        musicManager.OnUpdate += () => LoadedCommand.Execute(null);
+        this.updateManager = updateManager;
+        this.toasts = toasts;
+        updateManager.OnUpdate += UpdateManager_OnUpdate;
     }
 
-
-    private async Task RefreshSource()
+    private async void UpdateManager_OnUpdate(AlbumEntity[] albums)
     {
+        await App.Current.MainWindow.Dispatcher.InvokeAsync(async () => await RefreshProviders());
+
+        string toastsMessage = string.Join(" ", albums.Select((album, i) => $"{i + 1}) {album?.Title ?? "<Без названия>"}"));
+        toasts.ShowInformation("Найдены новые альбомы: " + toastsMessage);
+    }
+
+    private async Task CheckUpdatesAll()
+    {
+        IsLoading = true;
+        await updateManager.CheckUpdatesAllAsync();
+        IsLoading = false;
+    }
+
+    private async Task RefreshProviders()
+    {
+        MusicProviders.ToList().ForEach(mp => mp.OnMusicProviderChanged -= Mp_OnSelectionChanged);
+        MusicProviders.Clear();
+
         Dictionary<int, MusicProviderBase> dic = musicProviders.ToDictionary(i => i.Id, i => i);
 
         IsLoading = true;
-        await Task.Delay(TimeSpan.FromMilliseconds(250));
         
         try
         {
             var db = await dbCotextFactory.CreateDbContextAsync();
 
             db.MusicProviders.Include(p => p.Artists)
-                .Select(mp => new MusicProviderViewModel(dic[mp.MusicProviderId], musicManager, dbCotextFactory)
+                .Select(mp => new MusicProviderViewModel(dic[mp.MusicProviderId], updateManager, toasts, dbCotextFactory)
                 {
                     Name = mp.Name,
                     Image = mp.Image,
@@ -108,11 +135,6 @@ public class MainWindowViewModel : ViewModelBase
                 {
                     MusicProviders.Add(mp);                    
                     mp.OnMusicProviderChanged += Mp_OnSelectionChanged;
-                    mp.PropertyChanged += (o, e) =>
-                    {
-                        if (e.PropertyName == nameof(mp.SelectedArtist))
-                            RaisePropertyChanged(nameof(Title)); 
-                    };
                 });
         }
         finally

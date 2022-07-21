@@ -1,4 +1,5 @@
 ﻿using MusicNewsWatcher.Infrastructure.Helpers;
+using MusicNewsWatcher.Services;
 using System.Web;
 
 namespace MusicNewsWatcher.ViewModels;
@@ -12,11 +13,19 @@ public class TrackViewModel : ViewModelBase
     public string? DownloadUri { get; set; }
 
 
-    bool isDownloaded;
-    public bool IsDownloaded
+    public bool IsDownloaded => DownloadResult != TrackDownloadResult.None;
+
+    TrackDownloadResult downloadResult;
+    public TrackDownloadResult DownloadResult
     {
-        get => isDownloaded;
-        set => Set(ref isDownloaded, value);
+        get => downloadResult;
+        set
+        {
+            if(Set(ref downloadResult, value))
+            {
+                RaisePropertyChanged(nameof(IsDownloaded));
+            }
+        }
     }
 
     bool isDownloading;

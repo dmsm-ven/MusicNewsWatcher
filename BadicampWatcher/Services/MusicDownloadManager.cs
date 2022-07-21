@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Services;
 
+//TODO убрать прямое обращение через ViewModel
 public class MusicDownloadManager
 {
     private readonly string DOWNLOAD_DIRECTORY;
@@ -32,32 +33,27 @@ public class MusicDownloadManager
         this.DOWNLOAD_DIRECTORY = downloadDirectory;
     }
 
-    public async Task<string> DownloadFullAlbum(AlbumViewModel album,
-        IProgress<ValueTuple<TrackViewModel, bool>> indicator, 
-        CancellationToken token)
+    public async Task<string> DownloadFullAlbum(AlbumViewModel album, int parallelDownloads, CancellationToken token)
     {
-        // Скорее всего нельзя ставить больше 2х,
-        // т.к. многие сайты не позволяют закачивать больше чем в 2 потока
-        const int PARALLEL_DOWNLOADS = 2;
-        string albumDirectory = Path.Combine(DOWNLOAD_DIRECTORY, 
-            album.ParentArtistName.RemoveInvalidCharacters(), 
-            album.DisplayName.RemoveInvalidCharacters());  
+        if(parallelDownloads <= 0 || parallelDownloads > 32)
+        {
+            throw new ArgumentOutOfRangeException(nameof(parallelDownloads), "Parallel downloads must be in range 1..32");
+        }
+
+        string albumDirectory = GetAlbumLocalPath(album); 
         
         IList<TrackViewModel> source = album.Tracks;
         int currentPage = 0;
 
-        for(int i = 0; i < source.Count; i+= PARALLEL_DOWNLOADS)
+        for(int i = 0; i < source.Count; i+= parallelDownloads)
         {
-            var chunk = source.Skip(currentPage * PARALLEL_DOWNLOADS).Take(PARALLEL_DOWNLOADS)
-                .Select(t => CreateDownloadTrackTask(t, albumDirectory, indicator, token))
+            var chunk = source.Skip(currentPage * parallelDownloads).Take(parallelDownloads)
+                .Select(t => CreateDownloadTrackTask(t, albumDirectory, token))
                 .ToArray();
 
             await Task.WhenAll(chunk);
 
-            if (token.IsCancellationRequested)
-            {
-                break;
-            }
+            if (token.IsCancellationRequested) break;
 
             currentPage++;
         }
@@ -65,29 +61,29 @@ public class MusicDownloadManager
         return albumDirectory;
     }
 
-    private async Task CreateDownloadTrackTask(TrackViewModel track,string albumDirectory,
-        IProgress<ValueTuple<TrackViewModel, bool>> indicator, CancellationToken token)
-        {
-            indicator.Report(ValueTuple.Create(track, false));
-
-            bool isLoaded = await DownloadTrack(albumDirectory, track, token);
-
-            if (isLoaded)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(1));
-            }
-
-            indicator.Report(ValueTuple.Create(track, true));
-        }
-
-    private async Task<bool> DownloadTrack(string albumDirectory, TrackViewModel track, CancellationToken token)
+    private async Task CreateDownloadTrackTask(TrackViewModel track, string albumDirectory, CancellationToken token)
     {
-        if (!Directory.Exists(albumDirectory))
-        {
-            Directory.CreateDirectory(albumDirectory);
-        }
+        track.IsDownloading = true;
 
         string localName = Path.Combine(albumDirectory, Path.GetFileName(track.DownloadUri));
+
+        TrackDownloadResult downloadResult = await DownloadTrack(track, localName, token);
+
+        if (downloadResult == TrackDownloadResult.Success)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        track.IsDownloading = false;
+        track.DownloadResult = downloadResult;
+    }
+    
+    private async Task<TrackDownloadResult> DownloadTrack(TrackViewModel track, string localName, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(track.DownloadUri))
+        {
+            return TrackDownloadResult.Error;
+        }
 
         if(File.Exists(localName))
         {
@@ -98,7 +94,7 @@ public class MusicDownloadManager
             else
             {
                 // пропускаем, файл уже скачан
-                return false;
+                return TrackDownloadResult.Skipped;
             }
         }
 
@@ -106,7 +102,7 @@ public class MusicDownloadManager
         {
             var bytes = await client.GetByteArrayAsync(track.DownloadUri, token);
             await File.WriteAllBytesAsync(localName, bytes);
-            return true;
+            return TrackDownloadResult.Success;
         }
         catch (TaskCanceledException)
         {
@@ -114,12 +110,36 @@ public class MusicDownloadManager
             {
                 File.Delete(localName);
             }
+            return TrackDownloadResult.Cancelled;
         }
         catch(Exception ex)
         {
-            return false;
+            return TrackDownloadResult.Error;
         }
 
-        return false;
+        return TrackDownloadResult.Error;
     }
+
+    private string GetAlbumLocalPath(AlbumViewModel album)
+    {
+        var directoryPath = Path.Combine(DOWNLOAD_DIRECTORY,
+            album.ParentArtistName.RemoveInvalidCharacters(),
+            album.DisplayName.RemoveInvalidCharacters());
+
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        return directoryPath;
+    }
+}
+
+public enum TrackDownloadResult
+{
+    None,
+    Error,
+    Success,
+    Skipped,
+    Cancelled
 }

@@ -11,14 +11,14 @@ public class BoolToVisibilityConverter : IValueConverter
     {
         var result = Visibility.Collapsed;
 
-        if (value is bool? || value is bool)
+        if (value is bool val)
         {
-            result = (bool)value ? Visibility.Visible : Visibility.Collapsed;
-        }
+            if (parameter is string par && par == "inverse")
+            {
+                val = !val;
+            }
 
-        if (parameter is string par && par == "inverse")
-        {
-            result = (result == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed);
+            result = val ? Visibility.Visible : Visibility.Collapsed;
         }
 
         return result;

@@ -28,10 +28,11 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Top Menu -->
-        <vp:MainMenuView DataContext="{Binding SelectedMusicProvider}" />
+        <vp:MainMenuView/>
 
         <!-- Main Content -->
         <Grid Grid.Row="1" Margin="2">
@@ -42,7 +43,6 @@
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- TODO: Вынести каждый блок меню в отдельный UserControl -->
             <!-- Provider Menu -->
             <Border Grid.Column="0" Style="{StaticResource MainSectionBorder}"                    
                     Background="{StaticResource ProvidersMenuBackground}">
@@ -64,9 +64,9 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <Label Style="{StaticResource MainSectionTitle}"
-                           Content="{Binding TrackedArtists.Count}"
-                           ContentStringFormat="Отслеживаемые исполнители [{0}]"/>
+                        <TextBlock Style="{StaticResource MainSectionTitle}"
+                                   Text="{Binding TrackedArtistsCount, StringFormat={}Отслеживаемые исполнители [{0}]}">
+                        </TextBlock>
 
                         <Button Grid.Column="1" 
                                 Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
@@ -93,11 +93,9 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Label Style="{StaticResource MainSectionTitle}"
-                           Content="{Binding Albums.Count}"
-                           ContentStringFormat="Альбомы исполнителя [{0}]">
-                        
-                    </Label>
+                    <TextBlock Style="{StaticResource MainSectionTitle}"
+                               Text="{Binding DisplayName}"></TextBlock>
+
                     <vp:ArtistAlbumsView Grid.Row="1" />
 
                 </Grid>
@@ -111,44 +109,47 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Row="0">
+                        <DockPanel>
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                        Command="{Binding DownloadAlbumCommand}"
+                                        Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                        Grid.Column="1"
+                                        ToolTip="Скачать весь альбом"
+                                        Panel.ZIndex="99"
+                                        DockPanel.Dock="Right">
+                                <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource MediumIconSize}"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                        Foreground="{StaticResource Scarlet}"
+                                        Command="{Binding CancelDownloadingCommand}"
+                                        Opacity="0.5"
+                                        Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                        Grid.Column="2"
+                                        ToolTip="Отменить загрузку"
+                                        Panel.ZIndex="99"
+                                        DockPanel.Dock="Right">
+                                <icons:PackIconFontAwesome Kind="StopCircleSolid" Style="{StaticResource MediumIconSize}"/>
+                            </Button>
 
-                        <Label Grid.ColumnSpan="3" 
-                               Content="{Binding Tracks.Count}"
-                               ContentStringFormat="Треки альбома [{0}]"
-                               Style="{StaticResource MainSectionTitle}"></Label>
+                            <TextBlock Style="{StaticResource MainSectionTitle}"
+                                       Text="{Binding DisplayName}"/>
+                        </DockPanel>
 
-                        <Button Style="{StaticResource ToolButtonStyle}"
-                            Command="{Binding DownloadAlbumCommand}"
-                            Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                            Grid.Column="1"
-                            ToolTip="Скачать весь альбом"
-                            Panel.ZIndex="99"
-                            DockPanel.Dock="Left">
-                            <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource MediumIconSize}"/>
-                        </Button>
+                        <TextBlock Style="{StaticResource MainSectionTitle}"
+                                       Text="{Binding Tracks.Count, StringFormat={}Треки альбома [{0}]}"/>
 
-                        <Button Style="{StaticResource ToolButtonStyle}"
-                            Foreground="{StaticResource Scarlet}"
-                            Command="{Binding CancelDownloadingCommand}"
-                            Opacity="0.5"
-                            Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                            Grid.Column="2"
-                            ToolTip="Отменить загрузку"
-                            Panel.ZIndex="99"
-                            DockPanel.Dock="Left">
-                            <icons:PackIconFontAwesome Kind="StopCircleSolid" Style="{StaticResource MediumIconSize}"/>
-                        </Button>
-                    </Grid>
+                    </StackPanel>
 
                     <vp:AlbumTracksView Grid.Row="1" />
                 </Grid>
             </Border>
         </Grid>
+    
+        <!-- Progress bar-->
+        <ProgressBar Height="20" Margin="2" IsIndeterminate="True"
+                     Grid.Row="2"
+                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
+        </ProgressBar>
     </Grid>
 </Window>

@@ -1,4 +1,5 @@
-﻿using Telegram.Bot;
+﻿using System.Text;
+using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -6,9 +7,9 @@ using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace MusicNewWatcher.TelegramBot;
+namespace MusicNewsWatcher.TelegramBot;
 
-public static class UpdateHandlers
+internal static class UpdateHandlers
 {
     public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
@@ -45,13 +46,26 @@ public static class UpdateHandlers
         if (message.Text is not { } messageText)
             return;
 
-        var action = messageText.Split(' ')[0] switch
+        string textCommand = messageText.Split(' ')[0];
+        string? textCommandParams = messageText.IndexOf(' ') == -1 ? null : messageText.Substring(messageText.IndexOf(' ') + 1);
+
+        Dictionary<string, Func<Task<Message?>>> routes = new();
+        routes["/tracked_artists"] = () => UpdateBotHandlers.TrackedArtists(botClient, message, textCommandParams);
+
+        Task<Message?> routedHandler;
+
+        if (routes.ContainsKey(textCommand))
         {
-            "/tracked_artists" => UpdateBotHandlers.TrackedArtists(botClient, message),
-            _ => Usage(botClient, message)
-        };
-        Message sentMessage = await action;
-        Console.WriteLine($"The message was sent with id: {sentMessage.MessageId}");
+            routedHandler = routes[textCommand].Invoke();
+        }
+        else
+        {
+            routedHandler = Usage(botClient, message);
+        }
+        
+        Message sentMessage = await routedHandler;
+
+        Console.WriteLine($"The message was sent '{messageText}' with id: {sentMessage.MessageId}");
     }
   
     private static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
@@ -85,23 +99,61 @@ public static class UpdateHandlers
         Console.WriteLine($"Unknown update type: {update.Type}");
         return Task.CompletedTask;
     }
+
 }
 
 internal static class UpdateBotHandlers
 {
-    public static async Task<Message> TrackedArtists(ITelegramBotClient botClient, Message message)
+    static UpdateBotHandlers()
     {
-        List<string> trackedArtists = new List<string>()
+        TestData = new Dictionary<string, List<string>>()
         {
-            "Alphaxone",
-            "Council of Nine",
-            "Dynazty"
+            ["Musify.club"] = new()
+            {
+                "Alphaxone",
+                "Council of Nine",
+                "Dynazty"
+            },
+            ["Bandcamp.com"] = new()
+            {
+                "E-Mantra",
+                "Cryo Chamber",
+                "AFM Records"
+
+            }
         };
+    }
 
-        string responseMessage = string.Join(" ", trackedArtists.Select((a, i) => $"{i + 1}) {a}"));
+    public static IReadOnlyDictionary<string, List<string>> TestData { get; }
 
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: responseMessage,
+    public static async Task<Message> TrackedArtists(ITelegramBotClient botClient, Message message, string? provider = null)
+    {
+        if (provider == null)
+        {
+            ReplyKeyboardMarkup replyKeyboardMarkup = new(new[] {
+                    new KeyboardButton[] {
+                        new KeyboardButton($"/tracked_artists {TestData.Keys.First()}" ),
+                        new KeyboardButton($"/tracked_artists {TestData.Keys.Last()}" ),
+                    },
+            });
+
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: "Для какого провайдера ?",
+                                                        replyMarkup: replyKeyboardMarkup);
+        }
+        else if(TestData.ContainsKey(provider))
+        {
+            string replyText = string.Join("\r\n", TestData[provider].Select((album, i) => $"[{i + 1}] {album}"));
+
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: replyText,
                                             replyMarkup: new ReplyKeyboardRemove());
+        }
+        else
+        {
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id, 
+                "Такого провайдера нет");
+        }
     }
 }
