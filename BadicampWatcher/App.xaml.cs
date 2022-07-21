@@ -11,6 +11,7 @@ using System.Threading;
 using System.Windows;
 using ToastNotifications;
 using Microsoft.Extensions.Configuration;
+using MusicNewsWatcher.Views;
 
 namespace MusicNewsWatcher;
 /// <summary>
@@ -47,6 +48,8 @@ public partial class App : Application
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
                 services.AddSingleton<MusicDownloadManager>(x => new MusicDownloadManager(FileBrowserHelper.DownloadDirectory));
                 services.AddSingleton<MusicUpdateManager>();
+                services.AddSingleton<SettingsWindowViewModel>();
+                services.AddTransient<SettingsWindow>();
                 services.AddSingleton<MainWindowViewModel>();
             })
             .Build();

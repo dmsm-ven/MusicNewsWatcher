@@ -14,6 +14,7 @@ using System.Windows;
 using System.Windows.Input;
 using ToastNotifications;
 using ToastNotifications.Messages;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicNewsWatcher.ViewModels;
 
@@ -29,15 +30,6 @@ public class MainWindowViewModel : ViewModelBase
         get
         {
             string title = "Music News Watcher";
-            if(SelectedMusicProvider != null)
-            {
-                title += $" | {SelectedMusicProvider.Name}";
-
-                if(SelectedMusicProvider.SelectedArtist != null)
-                {
-                    title += $" | исполнитель {SelectedMusicProvider.SelectedArtist.DisplayName}";
-                }
-            }
 
             return title;
         }
@@ -74,10 +66,11 @@ public class MainWindowViewModel : ViewModelBase
     {
         CheckUpdatesAllCommand = new LambdaCommand(async e => await CheckUpdatesAll(), e => !IsLoading);
         OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());       
-        SettingsCommand = new LambdaCommand(e => { });       
+        SettingsCommand = new LambdaCommand(ShowSettingsWindow);       
         LoadedCommand = new LambdaCommand(async e => await RefreshProviders());       
         MusicProviders = new ObservableCollection<MusicProviderViewModel>();
     }
+
 
     public MainWindowViewModel(
         IEnumerable<MusicProviderBase> musicProviders, 
@@ -91,6 +84,13 @@ public class MainWindowViewModel : ViewModelBase
         this.updateManager = updateManager;
         this.toasts = toasts;
         updateManager.OnUpdate += UpdateManager_OnUpdate;
+    }
+
+    private void ShowSettingsWindow(object obj)
+    {
+        var window = App.HostContainer.Services.GetRequiredService<SettingsWindow>();
+        window.DataContext = App.HostContainer.Services.GetRequiredService<SettingsWindowViewModel>();
+        window.ShowDialog();
     }
 
     private async void UpdateManager_OnUpdate(AlbumEntity[] albums)

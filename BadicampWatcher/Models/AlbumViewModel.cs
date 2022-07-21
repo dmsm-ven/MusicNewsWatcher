@@ -106,6 +106,7 @@ public class AlbumViewModel : ViewModelBase
         RefreshTracksCommand = new LambdaCommand(async e => await RefreshTracks());
         OnChangedCommand = new LambdaCommand(async e => await AlbumChanged());
         Tracks = new();
+        Tracks.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
     }
 
     private void CancelDownloading(object obj)
@@ -128,10 +129,16 @@ public class AlbumViewModel : ViewModelBase
         Notifier toasts = App.HostContainer.Services.GetRequiredService<Notifier>();
         Stopwatch sw = Stopwatch.StartNew();
 
+        int parallelDownloads;
+        using (var db = dbFactory.CreateDbContext())
+        {
+            parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
+        }
+           
         try
         {
             cts = new CancellationTokenSource();
-            string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, parallelDownloads: 1, cts.Token);
+            string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, parallelDownloads, cts.Token);
           
             if (!cts.IsCancellationRequested)
             {

@@ -6,24 +6,21 @@
         xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
         xmlns:vp="clr-namespace:MusicNewsWatcher.Views.Parts"
         xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
-        mc:Ignorable="d"        
+        xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"               
         MinWidth="800"
         WindowStartupLocation="CenterScreen"
+        Title="{Binding Title}"
+        Height="300" Width="1200"
+        mc:Ignorable="d" 
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-        Title="{Binding Title}" Height="300" Width="1200">
+        Background="{StaticResource MainWindowBackgroundTexture}"
+        d:Width="800" d:Height="300">
     <beh:Interaction.Triggers>
         <beh:EventTrigger EventName="Loaded">
             <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
         </beh:EventTrigger>
     </beh:Interaction.Triggers>
-    
-    <Window.Background>
-        <ImageBrush TileMode="FlipXY" ViewportUnits="Absolute"
-                            Viewport="0,0,200,200"
-                            Stretch="Fill" ImageSource="../Assets/bricks.jpg" />
-    </Window.Background>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

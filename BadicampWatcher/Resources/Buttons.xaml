@@ -53,6 +53,80 @@
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch"/>
     </Style>
+
+    <Style TargetType="{x:Type Button}" x:Key="LoginButtonStyle">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="buttonBorder"     
+                            BorderThickness="1"
+                            CornerRadius="6"  
+                            Background="#2F1A41"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="{TemplateBinding Margin}">
+                        <Border.BorderBrush>
+                            <LinearGradientBrush>
+                                <LinearGradientBrush.GradientStops>
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop Color="Fuchsia" Offset="0.5"/>
+                                    <GradientStop Color="White" Offset="1"/>
+                                </LinearGradientBrush.GradientStops>
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="buttonBorder" Property="Background" Value="#4C395C" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="buttonBorder" Property="Background" Value="Navy" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.75" />
+                            <Setter Property="BorderBrush" Value="Transparent" TargetName="buttonBorder"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type Button}" x:Key="SaveSettingsButton">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="buttonBorder"     
+                            BorderThickness="1"
+                            CornerRadius="6"  
+                            Padding="15 10"
+                            Margin="{TemplateBinding Margin}"
+                            Background="{StaticResource GreenLinearGradientBrush}">
+
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="buttonBorder" Property="Opacity" Value="0.9" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="buttonBorder" Property="Opacity" Value="0.85" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.75" />
+                            <Setter Property="BorderBrush" Value="Transparent" TargetName="buttonBorder"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="{x:Type icons:PackIconFontAwesome}" x:Key="LinkIconSize">
         <Setter Property="Width" Value="18"/>
         <Setter Property="Height" Value="18"/>

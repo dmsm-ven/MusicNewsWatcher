@@ -15,6 +15,7 @@
     <None Remove="Assets\cosmos-texture.jpg" />
     <None Remove="Assets\image-placeholder.jpg" />
     <None Remove="Assets\musify-logo.png" />
+    <None Remove="Assets\settings-window-background-texture.jpg" />
     <None Remove="logo.ico" />
   </ItemGroup>
 
@@ -54,6 +55,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\musify-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\settings-window-background-texture.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="logo.ico" />
