@@ -14,7 +14,7 @@ public class MusicWatcherDbContext : DbContext
 
     public MusicWatcherDbContext(DbContextOptions<MusicWatcherDbContext> options) : base(options)
     {
-        Database.Migrate();
+        //Database.Migrate();
     }
 }
 

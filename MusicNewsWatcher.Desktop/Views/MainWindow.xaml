@@ -1,0 +1,152 @@
+﻿<Window x:Class="MusicNewsWatcher.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
+        xmlns:vp="clr-namespace:MusicNewsWatcher.Views.Parts"
+        xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"               
+        MinWidth="800"
+        WindowStartupLocation="CenterScreen"
+        Title="{Binding Title}"
+        Height="300" Width="1200"
+        mc:Ignorable="d" 
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
+        Background="{StaticResource MainWindowBackgroundTexture}"
+        d:Width="800" d:Height="300">
+    <beh:Interaction.Triggers>
+        <beh:EventTrigger EventName="Loaded">
+            <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
+        </beh:EventTrigger>
+    </beh:Interaction.Triggers>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Menu -->
+        <vp:MainMenuView/>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="5*"/>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Provider Menu -->
+            <Border Grid.Column="0" Style="{StaticResource MainSectionBorder}"                    
+                    Background="{StaticResource ProvidersMenuBackground}">
+                <vp:ProvidersMenuView Grid.Row="1" DataContext="{Binding}" />
+            </Border>
+
+            <!-- Artist Menu -->
+            <Border Grid.Column="1" Style="{StaticResource MainSectionBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid DataContext="{Binding SelectedMusicProvider}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Style="{StaticResource MainSectionTitle}"
+                                   Text="{Binding TrackedArtistsCount, StringFormat={}Отслеживаемые исполнители [{0}]}">
+                        </TextBlock>
+
+                        <Button Grid.Column="1" 
+                                Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="PlusCircleSolid" Style="{StaticResource MediumIconSize}"/>
+                        </Button>
+                        <Button Grid.Column="2" 
+                                Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="PencilAltSolid" Style="{StaticResource MediumIconSize}"/>
+                        </Button>
+                        <Button Grid.Column="3" 
+                                Command="{Binding DeleteArtistCommand}" Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="TrashSolid" Style="{StaticResource MediumIconSize}"/>
+                        </Button>
+                    </Grid>
+                    <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider}" />
+                </Grid>
+            </Border>
+
+            <!-- Albums Menu -->
+            <Border Grid.Column="2" Style="{StaticResource MainSectionBorder}">
+                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Style="{StaticResource MainSectionTitle}"
+                               Text="{Binding DisplayName}"></TextBlock>
+
+                    <vp:ArtistAlbumsView Grid.Row="1" />
+
+                </Grid>
+            </Border>
+
+            <!-- Tacks Menu -->
+            <Border Grid.Column="3" Style="{StaticResource MainSectionBorder}">
+                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <DockPanel>
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                        Command="{Binding DownloadAlbumCommand}"
+                                        Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                        Grid.Column="1"
+                                        ToolTip="Скачать весь альбом"
+                                        Panel.ZIndex="99"
+                                        DockPanel.Dock="Right">
+                                <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource MediumIconSize}"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolButtonStyle}"
+                                        Foreground="{StaticResource Scarlet}"
+                                        Command="{Binding CancelDownloadingCommand}"
+                                        Opacity="0.5"
+                                        Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                        Grid.Column="2"
+                                        ToolTip="Отменить загрузку"
+                                        Panel.ZIndex="99"
+                                        DockPanel.Dock="Right">
+                                <icons:PackIconFontAwesome Kind="StopCircleSolid" Style="{StaticResource MediumIconSize}"/>
+                            </Button>
+
+                            <TextBlock Style="{StaticResource MainSectionTitle}"
+                                       Text="{Binding DisplayName}"/>
+                        </DockPanel>
+
+                        <TextBlock Style="{StaticResource MainSectionTitle}"
+                                       Text="{Binding Tracks.Count, StringFormat={}Треки альбома [{0}]}"/>
+
+                    </StackPanel>
+
+                    <vp:AlbumTracksView Grid.Row="1" />
+                </Grid>
+            </Border>
+        </Grid>
+    
+        <!-- Progress bar-->
+        <ProgressBar Height="20" Margin="2" IsIndeterminate="True"
+                     Grid.Row="2"
+                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
+        </ProgressBar>
+    </Grid>
+</Window>

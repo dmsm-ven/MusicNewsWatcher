@@ -1,0 +1,94 @@
+﻿<Window x:Class="MusicNewsWatcher.Desktop.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
+        xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
+        Title="Настройки" Height="300" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="ToolWindow"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:SettingsWindowViewModel, IsDesignTimeCreatable=True}">
+    <beh:Interaction.Triggers>
+        <beh:EventTrigger EventName="Loaded">
+            <beh:InvokeCommandAction Command="{Binding LoadedCommand}"/>
+        </beh:EventTrigger>
+    </beh:Interaction.Triggers>
+    
+    <Grid Background="{StaticResource MainWindowBackgroundTexture}">
+        <Grid>
+            <Grid.Background>
+                <SolidColorBrush Color="White" Opacity="0.9" />
+            </Grid.Background>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid.Resources>
+                <Style TargetType="TextBlock" x:Key="SettingsLineName">
+                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="Foreground" Value="#4A4FCB"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Margin" Value="2 2 40 2"/>
+                </Style>
+                <Style TargetType="TextBox" x:Key="SettingsLineValue">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="Foreground" Value="Red"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderBrush" Value="Fuchsia"/>
+                    <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                </Style>
+                <Style TargetType="UniformGrid">
+                    <Setter Property="Margin" Value="2 8 2 8"/>
+                </Style>
+            </Grid.Resources>
+            
+            <TextBlock Grid.Row="0"
+                       Text="Настройки приложения"
+                       Foreground="Black"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" 
+                       FontSize="24"/>
+
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="10 20">
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Количество потоков загрузки"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="1"
+                             Text="{Binding DownloadThreadsNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Интервал обхода (минут)"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="30"
+                             Text="{Binding UpdateManagerIntervalInMinutes, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Telegram API Token"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}" 
+                             d:Text="5126228910:AAEpsrsmxtbcgZro96fbQGyHrVaXqslcLsA"
+                             Text="{Binding TelegramApiToken, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+                <UniformGrid Columns="2">
+                    <TextBlock Style="{StaticResource SettingsLineName}" Text="Telegram API ChatId"/>
+                    <TextBox Style="{StaticResource SettingsLineValue}"
+                             d:Text="123456789"
+                             Text="{Binding TelegramChatId, UpdateSourceTrigger=PropertyChanged}"/>
+                </UniformGrid>
+            </StackPanel>
+
+            <Button Content="Сохранить изменения"
+                    Command="{Binding SaveCommand}"
+                    Grid.Row="2"
+                    Style="{StaticResource SaveSettingsButton}"
+                    Margin="8"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            </Button>
+        </Grid>
+    </Grid>
+</Window>
