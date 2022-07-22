@@ -22,7 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
     <ProjectReference Include="..\MusicNewsWatcher.TelegramBot\MusicNewsWatcher.TelegramBot.csproj" />
-    <ProjectReference Include="..\MusicNewWatcher.TelegramBotClient\MusicNewsWatcher.TelegramBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>

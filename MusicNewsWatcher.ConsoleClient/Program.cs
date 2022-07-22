@@ -12,18 +12,18 @@ public static class Program
 
     public static async Task Main(string[] args)
     {
-        ConfigureServices();
-
+        host = CreateHostBuilder(args).Build();
+       
         await StartBot();
-        await StartUpdateManager();
 
-        Console.Write("press any key to stop");
-        Console.ReadLine();
+        StartUpdateManager();
+
+        host.Run();
     }
 
-    private static void ConfigureServices()
+    public static IHostBuilder CreateHostBuilder(string[] args)
     {
-        host = Host.CreateDefaultBuilder()
+        return Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
@@ -36,10 +36,8 @@ public static class Program
                 services.AddSingleton<MusicUpdateManager>();
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
                 services.AddSingleton<MusicNewsWatcherTelegramBot>();
-            })
-            .Build();
-
-        host.Start();
+            });
+    
     }
 
     private static async Task StartBot()
@@ -49,10 +47,8 @@ public static class Program
         Console.WriteLine($"Telegram bot listening, account @{bot.AccountName}");
     }
 
-    private static async Task StartUpdateManager()
+    private static void StartUpdateManager()
     {
-        await Task.Delay(TimeSpan.FromSeconds(1));
-
         //получаем интервал обновления
         updateManager = host.Services.GetRequiredService<MusicUpdateManager>();
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
