@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MusicNewsWatcher.Infrastructure.Helpers;
-using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Desktop.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading;
@@ -11,9 +11,10 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class AlbumViewModel : ViewModelBase
 {
+    private readonly MusicDownloadManager downloadManager;
+    private readonly MusicUpdateManager updateManager;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-    private readonly MusicUpdateManager manager;
-    private readonly MusicProviderBase provider;
+    private readonly IToastsNotifier toasts;
 
     public event Action<AlbumViewModel> OnAlbumChanged;
 
@@ -39,7 +40,6 @@ public class AlbumViewModel : ViewModelBase
 
     public DateTime Created { get; init; }
     public int AlbumId { get; init; }
-    public string ParentArtistName { get; init; }
 
     bool isActiveAlbum;
     public bool IsActiveAlbum
@@ -76,43 +76,41 @@ public class AlbumViewModel : ViewModelBase
     public string? Image { get; set; }
     public string Uri { get; set; }
 
-    public ObservableCollection<TrackViewModel> Tracks { get; }
+    public ObservableCollection<TrackViewModel> Tracks { get; } = new();
 
     public ICommand RefreshTracksCommand { get; }
-    public ICommand OnChangedCommand { get; }
+    public ICommand AlbumChangedCommand { get; }
     public ICommand DownloadAlbumCommand { get; }
     public ICommand CancelDownloadingCommand { get; }
+    public ArtistViewModel ParentArtist { get; }
 
     CancellationTokenSource cts;
     
     public AlbumViewModel()
     {
+        downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
+        updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
+        toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
+        dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+
         CancelDownloadingCommand = new LambdaCommand(CancelDownloading, e => InProgress);
         DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(), e => CanDownloadAlbum);
-        RefreshTracksCommand = new LambdaCommand(async e => await RefreshTracks());
-        OnChangedCommand = new LambdaCommand(async e => await AlbumChanged());
-        Tracks = new();
+        AlbumChangedCommand = new LambdaCommand(AlbumChanged);
         Tracks.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
+
+        RefreshTracksCommand = new LambdaCommand(async e => await GetTracksFromProvider());
     }
 
-    private void CancelDownloading(object obj)
+    public AlbumViewModel(ArtistViewModel parent) : this()
     {
-        App.HostContainer.Services.GetRequiredService<Notifier>().ShowError("Загрузка альбома отменена ...");
-        cts.Cancel();       
-    }
-
-    public AlbumViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, MusicProviderBase provider) : this()
-    {
-        this.dbFactory = dbFactory;
-        this.provider = provider;
+        ParentArtist = parent;
     }
 
     private async Task DownloadAlbum()
     {
         InProgress = true;
         
-        MusicDownloadManager downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
-        Notifier toasts = App.HostContainer.Services.GetRequiredService<Notifier>();
+
         Stopwatch sw = Stopwatch.StartNew();
 
         int parallelDownloads;
@@ -146,61 +144,64 @@ public class AlbumViewModel : ViewModelBase
         }
     }
 
-    private async Task RefreshTracks()
+    private async Task RefreshTracksSource()
+    {
+        InProgress = true;
+
+        using var db = await dbFactory.CreateDbContextAsync();
+
+        if (await db.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync() != Tracks.Count)
+        {
+            Tracks.Clear();
+
+            var tracks = (await db
+                .Tracks
+                .Where(a => a.AlbumId == AlbumId)
+                .ToListAsync())
+                .Select(i => new TrackViewModel(this)
+                {
+                    AlbumId = i.AlbumId,
+                    Id = i.Id,
+                    Name = i.Name,
+                    DownloadUri = i.DownloadUri,
+                })
+                .OrderBy(a => a.Id)
+                .ToList();
+
+            foreach (var track in tracks)
+            {
+                Tracks.Add(track);
+            }
+        }
+
+        InProgress = false;
+    }
+
+    private async Task GetTracksFromProvider()
     {
         InProgress = true;
         try
         {
-            MusicUpdateManager updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
-
-            await updateManager.CheckUpdatesForAlbumAsync(provider, AlbumId);
+            await updateManager.CheckUpdatesForAlbumAsync(ParentArtist.ParentProvider.MusicProvider, AlbumId);
             await RefreshTracksSource();
         }
-        finally
+        catch (Exception ex)
         {
-            InProgress = false;
+            toasts.ShowError("Ошибка получения информации о треках" + ex.Message);
         }
+        InProgress = false;
     }
 
-    private async Task AlbumChanged()
+    private async void AlbumChanged(object obj)
     {
-        if (!IsActiveAlbum)
-        {
-            OnAlbumChanged?.Invoke(this);
-            IsActiveAlbum = true;
-
-            await RefreshTracksSource();
-        }
+        OnAlbumChanged?.Invoke(this);
+        await RefreshTracksSource();
     }
 
-    private async Task RefreshTracksSource()
+    private void CancelDownloading(object obj)
     {
-        if (Tracks.Count > 0) { return; } 
-
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var tracks = db
-            .Tracks.Where(a => a.AlbumId == AlbumId)
-            .Select(i => new TrackViewModel()
-            {
-                AlbumId = i.AlbumId,
-                Id = i.Id,
-                Name = i.Name,
-                DownloadUri = i.DownloadUri,
-            })
-            .OrderBy(a => a.Id)
-            .ToList();
-
-        foreach (var track in tracks)
-        {
-            Tracks.Add(track);
-        }
-
-        CommandManager.InvalidateRequerySuggested();
+        App.HostContainer.Services.GetRequiredService<Notifier>().ShowError("Загрузка альбома отменена ...");
+        cts.Cancel();
     }
 
-    public async Task InvalidateCacheImage()
-    {
-        await Task.Run(() => cachedImage ??= this.GetCachedImage(Image));
-    }
 }

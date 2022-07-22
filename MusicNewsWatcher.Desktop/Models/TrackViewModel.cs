@@ -1,5 +1,5 @@
 ﻿using MusicNewsWatcher.Infrastructure.Helpers;
-using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Desktop.Services;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
 
@@ -31,5 +31,11 @@ public class TrackViewModel : ViewModelBase
     {
         get => isDownloading;
         set => Set(ref isDownloading, value);
+    }
+    public AlbumViewModel Parent { get; }
+
+    public TrackViewModel(AlbumViewModel parent)
+    {
+        Parent = parent;
     }
 }

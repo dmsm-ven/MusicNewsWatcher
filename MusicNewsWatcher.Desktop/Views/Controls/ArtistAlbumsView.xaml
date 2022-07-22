@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
-             xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
+             xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
              xmlns:ss="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:ArtistViewModel, IsDesignTimeCreatable=True}"
@@ -45,7 +45,7 @@
                             <Grid>
                                 <beh:Interaction.Triggers>
                                     <beh:EventTrigger EventName="PreviewMouseDown">
-                                        <beh:InvokeCommandAction Command="{Binding OnChangedCommand}" />
+                                        <beh:InvokeCommandAction Command="{Binding AlbumChangedCommand}" />
                                     </beh:EventTrigger>
                                 </beh:Interaction.Triggers>
 

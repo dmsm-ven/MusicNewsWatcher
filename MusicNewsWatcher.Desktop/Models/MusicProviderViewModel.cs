@@ -7,14 +7,12 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class MusicProviderViewModel : ViewModelBase
 {
-    private readonly MusicProviderBase musicProvider;
-    private readonly MusicUpdateManager musicManager;
-    private readonly Notifier toasts;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
+    private readonly IToastsNotifier toasts;
 
     public event Action<MusicProviderViewModel> OnMusicProviderChanged;
-    public ObservableCollection<ArtistViewModel> TrackedArtists { get; } = new();
-
+    public ObservableCollection<ArtistViewModel> TrackedArtists { get; init; } = new();
+    public MusicProviderBase MusicProvider { get; init; }
     public int MusicProviderId { get; init; }
     public string Name { get; init; }
     public string Image { get; init; }
@@ -45,7 +43,18 @@ public class MusicProviderViewModel : ViewModelBase
     public ArtistViewModel? SelectedArtist
     {
         get => selectedArtist;
-        set => Set(ref selectedArtist, value);
+        set
+        {
+            if (selectedArtist != null)
+            {
+                selectedArtist.IsActiveArtist = false;
+            }
+
+            if (Set(ref selectedArtist, value) && value != null)
+            {
+                selectedArtist.IsActiveArtist = true;
+            }
+        }
     }
 
     public ICommand ChangeSelectedArtistCommand { get; }
@@ -54,65 +63,15 @@ public class MusicProviderViewModel : ViewModelBase
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
     
-
     public MusicProviderViewModel()
     {
+        dbContextFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+        toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
+
         ChangeSelectedArtistCommand = new LambdaCommand(e => OnMusicProviderChanged?.Invoke(this));
         AddArtistCommand = new LambdaCommand(async e => await AddArtist());
         DeleteArtistCommand = new LambdaCommand(DeleteArtist, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
-        TrackedArtists.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(TrackedArtistsCount));
-    }
-
-    public MusicProviderViewModel(
-        MusicProviderBase musicProvider, 
-        MusicUpdateManager musicManager,
-        Notifier toasts,
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory) : this()
-    {
-        this.musicProvider = musicProvider;
-        this.musicManager = musicManager;
-        this.toasts = toasts;
-        this.dbContextFactory = dbContextFactory;
-    }
-
-    public async Task LoadAllArtists(bool forced = false)
-    {
-        if (TrackedArtists.Count > 0 && !forced) { return; }
-     
-        InProgress = true;
-
-
-        using var db = await dbContextFactory.CreateDbContextAsync();
-        
-        var dbArtists = await db.Artists
-            .Where(a => a.MusicProviderId == MusicProviderId)
-            .ToListAsync();
-
-        if (TrackedArtists.Count != dbArtists.Count || forced)
-        {
-            var artistsVm = dbArtists
-            .Select(artist => new ArtistViewModel(dbContextFactory, musicManager, musicProvider, toasts)
-            {
-                ArtistId = artist.ArtistId,
-                MusicProviderId = artist.MusicProviderId,
-                Name = artist.Name,
-                Image = artist.Image,
-                Uri = artist.Uri
-            })
-            .OrderByDescending(a => a.LastAlbumDate);
-
-            TrackedArtists.ToList().ForEach(artist => artist.OnArtistChanged -= Artist_OnArtistChanged);
-            TrackedArtists.Clear();
-
-            foreach (var artist in artistsVm)
-            {
-                TrackedArtists.Add(artist);
-                artist.OnArtistChanged += Artist_OnArtistChanged;
-            }
-        }
-        
-        InProgress = false;
     }
 
     private async Task AddArtist()
@@ -122,8 +81,7 @@ public class MusicProviderViewModel : ViewModelBase
         dialogWindow.DataContext = dialogVm;
         if (dialogWindow.ShowDialog() == true)
         {
-            await LoadAllArtists(forced: true);
-            Artist_OnArtistChanged(TrackedArtists.LastOrDefault()!);
+
         }
     }
 
@@ -134,8 +92,6 @@ public class MusicProviderViewModel : ViewModelBase
         dialogWindow.DataContext = dialogVm;
         if (dialogWindow.ShowDialog() == true)
         {
-            await LoadAllArtists(forced: true);
-            Artist_OnArtistChanged(SelectedArtist);
             toasts.ShowSuccess($"Данные обновлены");
         }
     }
@@ -154,16 +110,5 @@ public class MusicProviderViewModel : ViewModelBase
             TrackedArtists.Remove(SelectedArtist);
             SelectedArtist = null;
         }
-    }
-
-    private void Artist_OnArtistChanged(ArtistViewModel? e)
-    {
-        if(SelectedArtist != null)
-        {
-            SelectedArtist.IsActiveArtist = false;           
-        }
-     
-        SelectedArtist = e;
-        GC.Collect(2);
     }
 }

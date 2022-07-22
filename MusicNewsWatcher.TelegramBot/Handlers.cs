@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.Core;
+using System.Globalization;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -53,28 +54,21 @@ internal static class UpdateHandlers
 
         Dictionary<string, Func<Task<Message?>>> routes = new();
         routes["/tracked_artists"] = () => UpdateBotHandlers.TrackedArtists(botClient, message, textCommandParams);
+        routes["/last_update"] = () => UpdateBotHandlers.LastUpdate(botClient, message);
 
-        Task<Message?> routedHandler;
-
-        if (routes.ContainsKey(textCommand))
-        {
-            routedHandler = routes[textCommand].Invoke();
-        }
-        else
-        {
-            routedHandler = Usage(botClient, message);
-        }
-        
+        Task<Message?> routedHandler = routes.ContainsKey(textCommand) ? routes[textCommand].Invoke() : Usage(botClient, message);
         Message sentMessage = await routedHandler;
 
-        Console.WriteLine($"The message was sent '{messageText}' with id: {sentMessage.MessageId}");
+        Console.WriteLine($"received from client: '{textCommand}'");
+        Console.WriteLine($"bot answer: '{(sentMessage?.Text ?? "<not a text>")}'");
     }
   
     private static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
     {
         var usageList = new List<string>() { 
             "Команды:",
-            "/tracked_artists   - Получить список отслеживаемых исполнителей"
+            "/tracked_artists\t - Получить список отслеживаемых исполнителей",
+            "/last_update\t - дата последнего парсинга сайтов"
         };
 
         string usageMessage = string.Join(Environment.NewLine, usageList);
@@ -108,6 +102,30 @@ internal static class UpdateBotHandlers
 {
     public static IReadOnlyDictionary<string, List<string>> TestData { get; }
 
+    public static async Task<Message> LastUpdate(ITelegramBotClient botClient, Message message)
+    {
+        const int textProgressBarLength = 30;
+
+        using var db = await MusicNewsWatcherTelegramBot.DbFactory.CreateDbContextAsync();
+
+        string lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value ?? "01.01.2000 00:00:00";
+        DateTime lastUpdate = DateTime.Parse(lastUpdateString, new CultureInfo("ru-RU"));
+        TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(db.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
+        int updateIntervalMinutes = (int)updateInterval.TotalMinutes;
+        DateTime nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
+
+        var sb = new StringBuilder()
+            .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToString("dd.MM.yyyy HH:mm")}</b>")
+            .AppendLine($"Интервал обновления: <b>{updateIntervalMinutes} мин.</b>")
+            .Append($"Следующий запуск: <b>{nextUpdate.ToString("dd.MM.yyyy HH:mm")}</b>");
+
+
+        string replyText = sb.ToString();
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                        text: replyText, ParseMode.Html);
+        
+    }
+    
     public static async Task<Message> TrackedArtists(ITelegramBotClient botClient, Message message, string? userPickedProvider = null)
     {
         using var db = await MusicNewsWatcherTelegramBot.DbFactory.CreateDbContextAsync();

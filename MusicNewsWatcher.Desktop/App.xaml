@@ -1,4 +1,4 @@
-﻿<Application x:Class="MusicNewsWatcher.App"
+﻿<Application x:Class="MusicNewsWatcher.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:con="clr-namespace:MusicNewsWatcher.Infrastructure.Converters">

@@ -14,10 +14,13 @@ public static class Program
     {
         host = CreateHostBuilder(args).Build();
        
+        //запускает телеграм бота для оповещения об обновлениях/ответа на запросы
         await StartBot();
 
+        //Запускаем службу обновления (парсера) музыки
         StartUpdateManager();
 
+        //Должен быть последним, что бы обрабатывать завершение от systemctl stop
         host.Run();
     }
 

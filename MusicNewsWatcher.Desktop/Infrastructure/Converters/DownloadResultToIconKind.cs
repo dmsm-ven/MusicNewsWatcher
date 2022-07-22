@@ -1,5 +1,5 @@
 ﻿using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Desktop.Services;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

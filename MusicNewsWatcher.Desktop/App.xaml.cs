@@ -7,16 +7,21 @@ global using ToastNotifications;
 global using ToastNotifications.Messages;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
+global using Microsoft.Extensions.DependencyInjection;
+global using MusicNewsWatcher.Desktop.Services;
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.Services;
 using System.Threading;
 using System.Windows;
+using MusicNewsWatcher.TelegramBot;
+using Hardcodet.Wpf.TaskbarNotification;
+using System.Windows.Controls;
+using System.Drawing;
+using ToastNotifications.Position;
+using ToastNotifications.Lifetime;
 
-
-namespace MusicNewsWatcher;
+namespace MusicNewsWatcher.Desktop;
 /// <summary>
 /// Interaction logic for App.xaml
 /// </summary>
@@ -42,7 +47,12 @@ public partial class App : Application
             })
             .ConfigureServices((context,services) =>
             {
-                services.AddDbContextFactory<MusicWatcherDbContext>();
+                services.AddDbContextFactory<MusicWatcherDbContext>(options =>
+                {
+                    string connectionString = context.Configuration["ConnectionStrings:default"];
+                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                });
+
                 services.AddToasts();
                 services.AddNotifyIcon();
                 services.AddTelegramBot(context);
@@ -76,6 +86,58 @@ public partial class App : Application
         HostContainer.Services.GetRequiredService<Notifier>().Dispose();
         await HostContainer.StopAsync();
         base.OnExit(e);
+    }
+}
+
+public static class ConfigureServicesAppExtensions
+{
+    public static void AddTelegramBot(this IServiceCollection services, HostBuilderContext context)
+    {
+        services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+        services.AddTransient<MusicNewsWatcherTelegramBot>();
+        services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
+    }
+
+    public static void AddNotifyIcon(this IServiceCollection services)
+    {
+        var tbi = new TaskbarIcon();
+
+        var tbiMenu = new ContextMenu();
+        var showMenuItem = new MenuItem() { Header = "Отобразить" };
+        showMenuItem.Click += (o, e) => Application.Current.MainWindow.Show();
+        var exitMenuItem = new MenuItem() { Header = "Выход" };
+        exitMenuItem.Click += (o, e) => Application.Current.Shutdown();
+
+        tbiMenu.Items.Add(showMenuItem);
+        tbiMenu.Items.Add(new Separator()); // null = separator
+        tbiMenu.Items.Add(exitMenuItem);
+
+        tbi.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/logo.ico")).Stream);
+        tbi.ToolTipText = "Парсер музыки";
+        tbi.ContextMenu = tbiMenu;
+
+        services.AddSingleton<TaskbarIcon>(tbi);
+    }
+
+    public static void AddToasts(this IServiceCollection services)
+    {
+        var notifier = new Notifier(cfg =>
+        {
+            cfg.PositionProvider = new WindowPositionProvider(
+                parentWindow: Application.Current.MainWindow,
+                corner: Corner.TopRight,
+                offsetX: 25,
+                offsetY: 25);
+
+            cfg.DisplayOptions.Width = 500;
+
+            cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
+                notificationLifetime: TimeSpan.FromSeconds(60),
+                maximumNotificationCount: MaximumNotificationCount.FromCount(4));
+
+            cfg.Dispatcher = Application.Current.Dispatcher;
+        });
+        services.AddSingleton<IToastsNotifier, DewCrewToastsNotifier>(x => new DewCrewToastsNotifier(notifier));
     }
 }
 

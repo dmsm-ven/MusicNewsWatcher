@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,23 +18,47 @@ public sealed class MusifyMusicProvider : MusicProviderBase
 
     public override async Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist)
     {
-        var doc = await GetDocument(artist.Uri +"/releases");
+        var doc = await GetDocument(artist.Uri + "/releases");
 
-        if (doc != null && doc.DocumentNode.SelectSingleNode(AlbumsXPath) != null)
+        if (doc == null || doc.DocumentNode.SelectSingleNode(AlbumsXPath) == null)
         {
-            var albums = doc.DocumentNode
-                .SelectNodes("//div[@id='divAlbumsList']/div")
-                .Select(div => new AlbumEntity()
+            return Enumerable.Empty<AlbumEntity>().ToArray();
+        }
+        
+        var parsedAlbums = doc.DocumentNode
+            .SelectNodes("//div[@id='divAlbumsList']/div")
+            .Select(div => new
+            {
+                Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty).Trim(),
+                Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty).Trim(),
+                Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty).Trim(),
+                DateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim()
+            })
+            .ToArray();
+
+        if (parsedAlbums.Length > 0)
+        {
+            AlbumEntity[] albums = new AlbumEntity[parsedAlbums.Length];
+
+            for(int i = 0; i< parsedAlbums.Length; i++)
+            {
+                albums[i] = new AlbumEntity()
                 {
                     ArtistId = artist.ArtistId,
-                    Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty),
-                    Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty),
-                    Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty),
-                    Created = DateTime.Parse(div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim())
-                }).ToArray();
+                    Title = parsedAlbums[i].Title,
+                    Image = parsedAlbums[i].Image,
+                    Uri = parsedAlbums[i].Uri
+                };
+
+                if (DateTime.TryParseExact(parsedAlbums[i].DateTimeString, "dd.MM.yyyy", null, DateTimeStyles.None, out var created))
+                {
+                    albums[i].Created = created;
+                }
+            }
 
             return albums;
         }
+        
 
         return Enumerable.Empty<AlbumEntity>().ToArray();
     }

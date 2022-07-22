@@ -5,7 +5,7 @@
              xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
-             xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels"
+             xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:MusicProviderViewModel, IsDesignTimeCreatable=True}"
              d:DesignHeight="450" d:DesignWidth="650">

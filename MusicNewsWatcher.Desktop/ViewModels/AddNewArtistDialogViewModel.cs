@@ -14,7 +14,18 @@ public class AddNewArtistDialogViewModel : ViewModelBase
     public MusicProviderViewModel? SelectedMusicProvider
     {
         get => selectedMusicProvider;
-        set => Set(ref selectedMusicProvider, value);
+        set
+        {
+            if(selectedMusicProvider != null)
+            {
+                selectedMusicProvider.IsActiveProvider = false;
+            }
+
+            if(Set(ref selectedMusicProvider, value) && value != null)
+            {
+                selectedMusicProvider!.IsActiveProvider = true;
+            }
+        }
     }
 
     public bool IsEdit { get; private set; }
@@ -33,7 +44,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory) : this()
     {
         this.contextFactory = contextFactory;
-        ContextArtist = new ArtistViewModel(contextFactory, null, null, null);
+        ContextArtist = new ArtistViewModel();
     }
 
     public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
@@ -56,7 +67,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             .ToList()
             .ForEach(item => MusicProviders.Add(item));
 
-        SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.MusicProviderId ?? 0));
+        SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.ParentProvider.MusicProviderId ?? 0));
     }
 
     private void Submit(object obj)

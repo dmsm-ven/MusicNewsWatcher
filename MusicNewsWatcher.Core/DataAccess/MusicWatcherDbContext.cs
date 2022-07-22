@@ -22,9 +22,9 @@ public class MusicWatcherDbContext : DbContext
 {
     public MusicWatcherDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<MusicWatcherDbContext>();
-        optionsBuilder.UseSqlite("Data Source=settings.db");
-
-        return new MusicWatcherDbContext(optionsBuilder.Options);
+        //var optionsBuilder = new DbContextOptionsBuilder<MusicWatcherDbContext>();
+        //optionsBuilder.UseMys("Data Source=settings.db");
+        //
+        //return new MusicWatcherDbContext(optionsBuilder.Options);
     }
 }*/

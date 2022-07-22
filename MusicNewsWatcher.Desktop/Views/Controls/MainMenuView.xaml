@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:vm="clr-namespace:MusicNewsWatcher.ViewModels" 
+             xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels" 
              xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
@@ -13,7 +13,7 @@
         <Button Command="{Binding CheckUpdatesAllCommand}" 
                 DockPanel.Dock="Right"
                 HorizontalAlignment="Right"
-                ToolTip="Проверить альбомы для всех провайдеров/артистов"
+                ToolTip="Закачать обновленные данные из БД"
                 Style="{StaticResource ToolButtonStyle}">
             <icons:PackIconFontAwesome Kind="CircleNotchSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>

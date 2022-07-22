@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Services;
+namespace MusicNewsWatcher.Desktop.Services;
 
 //TODO убрать прямое обращение через ViewModel
 public class MusicDownloadManager
@@ -125,7 +125,7 @@ public class MusicDownloadManager
     private string GetAlbumLocalPath(AlbumViewModel album)
     {
         var directoryPath = Path.Combine(DOWNLOAD_DIRECTORY,
-            album.ParentArtistName.RemoveInvalidCharacters(),
+            album.ParentArtist.DisplayName.RemoveInvalidCharacters(),
             album.DisplayName.RemoveInvalidCharacters());
 
         if (!Directory.Exists(directoryPath))

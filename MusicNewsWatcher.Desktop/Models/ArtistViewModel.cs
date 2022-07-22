@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.Infrastructure.Helpers;
+﻿using MusicNewsWatcher.Desktop.Services;
+using MusicNewsWatcher.Infrastructure.Helpers;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -8,19 +9,14 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class ArtistViewModel : ViewModelBase
 {
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-    private readonly MusicUpdateManager manager;
-    private readonly MusicProviderBase provider;
-    private readonly Notifier tosts;
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory; 
+    private readonly IToastsNotifier toasts;
 
     public event Action<ArtistViewModel> OnArtistChanged;
 
     public int ArtistId { get; init; }
-    public int MusicProviderId { get; init; }
-
     public string Name { get; set; }
     public string DisplayName => Name.ToDisplayName();
-
     public string Uri { get; set; }
     public string Image { get; set; }
 
@@ -78,109 +74,77 @@ public class ArtistViewModel : ViewModelBase
     public AlbumViewModel SelectedAlbum
     {
         get => selectedAlbum;
-        set => Set(ref selectedAlbum, value);
+        set
+        {
+            if(selectedAlbum != null)
+            {
+                selectedAlbum.IsActiveAlbum = false;
+            }
+
+            if(Set(ref selectedAlbum, value) && value != null)
+            {
+                selectedAlbum!.IsActiveAlbum = true;
+            }
+        }
     }
 
     public ObservableCollection<AlbumViewModel> Albums { get; init; } = new();
 
     public ICommand ArtistChangedCommand { get; }
-    public ICommand DownloadAlbumsCommand { get; }
+    public MusicProviderViewModel ParentProvider { get; }
 
     public ArtistViewModel()
     {
-        ArtistChangedCommand = new LambdaCommand(async e => await ArtistChanged());
-        DownloadAlbumsCommand = new LambdaCommand(async e => await DownloadAlbums());
+        ArtistChangedCommand = new LambdaCommand(ArtistChanged);
+
+        toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
+        dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
     }
 
-    private async Task DownloadAlbums()
+    private void ArtistChanged(object obj)
     {
-        InProgress = true;
-        await manager.CheckUpdatesForArtistAsync(provider, ArtistId);
-        await RefreshSource();
-        InProgress = false;
+        OnArtistChanged?.Invoke(this);
+        RefreshSource();
     }
 
-    public ArtistViewModel(IDbContextFactory<MusicWatcherDbContext> dbFactory, 
-        MusicUpdateManager manager, 
-        MusicProviderBase provider,
-        Notifier tosts) : this()
-    {      
-        this.dbFactory = dbFactory;
-        this.manager = manager;
-        this.provider = provider;
-        this.tosts = tosts;
-    }
-
-    private async Task ArtistChanged()
+    public ArtistViewModel(MusicProviderViewModel parent) : this()
     {
-        if (!IsActiveArtist)
-        {
-            OnArtistChanged?.Invoke(this);
-            IsActiveArtist = true;
-            await RefreshSource();
-        }
+        ParentProvider = parent;
     }
 
-    //TODO: исправить утечку памяти при загрузке (превью не выгружаются из ItemsControl)
     private async Task RefreshSource()
     {
         InProgress = true;
 
-        List<AlbumViewModel> dbAlbums = await GetMappedAlbums();
+        using var db = await dbFactory.CreateDbContextAsync();
 
-        if (Albums.Count != dbAlbums.Count)
+        if (await db.Albums.Where(a => a.ArtistId == ArtistId).CountAsync() != Albums.Count)
         {
-            if(Albums.Count != 0)
-            {
-                tosts.ShowSuccess($"Найден новый альбом исполнителя '{DisplayName}'");
-            }
-
-            Albums.ToList().ForEach(a => a.OnAlbumChanged -= Album_OnAlbumChanged);
             Albums.Clear();
+
+            List<AlbumViewModel> dbAlbums = (await db
+                .Albums
+                .Where(a => a.ArtistId == ArtistId)
+                .OrderByDescending(a => a.Created)
+                .ThenBy(a => a.AlbumId)
+                .ToListAsync())
+                .Select(i => new AlbumViewModel(this)
+                {
+                    Title = i.Title,
+                    Created = i.Created,
+                    Image = i.Image,
+                    Uri = i.Uri,
+                    AlbumId = i.AlbumId,
+                })
+                .ToList();
 
             foreach (var album in dbAlbums)
             {
-                album.OnAlbumChanged += Album_OnAlbumChanged;
+                album.OnAlbumChanged += (e) => SelectedAlbum = e;
                 Albums.Add(album);
             }
-
-            Albums.ToList().ForEach(async a => await a.InvalidateCacheImage());            
         }
 
-        CommandManager.InvalidateRequerySuggested();
         InProgress = false;
-    }
-
-    private async Task<List<AlbumViewModel>> GetMappedAlbums()
-    {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var dbAlbums = db
-            .Albums.Where(a => a.ArtistId == ArtistId)
-            .Select(i => new AlbumViewModel(dbFactory, provider)
-            {
-                Title = i.Title,
-                Created = i.Created,
-                Image = i.Image,
-                Uri = i.Uri,
-                AlbumId = i.AlbumId,
-                ParentArtistName = Name
-            })
-            .OrderByDescending(a => a.Created)
-            .ThenBy(a => a.AlbumId)
-            .ToList();
-
-        return dbAlbums;
-    }
-
-    public void Album_OnAlbumChanged(AlbumViewModel e)
-    {
-        if(SelectedAlbum != null)
-        {
-            SelectedAlbum.IsActiveAlbum = false;
-        }
-        SelectedAlbum = e;
-
-        GC.Collect(2);
     }
 }

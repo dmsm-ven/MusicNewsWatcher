@@ -8,6 +8,7 @@
         Title="Настройки" Height="300" Width="1000"
         WindowStartupLocation="CenterScreen"
         WindowStyle="ToolWindow"
+        SizeToContent="WidthAndHeight"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SettingsWindowViewModel, IsDesignTimeCreatable=True}">
     <beh:Interaction.Triggers>
