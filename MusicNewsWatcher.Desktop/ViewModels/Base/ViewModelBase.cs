@@ -30,7 +30,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
         return true;
     }
 
-    protected static void OpenInBrowser(object param)
+    private static void OpenInBrowser(object param)
     {
         if (param is string uri && Uri.IsWellFormedUriString(uri, UriKind.Absolute))
         {

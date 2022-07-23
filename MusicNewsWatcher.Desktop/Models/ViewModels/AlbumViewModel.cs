@@ -130,13 +130,16 @@ public class AlbumViewModel : ViewModelBase
                 toasts.ShowSuccess(msg);
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             FileBrowserHelper.OpenFolderInFileBrowser(downloadedFilesDirectory);
         }
         catch(Exception ex)
         {
-            toasts.ShowError($"Ошибка загрузки альбома '{DisplayName}'\r\n{ex.Message}");
+            if (!cts.IsCancellationRequested)
+            {
+                toasts.ShowError($"Ошибка загрузки альбома '{DisplayName}'\r\n{ex.Message}");
+            }
         }
         finally
         {
@@ -194,13 +197,15 @@ public class AlbumViewModel : ViewModelBase
 
     private async void AlbumChanged(object obj)
     {
+        if (IsActiveAlbum) { return; }
+
         OnAlbumChanged?.Invoke(this);
         await RefreshTracksSource();
     }
 
     private void CancelDownloading(object obj)
     {
-        App.HostContainer.Services.GetRequiredService<Notifier>().ShowError("Загрузка альбома отменена ...");
+        toasts.ShowError("Загрузка альбома отменена");
         cts.Cancel();
     }
 

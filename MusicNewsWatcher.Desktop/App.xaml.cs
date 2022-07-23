@@ -7,6 +7,7 @@ global using ToastNotifications;
 global using ToastNotifications.Messages;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
+global using MusicNewsWatcher.Desktop.Models;
 global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Desktop.Services;
 
@@ -85,6 +86,7 @@ public partial class App : Application
     {
         HostContainer.Services.GetRequiredService<Notifier>().Dispose();
         await HostContainer.StopAsync();
+        _mutex.Dispose();
         base.OnExit(e);
     }
 }
@@ -106,7 +108,10 @@ public static class ConfigureServicesAppExtensions
         var showMenuItem = new MenuItem() { Header = "Отобразить" };
         showMenuItem.Click += (o, e) => Application.Current.MainWindow.Show();
         var exitMenuItem = new MenuItem() { Header = "Выход" };
-        exitMenuItem.Click += (o, e) => Application.Current.Shutdown();
+        exitMenuItem.Click += (o, e) =>
+        {
+            Application.Current.Shutdown();
+        };
 
         tbiMenu.Items.Add(showMenuItem);
         tbiMenu.Items.Add(new Separator()); // null = separator
@@ -137,7 +142,8 @@ public static class ConfigureServicesAppExtensions
 
             cfg.Dispatcher = Application.Current.Dispatcher;
         });
-        services.AddSingleton<IToastsNotifier, DewCrewToastsNotifier>(x => new DewCrewToastsNotifier(notifier));
+
+        services.AddSingleton<IToastsNotifier>(x => new DewCrewToastsNotifier(notifier));
     }
 }
 

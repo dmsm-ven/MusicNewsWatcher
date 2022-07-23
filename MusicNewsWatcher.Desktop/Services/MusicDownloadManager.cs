@@ -12,6 +12,7 @@ public class MusicDownloadManager
 {
     private readonly string DOWNLOAD_DIRECTORY;
     private readonly HttpClient client;
+    public static SemaphoreSlim semaphor;
 
     public MusicDownloadManager(string downloadDirectory)
     {
@@ -28,6 +29,27 @@ public class MusicDownloadManager
     }
 
     public async Task<string> DownloadFullAlbum(AlbumViewModel album, int parallelDownloads, CancellationToken token)
+    {
+        if (parallelDownloads <= 0 || parallelDownloads > 32)
+        {
+            throw new ArgumentOutOfRangeException(nameof(parallelDownloads), "Parallel downloads must be in range 1..32");
+        }
+
+        string albumDirectory = GetAlbumLocalPath(album);
+        IList<TrackViewModel> source = album.Tracks;
+        source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
+
+        using (semaphor = new SemaphoreSlim(parallelDownloads))
+        {
+            var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
+
+            await Task.WhenAll(tasks);
+        }
+
+        return albumDirectory;
+    }
+
+    public async Task<string> DownloadFullAlbumOld(AlbumViewModel album, int parallelDownloads, CancellationToken token)
     {
         if(parallelDownloads <= 0 || parallelDownloads > 32)
         {
@@ -65,6 +87,8 @@ public class MusicDownloadManager
 
     private async Task CreateDownloadTrackTask(TrackViewModel track, string albumDirectory, CancellationToken token)
     {
+        await semaphor.WaitAsync(token);
+
         track.IsDownloading = true;
 
         string localName = Path.Combine(albumDirectory, Path.GetFileName(track.DownloadUri));
@@ -78,6 +102,9 @@ public class MusicDownloadManager
 
         track.IsDownloading = false;
         track.DownloadResult = downloadResult;
+
+        semaphor.Release();
+
     }
     
     private async Task<TrackDownloadResult> DownloadTrack(TrackViewModel track, string localName, CancellationToken token)
@@ -137,11 +164,4 @@ public class MusicDownloadManager
     }
 }
 
-public enum TrackDownloadResult
-{
-    None,
-    Error,
-    Success,
-    Skipped,
-    Cancelled
-}
+

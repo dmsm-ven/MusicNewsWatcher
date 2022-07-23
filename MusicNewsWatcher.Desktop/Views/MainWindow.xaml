@@ -105,36 +105,45 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
+               
                     <StackPanel Grid.Row="0">
-                        <DockPanel>
-                            <Button Style="{StaticResource ToolButtonStyle}"
-                                        Command="{Binding DownloadAlbumCommand}"
-                                        Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                                        Grid.Column="1"
-                                        ToolTip="Скачать весь альбом"
-                                        Panel.ZIndex="99"
-                                        DockPanel.Dock="Right">
+
+                        <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding DisplayName}"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <Button Command="{Binding DownloadAlbumCommand}" 
+                                    Style="{StaticResource ToolButtonStyle}"
+                                    Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                    ToolTip="Скачать весь альбом"
+                                    Panel.ZIndex="99"
+                                    HorizontalAlignment="Right">
                                 <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource MediumIconSize}"/>
                             </Button>
-                            <Button Style="{StaticResource ToolButtonStyle}"
-                                        Foreground="{StaticResource Scarlet}"
-                                        Command="{Binding CancelDownloadingCommand}"
-                                        Opacity="0.5"
-                                        Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                                        Grid.Column="2"
-                                        ToolTip="Отменить загрузку"
-                                        Panel.ZIndex="99"
-                                        DockPanel.Dock="Right">
+                                                        
+                            <Button Command="{Binding CancelDownloadingCommand}"
+                                    Style="{StaticResource ToolButtonStyle}"
+                                    Foreground="{StaticResource Scarlet}"
+                                    Opacity="0.5"
+                                    Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                    ToolTip="Отменить загрузку"
+                                    Panel.ZIndex="99"
+                                    HorizontalAlignment="Right">
                                 <icons:PackIconFontAwesome Kind="StopCircleSolid" Style="{StaticResource MediumIconSize}"/>
                             </Button>
 
-                            <TextBlock Style="{StaticResource MainSectionTitle}"
-                                       Text="{Binding DisplayName}"/>
-                        </DockPanel>
+                            <Button Command="{Binding OpenInBrowserCommand}"
+                                    CommandParameter="{Binding Uri}"
+                                    Visibility="{Binding IsActiveAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
+                                    Style="{StaticResource ToolButtonStyle}"
+                                    ToolTip="Открыть в браузере"
+                                    Panel.ZIndex="99"
+                                    HorizontalAlignment="Right">
+                                <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource MediumIconSize}"/>
+                            </Button>
+                        </StackPanel>
 
                         <TextBlock Style="{StaticResource MainSectionTitle}"
-                                       Text="{Binding Tracks.Count, StringFormat={}Треки альбома [{0}]}"/>
+                                   Text="{Binding Tracks.Count, StringFormat={}Треки альбома [{0}]}"/>
 
                     </StackPanel>
 

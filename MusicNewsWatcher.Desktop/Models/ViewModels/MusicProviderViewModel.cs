@@ -58,7 +58,6 @@ public class MusicProviderViewModel : ViewModelBase
     }
 
     public ICommand ChangeSelectedArtistCommand { get; }
-    public ICommand CheckUpdatesSelectedCommand { get; }
     public ICommand AddArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }

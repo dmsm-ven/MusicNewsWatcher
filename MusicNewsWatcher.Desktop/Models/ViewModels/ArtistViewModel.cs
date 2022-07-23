@@ -101,10 +101,11 @@ public class ArtistViewModel : ViewModelBase
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
     }
 
-    private void ArtistChanged(object obj)
+    private async void ArtistChanged(object obj)
     {
+        if (IsActiveArtist) { return; }
         OnArtistChanged?.Invoke(this);
-        RefreshSource();
+        await RefreshSource();
     }
 
     public ArtistViewModel(MusicProviderViewModel parent) : this()
