@@ -12,7 +12,7 @@ public class MusicDownloadManager
 {
     private readonly string DOWNLOAD_DIRECTORY;
     private readonly HttpClient client;
-    public static SemaphoreSlim semaphor;
+    private SemaphoreSlim semaphor;
 
     public MusicDownloadManager(string downloadDirectory)
     {
@@ -28,18 +28,18 @@ public class MusicDownloadManager
         this.DOWNLOAD_DIRECTORY = downloadDirectory;
     }
 
-    public async Task<string> DownloadFullAlbum(AlbumViewModel album, int parallelDownloads, CancellationToken token)
+    public async Task<string> DownloadFullAlbum(AlbumViewModel album, int maxParallelDownloads, CancellationToken token)
     {
-        if (parallelDownloads <= 0 || parallelDownloads > 32)
+        if (maxParallelDownloads <= 0 || maxParallelDownloads > 32)
         {
-            throw new ArgumentOutOfRangeException(nameof(parallelDownloads), "Parallel downloads must be in range 1..32");
+            throw new ArgumentOutOfRangeException(nameof(maxParallelDownloads), "Parallel downloads must be in range [1..32]");
         }
 
         string albumDirectory = GetAlbumLocalPath(album);
         IList<TrackViewModel> source = album.Tracks;
         source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
 
-        using (semaphor = new SemaphoreSlim(parallelDownloads))
+        using (semaphor = new SemaphoreSlim(maxParallelDownloads))
         {
             var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 

@@ -32,8 +32,11 @@ public sealed class MusifyMusicProvider : MusicProviderBase
                 Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty).Trim(),
                 Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty).Trim(),
                 Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty).Trim(),
-                DateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim()
+                DateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim(),
+                AlbumType = int.Parse(div.GetAttributeValue("data-type", "0"))
+
             })
+            .Where(a => Enum.IsDefined(typeof(MusifyAlbumType), a.AlbumType))
             .ToArray();
 
         if (parsedAlbums.Length > 0)
@@ -84,5 +87,14 @@ public sealed class MusifyMusicProvider : MusicProviderBase
             }
         }
         return Enumerable.Empty<TrackEntity>().ToArray();
+    }
+
+    enum MusifyAlbumType 
+    {
+        Album = 2,//Студийный альбом = 2,
+        EP = 3,//EP = 3,
+        Single = 4,//Сингл = 4,
+        Split = 12,//Сплиты = 12,
+        Soundtrack = 14//Саундтреки = 14,
     }
 }

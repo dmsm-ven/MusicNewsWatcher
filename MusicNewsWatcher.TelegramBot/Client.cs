@@ -17,23 +17,27 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     private string? apiToken;
     private string? consumerId;
     private readonly IMusicNewsMessageFormatter formatter;
-    internal static IDbContextFactory<MusicWatcherDbContext> DbFactory { get; private set; }
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     User? botInfo;
 
     public string AccountName => botInfo?.Username ?? "Not connected";
 
     public MusicNewsWatcherTelegramBot(IMusicNewsMessageFormatter formatter,  IDbContextFactory<MusicWatcherDbContext> dbFactory)
     {
-        //TODO убрать статический метод
+        
         this.formatter = formatter;
-        DbFactory = dbFactory;
+        this.dbFactory = dbFactory;
+
+        //TODO убрать статический метод
+        UpdateHandlers.DbContextFactory = dbFactory;
+        BotCommandHandlers.dbFactory = dbFactory;
     }
 
     public async Task Start()
     {
         if (IsStarted) { return; }
 
-        using (var db = await DbFactory.CreateDbContextAsync())
+        using (var db = await dbFactory.CreateDbContextAsync())
         {
             this.apiToken = db.Settings.Find("TelegramApiToken")?.Value;
             this.consumerId = db.Settings.Find("TelegramChatId")?.Value;

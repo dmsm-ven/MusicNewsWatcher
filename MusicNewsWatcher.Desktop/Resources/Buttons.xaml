@@ -97,6 +97,7 @@
 
     <Style TargetType="{x:Type Button}" x:Key="SaveSettingsButton">
         <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -118,7 +119,8 @@
                             <Setter TargetName="buttonBorder" Property="Opacity" Value="0.85" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.75" />
+                            <Setter Property="Opacity" Value="0.6" />
+                            <Setter Property="Cursor" Value="Arrow" />
                             <Setter Property="BorderBrush" Value="Transparent" TargetName="buttonBorder"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

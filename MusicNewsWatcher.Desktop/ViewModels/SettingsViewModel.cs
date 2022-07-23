@@ -7,7 +7,7 @@ public class SettingsWindowViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
 
-    int updateManagerIntervalInMinutes;
+    int updateManagerIntervalInMinutes = 30;
     public int UpdateManagerIntervalInMinutes
     {
         get => updateManagerIntervalInMinutes;
@@ -24,7 +24,7 @@ public class SettingsWindowViewModel : ViewModelBase
         }
     }
 
-    int downloadThreadsNumber;
+    int downloadThreadsNumber = 2;
     public int DownloadThreadsNumber
     {
         get => downloadThreadsNumber;

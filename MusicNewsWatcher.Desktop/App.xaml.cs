@@ -74,11 +74,14 @@ public partial class App : Application
     {
         await HostContainer.StartAsync();
 
+        //Окно занимает 85% экрана
+        double sizeRatio = 0.85;
+
         var mainWindow = new MainWindow();
         mainWindow.Closing += (o, e) => { e.Cancel = true; mainWindow.Hide(); };
         mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
-        mainWindow.Width = SystemParameters.PrimaryScreenWidth * 0.75;
-        mainWindow.Height = SystemParameters.PrimaryScreenHeight * 0.75;
+        mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
+        mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
         mainWindow.Show();
     }
 

@@ -14,6 +14,8 @@ namespace MusicNewsWatcher.TelegramBot;
 
 internal static class UpdateHandlers
 {
+    public static IDbContextFactory<MusicWatcherDbContext> DbContextFactory { get; set; }
+
     public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         var handler = update.Type switch
@@ -53,29 +55,16 @@ internal static class UpdateHandlers
         string? textCommandParams = messageText.IndexOf(' ') == -1 ? null : messageText.Substring(messageText.IndexOf(' ') + 1);
 
         Dictionary<string, Func<Task<Message?>>> routes = new();
-        routes["/tracked_artists"] = () => UpdateBotHandlers.TrackedArtists(botClient, message, textCommandParams);
-        routes["/last_update"] = () => UpdateBotHandlers.LastUpdate(botClient, message);
+        routes["/tracked_artists"] = () => BotCommandHandlers.TrackedArtists(botClient, message, textCommandParams);
+        routes["/last_update"] = () => BotCommandHandlers.LastUpdate(botClient, message);
 
-        Task<Message?> routedHandler = routes.ContainsKey(textCommand) ? routes[textCommand].Invoke() : Usage(botClient, message);
+        Task<Message?> routedHandler = routes.ContainsKey(textCommand) ? 
+            routes[textCommand].Invoke() : 
+            BotCommandHandlers.Usage(botClient, message);
         Message sentMessage = await routedHandler;
 
         Console.WriteLine($"received from client: '{textCommand}'");
         Console.WriteLine($"bot answer: '{(sentMessage?.Text ?? "<not a text>")}'");
-    }
-  
-    private static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
-    {
-        var usageList = new List<string>() { 
-            "Команды:",
-            "/tracked_artists\t - Получить список отслеживаемых исполнителей",
-            "/last_update\t - дата последнего парсинга сайтов"
-        };
-
-        string usageMessage = string.Join(Environment.NewLine, usageList);
-
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                    text: usageMessage,
-                                                    replyMarkup: new ReplyKeyboardRemove());
     }
 
     public static Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -98,15 +87,15 @@ internal static class UpdateHandlers
 
 }
 
-internal static class UpdateBotHandlers
+internal static class BotCommandHandlers
 {
-    public static IReadOnlyDictionary<string, List<string>> TestData { get; }
+    public static IDbContextFactory<MusicWatcherDbContext> dbFactory { get; set; }
 
     public static async Task<Message> LastUpdate(ITelegramBotClient botClient, Message message)
     {
         const int textProgressBarLength = 30;
 
-        using var db = await MusicNewsWatcherTelegramBot.DbFactory.CreateDbContextAsync();
+        using var db = await dbFactory.CreateDbContextAsync();
 
         string lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value ?? "01.01.2000 00:00:00";
         DateTime lastUpdate = DateTime.Parse(lastUpdateString, new CultureInfo("ru-RU"));
@@ -128,7 +117,7 @@ internal static class UpdateBotHandlers
     
     public static async Task<Message> TrackedArtists(ITelegramBotClient botClient, Message message, string? userPickedProvider = null)
     {
-        using var db = await MusicNewsWatcherTelegramBot.DbFactory.CreateDbContextAsync();
+        using var db = await dbFactory.CreateDbContextAsync();
 
         if (userPickedProvider == null)
         {
@@ -165,5 +154,20 @@ internal static class UpdateBotHandlers
             }
         }
 
+    }
+
+    public static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
+    {
+        var usageList = new List<string>() {
+            "Команды:",
+            "/tracked_artists\t - Получить список отслеживаемых исполнителей",
+            "/last_update\t - дата последнего парсинга сайтов"
+        };
+
+        string usageMessage = string.Join(Environment.NewLine, usageList);
+
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                    text: usageMessage,
+                                                    replyMarkup: new ReplyKeyboardRemove());
     }
 }

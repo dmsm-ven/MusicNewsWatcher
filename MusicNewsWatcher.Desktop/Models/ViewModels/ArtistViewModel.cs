@@ -11,6 +11,7 @@ public class ArtistViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory; 
     private readonly IToastsNotifier toasts;
+    private readonly MusicUpdateManager updateManager;
 
     public event Action<ArtistViewModel> OnArtistChanged;
 
@@ -90,15 +91,27 @@ public class ArtistViewModel : ViewModelBase
 
     public ObservableCollection<AlbumViewModel> Albums { get; init; } = new();
 
+    public ICommand GetAlbumsFromProviderForArtistCommand { get; }
     public ICommand ArtistChangedCommand { get; }
+
     public MusicProviderViewModel ParentProvider { get; }
 
     public ArtistViewModel()
     {
+        GetAlbumsFromProviderForArtistCommand = new LambdaCommand(async e => await GetAlbumsFromProviderForArtist());
         ArtistChangedCommand = new LambdaCommand(ArtistChanged);
 
+        updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+    }
+
+    private async Task GetAlbumsFromProviderForArtist()
+    {
+        InProgress = true;
+        await updateManager.CheckUpdatesForArtistAsync(ParentProvider.MusicProvider, ArtistId);
+        await RefreshSource();
+        InProgress = false;
     }
 
     private async void ArtistChanged(object obj)

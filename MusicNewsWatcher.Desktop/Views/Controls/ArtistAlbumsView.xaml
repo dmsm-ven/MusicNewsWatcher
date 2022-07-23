@@ -16,7 +16,7 @@
             <Button Style="{StaticResource ToolButtonStyle}" 
                 Background="Transparent"
                 Visibility="{Binding IsUpdateAlbumsButtonVisibile, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
-                Command="{Binding DownloadAlbumsCommand}"
+                Command="{Binding GetAlbumsFromProviderForArtistCommand}"
                 Panel.ZIndex="98"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"
@@ -50,7 +50,8 @@
                                 </beh:Interaction.Triggers>
 
                                 <Image Source="{Binding CachedImage, Converter={StaticResource StringToImageSourceConverter}}" 
-                                       Width="120" Height="120" Stretch="Uniform">
+                                       Width="120" Height="120" 
+                                       Stretch="UniformToFill">
                                 </Image>
                                 <ProgressBar Opacity="0.5" 
                                              Panel.ZIndex="99"
@@ -67,7 +68,7 @@
 
                                 <Label Content="{Binding DisplayName}"
                                                Foreground="White"
-                                               FontSize="10"
+                                               FontSize="11"
                                                MaxWidth="120"
                                                Margin="0"
                                                FontWeight="Bold"
