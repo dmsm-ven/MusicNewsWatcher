@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.Desktop.Services;
+﻿using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Desktop.Services;
 using MusicNewsWatcher.Infrastructure.Helpers;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -39,11 +40,30 @@ public class ArtistViewModel : ViewModelBase
         }
     }
 
-    bool hasNew;
-    public bool HasNew
+    bool multiselectEnabled;
+    public bool MultiselectEnabled
     {
-        get => hasNew;
-        set => Set(ref hasNew, value);
+        get => multiselectEnabled;
+        set
+        {
+            if(Set(ref multiselectEnabled, value))
+            {
+                Albums.ToList().ForEach(a => a.IsChecked = value ? false : null);
+                RaisePropertyChanged(nameof(CurrentMultiselectIcon));
+            }
+        }
+    }
+
+    public bool HasCheckedAlbums
+    {
+        get => Albums.Count(a => a.IsChecked == true) >= 1;
+    }
+
+    public PackIconFontAwesomeKind CurrentMultiselectIcon
+    {
+        get => MultiselectEnabled ? 
+            PackIconFontAwesomeKind.SquareRegular :
+            PackIconFontAwesomeKind.CheckDoubleSolid;
     }
 
     bool isActiveArtist;
@@ -93,17 +113,30 @@ public class ArtistViewModel : ViewModelBase
 
     public ICommand GetAlbumsFromProviderForArtistCommand { get; }
     public ICommand ArtistChangedCommand { get; }
+    public ICommand ToggleMultiselectModeCommand { get; }
+    public ICommand DownloadCheckedAlbumsCommand { get; }
 
     public MusicProviderViewModel ParentProvider { get; }
 
     public ArtistViewModel()
     {
+        DownloadCheckedAlbumsCommand = new LambdaCommand(async e => await DownloadCheckedAlbums(), e => HasCheckedAlbums);
+        ToggleMultiselectModeCommand = new LambdaCommand(e => MultiselectEnabled = !MultiselectEnabled);
         GetAlbumsFromProviderForArtistCommand = new LambdaCommand(async e => await GetAlbumsFromProviderForArtist());
         ArtistChangedCommand = new LambdaCommand(ArtistChanged);
 
         updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+    }
+
+    private async Task DownloadCheckedAlbums()
+    {
+        foreach(var album in Albums.Where(a => a.IsChecked == true))
+        {
+            await album.RefreshTracksSource();
+            await album.DownloadAlbum(openFolder: false);
+        }
     }
 
     private async Task GetAlbumsFromProviderForArtist()
@@ -155,6 +188,13 @@ public class ArtistViewModel : ViewModelBase
             foreach (var album in dbAlbums)
             {
                 album.OnAlbumChanged += (e) => SelectedAlbum = e;
+                album.PropertyChanged += (o, e) =>
+                {
+                    if(e.PropertyName == nameof(AlbumViewModel.IsChecked))
+                    {
+                        RaisePropertyChanged(nameof(HasCheckedAlbums));
+                    }
+                };
                 Albums.Add(album);
             }
         }

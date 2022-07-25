@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using MahApps.Metro.IconPacks;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
 
@@ -68,6 +69,31 @@ public class AlbumViewModel : ViewModelBase
         }
     }
 
+    bool? isChecked = null;
+    public bool? IsChecked
+    {
+        get => isChecked;
+        set
+        {
+            if(Set(ref isChecked, value))
+            {
+                RaisePropertyChanged(nameof(CurrentMultiselectStateIcon));
+            }
+        }
+    }
+
+    public PackIconFontAwesomeKind CurrentMultiselectStateIcon
+    {
+        get
+        {
+            if (IsChecked.HasValue)
+            {
+                return IsChecked.Value ? PackIconFontAwesomeKind.CheckSquareRegular : PackIconFontAwesomeKind.SquareRegular;
+            }
+            return PackIconFontAwesomeKind.QuestionSolid;
+        }
+    }
+
     public bool IsUpdateTracksButtonVisibile
     {
         get => Tracks.Count == 0 && !InProgress;
@@ -82,6 +108,7 @@ public class AlbumViewModel : ViewModelBase
     public ICommand AlbumChangedCommand { get; }
     public ICommand DownloadAlbumCommand { get; }
     public ICommand CancelDownloadingCommand { get; }
+    public ICommand ToggleMultiselectStateCommand { get; }
     public ArtistViewModel ParentArtist { get; }
 
     CancellationTokenSource cts;
@@ -93,8 +120,9 @@ public class AlbumViewModel : ViewModelBase
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
 
+        ToggleMultiselectStateCommand = new LambdaCommand(e => IsChecked = !IsChecked.Value, e => IsChecked.HasValue);
         CancelDownloadingCommand = new LambdaCommand(CancelDownloading, e => InProgress);
-        DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(), e => CanDownloadAlbum);
+        DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(openFolder: true), e => CanDownloadAlbum);
         AlbumChangedCommand = new LambdaCommand(AlbumChanged);
         Tracks.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
 
@@ -106,23 +134,22 @@ public class AlbumViewModel : ViewModelBase
         ParentArtist = parent;
     }
 
-    private async Task DownloadAlbum()
+    public async Task DownloadAlbum(bool openFolder)
     {
         InProgress = true;
-        
-
+       
         Stopwatch sw = Stopwatch.StartNew();
-
-        int parallelDownloads;
         using (var db = dbFactory.CreateDbContext())
         {
-            parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
+            int parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
+
+            downloadManager.ThreadLimit = parallelDownloads;
         }
            
         try
         {
             cts = new CancellationTokenSource();
-            string downloadedFilesDirectory = await downloadManager.DownloadFullAlbum(this, parallelDownloads, cts.Token);
+            string albumDir = await downloadManager.DownloadFullAlbum(this, FileBrowserHelper.DownloadDirectory, cts.Token);
           
             if (!cts.IsCancellationRequested)
             {
@@ -132,7 +159,7 @@ public class AlbumViewModel : ViewModelBase
 
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            FileBrowserHelper.OpenFolderInFileBrowser(downloadedFilesDirectory);
+            FileBrowserHelper.OpenFolderInFileBrowser(albumDir);
         }
         catch(Exception ex)
         {
@@ -147,10 +174,8 @@ public class AlbumViewModel : ViewModelBase
         }
     }
 
-    private async Task RefreshTracksSource()
+    public async Task RefreshTracksSource()
     {
-        InProgress = true;
-
         using var db = await dbFactory.CreateDbContextAsync();
 
         if (await db.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync() != Tracks.Count)
@@ -176,8 +201,6 @@ public class AlbumViewModel : ViewModelBase
                 Tracks.Add(track);
             }
         }
-
-        InProgress = false;
     }
 
     private async Task GetTracksFromProvider()

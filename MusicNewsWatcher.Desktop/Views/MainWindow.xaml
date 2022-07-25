@@ -63,6 +63,7 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Style="{StaticResource MainSectionTitle}"
+                                   Grid.ColumnSpan="4"
                                    Text="{Binding TrackedArtistsCount, StringFormat={}Отслеживаемые исполнители [{0}]}">
                         </TextBlock>
 
@@ -91,11 +92,35 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Style="{StaticResource MainSectionTitle}"
-                               Text="{Binding DisplayName}"></TextBlock>
+                    <Grid Visibility="{Binding IsActiveArtist, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding DisplayName}"
+                                   Grid.ColumnSpan="3"/>
+
+
+                        <Button Grid.Column="1" 
+                                Style="{StaticResource ToolButtonStyle}"
+                                Command="{Binding DownloadCheckedAlbumsCommand}"
+                                Visibility="{Binding MultiselectEnabled, Converter={StaticResource NotNullToVisibilityConverter}, FallbackValue=Hidden}">
+                            <icons:PackIconFontAwesome Kind="DownloadSolid" 
+                                                       Style="{StaticResource MediumIconSize}"/>
+                        </Button>
+                        <Button Grid.Column="2" Style="{StaticResource ToolButtonStyle}"
+                                Command="{Binding ToggleMultiselectModeCommand}">
+                            <icons:PackIconFontAwesome Kind="{Binding CurrentMultiselectIcon}" 
+                                                       Style="{StaticResource MediumIconSize}"/>
+                        </Button>
+                        
+                    </Grid>
 
                     <vp:ArtistAlbumsView Grid.Row="1" />
-
+                    
                 </Grid>
             </Border>
 
@@ -107,12 +132,20 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                
-                    <StackPanel Grid.Row="0">
+                    <Grid Grid.Row="0">
 
-                        <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding DisplayName}"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource MainSectionTitle}" 
+                                   Grid.ColumnSpan="4"
+                                   Text="{Binding DisplayName}"/>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                            <Button Command="{Binding DownloadAlbumCommand}" 
+
+                            <Button Grid.Column="1" Command="{Binding DownloadAlbumCommand}" 
                                     Style="{StaticResource ToolButtonStyle}"
                                     Visibility="{Binding CanDownloadAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
                                     ToolTip="Скачать весь альбом"
@@ -121,7 +154,7 @@
                                 <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource MediumIconSize}"/>
                             </Button>
                                                         
-                            <Button Command="{Binding CancelDownloadingCommand}"
+                            <Button Grid.Column="2" Command="{Binding CancelDownloadingCommand}"
                                     Style="{StaticResource ToolButtonStyle}"
                                     Foreground="{StaticResource Scarlet}"
                                     Opacity="0.5"
@@ -132,7 +165,7 @@
                                 <icons:PackIconFontAwesome Kind="StopCircleSolid" Style="{StaticResource MediumIconSize}"/>
                             </Button>
 
-                            <Button Command="{Binding OpenInBrowserCommand}"
+                            <Button Grid.Column="3" Command="{Binding OpenInBrowserCommand}"
                                     CommandParameter="{Binding Uri}"
                                     Visibility="{Binding IsActiveAlbum, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"
                                     Style="{StaticResource ToolButtonStyle}"
@@ -141,12 +174,7 @@
                                     HorizontalAlignment="Right">
                                 <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource MediumIconSize}"/>
                             </Button>
-                        </StackPanel>
-
-                        <TextBlock Style="{StaticResource MainSectionTitle}"
-                                   Text="{Binding Tracks.Count, StringFormat={}Треки альбома [{0}]}"/>
-
-                    </StackPanel>
+                    </Grid>
 
                     <vp:AlbumTracksView Grid.Row="1" />
                 </Grid>
@@ -154,8 +182,9 @@
         </Grid>
     
         <!-- Progress bar-->
-        <ProgressBar Height="20" Margin="2" IsIndeterminate="True"
+        <ProgressBar Height="14" Margin="2" IsIndeterminate="True"
                      Grid.Row="2"
+                     Opacity="0.75"
                      Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
         </ProgressBar>
     </Grid>

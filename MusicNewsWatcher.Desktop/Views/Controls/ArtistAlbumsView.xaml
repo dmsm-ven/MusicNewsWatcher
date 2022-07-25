@@ -49,6 +49,19 @@
                                     </beh:EventTrigger>
                                 </beh:Interaction.Triggers>
 
+                                <Button Style="{StaticResource ToolButtonStyle}"
+                                        Visibility="{Binding IsChecked, Converter={StaticResource NotNullToVisibilityConverter}, FallbackValue=Hidden}"
+                                        Command="{Binding ToggleMultiselectStateCommand}"
+                                        Panel.ZIndex="99"
+                                        VerticalAlignment="Top"
+                                        HorizontalAlignment="Left">
+                                    <icons:PackIconFontAwesome 
+                                        Kind="{Binding CurrentMultiselectStateIcon}" 
+                                        Foreground="White"
+                                                       Style="{StaticResource SmallIconSize}"/>
+                                </Button>
+
+
                                 <Image Source="{Binding CachedImage, Converter={StaticResource StringToImageSourceConverter}}" 
                                        Width="120" Height="120" 
                                        Stretch="UniformToFill">
@@ -63,7 +76,8 @@
                                     CommandParameter="{Binding Uri}"
                                     Panel.ZIndex="99"
                                 HorizontalAlignment="Right" VerticalAlignment="Top">
-                                    <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource LinkIconSize}"/>
+                                    <icons:PackIconFontAwesome Kind="LinkSolid" 
+                                                               Style="{StaticResource SmallIconSize}"/>
                                 </Button>
 
                                 <Label Content="{Binding DisplayName}"

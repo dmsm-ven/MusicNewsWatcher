@@ -8,13 +8,34 @@ using System.Threading.Tasks;
 namespace MusicNewsWatcher.Desktop.Services;
 
 //TODO убрать прямое обращение через ViewModel
-public class MusicDownloadManager
-{
-    private readonly string DOWNLOAD_DIRECTORY;
+public class MusicDownloadManager : IDisposable
+{   
     private readonly HttpClient client;
     private SemaphoreSlim semaphor;
 
-    public MusicDownloadManager(string downloadDirectory)
+    private int threadLimit;
+    public int ThreadLimit
+    {
+        get => threadLimit;
+        set
+        {
+            if(threadLimit != value)
+            {
+                if ((value >= 1 && value <= 8))
+                {
+                    threadLimit = value;
+                    semaphor?.Dispose();
+                    semaphor = new SemaphoreSlim(ThreadLimit);
+                }
+                else
+                {
+                    throw new ArgumentOutOfRangeException(nameof(ThreadLimit), "must be in range 1..8");
+                }
+            }
+        }
+    }
+
+    public MusicDownloadManager()
     {
         client = new HttpClient(new HttpClientHandler()
         {
@@ -25,62 +46,17 @@ public class MusicDownloadManager
         });
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Add("Accept", "*/*");
-        this.DOWNLOAD_DIRECTORY = downloadDirectory;
     }
 
-    public async Task<string> DownloadFullAlbum(AlbumViewModel album, int maxParallelDownloads, CancellationToken token)
+    public async Task<string> DownloadFullAlbum(AlbumViewModel album, string downloadDirectory, CancellationToken token)
     {
-        if (maxParallelDownloads <= 0 || maxParallelDownloads > 32)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxParallelDownloads), "Parallel downloads must be in range [1..32]");
-        }
-
-        string albumDirectory = GetAlbumLocalPath(album);
+        string albumDirectory = GetAlbumLocalPath(album, downloadDirectory);
         IList<TrackViewModel> source = album.Tracks;
         source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
 
-        using (semaphor = new SemaphoreSlim(maxParallelDownloads))
-        {
-            var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
+        var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 
-            await Task.WhenAll(tasks);
-        }
-
-        return albumDirectory;
-    }
-
-    public async Task<string> DownloadFullAlbumOld(AlbumViewModel album, int parallelDownloads, CancellationToken token)
-    {
-        if(parallelDownloads <= 0 || parallelDownloads > 32)
-        {
-            throw new ArgumentOutOfRangeException(nameof(parallelDownloads), "Parallel downloads must be in range 1..32");
-        }
-
-        string albumDirectory = GetAlbumLocalPath(album); 
-        IList<TrackViewModel> source = album.Tracks;
-        int currentPage = 0;
-        source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
-
-        for (int i = 0; i < source.Count; i+= parallelDownloads)
-        {
-            var chunk = source.Skip(currentPage * parallelDownloads).Take(parallelDownloads)
-                .Select(t => CreateDownloadTrackTask(t, albumDirectory, token))
-                .ToArray();
-
-            await Task.WhenAll(chunk);
-
-            if (token.IsCancellationRequested)
-            {
-                source
-                    .Where(i => i.DownloadResult == TrackDownloadResult.None)
-                    .ToList()
-                    .ForEach(i => i.DownloadResult = TrackDownloadResult.Skipped);
-
-                break;
-            }
-
-            currentPage++;
-        }
+        await Task.WhenAll(tasks);
 
         return albumDirectory;
     }
@@ -106,7 +82,7 @@ public class MusicDownloadManager
         semaphor.Release();
 
     }
-    
+
     private async Task<TrackDownloadResult> DownloadTrack(TrackViewModel track, string localName, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(track.DownloadUri))
@@ -149,9 +125,9 @@ public class MusicDownloadManager
         return TrackDownloadResult.Error;
     }
 
-    private string GetAlbumLocalPath(AlbumViewModel album)
+    private string GetAlbumLocalPath(AlbumViewModel album, string downloadDirectory)
     {
-        var directoryPath = Path.Combine(DOWNLOAD_DIRECTORY,
+        var directoryPath = Path.Combine(downloadDirectory,
             album.ParentArtist.DisplayName.RemoveInvalidCharacters(),
             album.DisplayName.RemoveInvalidCharacters());
 
@@ -161,6 +137,12 @@ public class MusicDownloadManager
         }
 
         return directoryPath;
+    }
+
+    public void Dispose()
+    {
+        client?.Dispose();
+        semaphor?.Dispose();
     }
 }
 

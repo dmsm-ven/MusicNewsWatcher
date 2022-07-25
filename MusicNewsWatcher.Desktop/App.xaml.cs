@@ -60,7 +60,7 @@ public partial class App : Application
                 
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
-                services.AddSingleton<MusicDownloadManager>(x => new MusicDownloadManager(FileBrowserHelper.DownloadDirectory));
+                services.AddSingleton<MusicDownloadManager>();
                 services.AddSingleton<MusicUpdateManager>();
                 services.AddSingleton<SettingsWindowViewModel>();
                 services.AddTransient<SettingsWindow>();

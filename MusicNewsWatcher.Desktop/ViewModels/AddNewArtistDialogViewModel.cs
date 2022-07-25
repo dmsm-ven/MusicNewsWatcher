@@ -67,7 +67,10 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             .ToList()
             .ForEach(item => MusicProviders.Add(item));
 
-        SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.ParentProvider.MusicProviderId ?? 0));
+        if(ContextArtist.ParentProvider != null)
+        {
+            SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.ParentProvider.MusicProviderId ?? 0));
+        }
     }
 
     private void Submit(object obj)
