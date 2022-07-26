@@ -30,13 +30,13 @@ public partial class App : Application
 {
     public static IHost HostContainer { get; private set; }
 
-    readonly Mutex _mutex;
+    public static Mutex mutex;
 
     public App()
     {
-        _mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
+        mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
 
-        if (!_mutex.WaitOne(500, false))
+        if (!mutex.WaitOne(500, false))
         {
             Application.Current.Shutdown();
         }
@@ -57,13 +57,18 @@ public partial class App : Application
                 services.AddToasts();
                 services.AddNotifyIcon();
                 services.AddTelegramBot(context);
-                
+
+                services.AddTransient<AddNewArtistDialogViewModel>();
+                services.AddTransient<AddNewArtistDialog>();
+
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
                 services.AddSingleton<MusicDownloadManager>();
                 services.AddSingleton<MusicUpdateManager>();
+
                 services.AddSingleton<SettingsWindowViewModel>();
                 services.AddTransient<SettingsWindow>();
+
                 services.AddSingleton<MainWindowViewModel>();
             })
             .Build();
@@ -87,22 +92,17 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        HostContainer.Services.GetRequiredService<Notifier>().Dispose();
         await HostContainer.StopAsync();
-        _mutex.Dispose();
+        mutex.ReleaseMutex();
+        mutex.Dispose();
         base.OnExit(e);
     }
+
+
 }
 
 public static class ConfigureServicesAppExtensions
 {
-    public static void AddTelegramBot(this IServiceCollection services, HostBuilderContext context)
-    {
-        services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
-        services.AddTransient<MusicNewsWatcherTelegramBot>();
-        services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
-    }
-
     public static void AddNotifyIcon(this IServiceCollection services)
     {
         var tbi = new TaskbarIcon();
@@ -127,6 +127,13 @@ public static class ConfigureServicesAppExtensions
         services.AddSingleton<TaskbarIcon>(tbi);
     }
 
+    public static void AddTelegramBot(this IServiceCollection services, HostBuilderContext context)
+    {
+        services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+        services.AddTransient<MusicNewsWatcherTelegramBot>();
+        services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
+    }
+
     public static void AddToasts(this IServiceCollection services)
     {
         var notifier = new Notifier(cfg =>
@@ -138,6 +145,7 @@ public static class ConfigureServicesAppExtensions
                 offsetY: 25);
 
             cfg.DisplayOptions.Width = 500;
+            cfg.DisplayOptions.TopMost = false;
 
             cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
                 notificationLifetime: TimeSpan.FromSeconds(60),

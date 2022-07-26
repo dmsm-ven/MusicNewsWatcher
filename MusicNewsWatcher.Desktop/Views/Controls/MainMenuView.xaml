@@ -10,25 +10,26 @@
              d:DesignHeight="100" d:DesignWidth="600">
     <StackPanel Orientation="Horizontal" Background="{StaticResource MainWindowTransparentBrush}">
 
+        <Button Command="{Binding AddArtistCommand}" 
+                ToolTip="Добавить исполнителя на отслеживание"
+                Style="{StaticResource ToolButtonStyle}">
+            <icons:PackIconFontAwesome Kind="PlusSolid" Style="{StaticResource LargeIconSize}"/>
+        </Button>
+        
+        
         <Button Command="{Binding CheckUpdatesAllCommand}" 
-                DockPanel.Dock="Right"
-                HorizontalAlignment="Right"
                 ToolTip="Закачать обновленные данные из БД"
                 Style="{StaticResource ToolButtonStyle}">
             <icons:PackIconFontAwesome Kind="CircleNotchSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
         
         <Button Command="{Binding OpenDownloadsFolderCommand}" 
-                DockPanel.Dock="Right"
-                HorizontalAlignment="Right"
                 ToolTip="Папка с загруженными альбомами"
                 Style="{StaticResource ToolButtonStyle}">
             <icons:PackIconFontAwesome Kind="FolderOpenSolid" Style="{StaticResource LargeIconSize}"/>
         </Button>
         
         <Button Command="{Binding SettingsCommand}" 
-                DockPanel.Dock="Right"
-                HorizontalAlignment="Right"
                 ToolTip="Настройки"
                 Style="{StaticResource ToolButtonStyle}">
             <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}"/>

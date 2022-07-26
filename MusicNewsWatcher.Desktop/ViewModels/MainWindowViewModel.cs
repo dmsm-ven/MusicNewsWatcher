@@ -18,7 +18,6 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
     private readonly IToastsNotifier toasts;
-    private readonly MusicUpdateManager updateManager;
     
     public string Title
     {
@@ -61,16 +60,17 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand CheckUpdatesAllCommand { get; }
     public ICommand SettingsCommand { get; }
     public ICommand OpenDownloadsFolderCommand { get; }
+    public ICommand AddArtistCommand { get; }
 
     public MainWindowViewModel()
     {
+        AddArtistCommand = new LambdaCommand(ShowNewArtistWindow);
         CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
         OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());       
         SettingsCommand = new LambdaCommand(ShowSettingsWindow);       
         LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());       
         MusicProviders = new ObservableCollection<MusicProviderViewModel>();
     }
-
 
     public MainWindowViewModel(
         IEnumerable<MusicProviderBase> musicProviders, 
@@ -81,7 +81,6 @@ public class MainWindowViewModel : ViewModelBase
 
         this.musicProviders = musicProviders;
         this.dbCotextFactory = dbCotextFactory;
-        this.updateManager = updateManager;
         this.toasts = toasts;
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
     }
@@ -90,6 +89,13 @@ public class MainWindowViewModel : ViewModelBase
     {
         string toastsMessage = string.Join("\r\n", e.NewAlbums.Select((album, i) => $"{i + 1}) {album?.name ?? "<Без названия>"}"));
         toasts.ShowInformation("Найдены новые альбомы:\r\n" + toastsMessage);
+    }
+
+    private void ShowNewArtistWindow(object obj)
+    {
+        var dialogWindow = App.HostContainer.Services.GetRequiredService<AddNewArtistDialog>();
+        dialogWindow.DataContext = App.HostContainer.Services.GetRequiredService<AddNewArtistDialogViewModel>();
+        dialogWindow.ShowDialog();
     }
 
     private void ShowSettingsWindow(object obj)

@@ -58,7 +58,6 @@ public class MusicProviderViewModel : ViewModelBase
     }
 
     public ICommand ChangeSelectedArtistCommand { get; }
-    public ICommand AddArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
     
@@ -68,20 +67,8 @@ public class MusicProviderViewModel : ViewModelBase
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
 
         ChangeSelectedArtistCommand = new LambdaCommand(e => OnMusicProviderChanged?.Invoke(this));
-        AddArtistCommand = new LambdaCommand(async e => await AddArtist());
         DeleteArtistCommand = new LambdaCommand(DeleteArtist, e => SelectedArtist != null);
         EditArtistCommand = new LambdaCommand(EditArtist, e => SelectedArtist != null);
-    }
-
-    private async Task AddArtist()
-    {
-        var dialogVm = new AddNewArtistDialogViewModel(dbContextFactory);
-        var dialogWindow = new AddNewArtistDialog();
-        dialogWindow.DataContext = dialogVm;
-        if (dialogWindow.ShowDialog() == true)
-        {
-
-        }
     }
 
     private async void EditArtist(object obj)

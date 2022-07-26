@@ -67,10 +67,6 @@
                                    Text="{Binding TrackedArtistsCount, StringFormat={}Отслеживаемые исполнители [{0}]}">
                         </TextBlock>
 
-                        <Button Grid.Column="1" 
-                                Command="{Binding AddArtistCommand}" Style="{StaticResource ToolButtonStyle}">
-                            <icons:PackIconFontAwesome Kind="PlusCircleSolid" Style="{StaticResource MediumIconSize}"/>
-                        </Button>
                         <Button Grid.Column="2" 
                                 Command="{Binding EditArtistCommand}" Style="{StaticResource ToolButtonStyle}">
                             <icons:PackIconFontAwesome Kind="PencilAltSolid" Style="{StaticResource MediumIconSize}"/>
