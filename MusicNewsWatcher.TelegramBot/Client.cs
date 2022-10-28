@@ -11,6 +11,7 @@ namespace MusicNewsWatcher.TelegramBot;
 public class MusicNewsWatcherTelegramBot : IDisposable
 {
     public bool IsStarted { get; private set; }
+    public event Action OnParsingReceived;
 
     private TelegramBotClient bot;
     private CancellationTokenSource cts;
@@ -31,6 +32,7 @@ public class MusicNewsWatcherTelegramBot : IDisposable
         //TODO убрать статический метод
         UpdateHandlers.DbContextFactory = dbFactory;
         BotCommandHandlers.dbFactory = dbFactory;
+        BotCommandHandlers.OnParsingReceived += () => OnParsingReceived?.Invoke();
     }
 
     public async Task Start()
@@ -65,6 +67,11 @@ public class MusicNewsWatcherTelegramBot : IDisposable
         botInfo = await bot.GetMeAsync(cts.Token);
 
         IsStarted = true;
+    }
+
+    public async Task SendCustomMessage(string message)
+    {
+        await bot.SendTextMessageAsync(consumerId, message, ParseMode.Html);
     }
 
     public void Stop()

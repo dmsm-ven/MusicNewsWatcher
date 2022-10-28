@@ -57,6 +57,7 @@ internal static class UpdateHandlers
         Dictionary<string, Func<Task<Message?>>> routes = new();
         routes["/tracked_artists"] = () => BotCommandHandlers.TrackedArtists(botClient, message, textCommandParams);
         routes["/last_update"] = () => BotCommandHandlers.LastUpdate(botClient, message);
+        routes["/force_update"] = () => BotCommandHandlers.ForceUpdate(botClient, message);
 
         Task<Message?> routedHandler = routes.ContainsKey(textCommand) ? 
             routes[textCommand].Invoke() : 
@@ -89,7 +90,17 @@ internal static class UpdateHandlers
 
 internal static class BotCommandHandlers
 {
+    public static event Action OnParsingReceived;
+
     public static IDbContextFactory<MusicWatcherDbContext> dbFactory { get; set; }
+
+    public static async Task<Message> ForceUpdate(ITelegramBotClient botClient, Message message)
+    {
+        OnParsingReceived?.Invoke();
+
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                text: "Запуск ...", ParseMode.Html);
+    }
 
     public static async Task<Message> LastUpdate(ITelegramBotClient botClient, Message message)
     {
@@ -161,7 +172,8 @@ internal static class BotCommandHandlers
         var usageList = new List<string>() {
             "Команды:",
             "/tracked_artists\t - Получить список отслеживаемых исполнителей",
-            "/last_update\t - дата последнего парсинга сайтов"
+            "/last_update\t - дата последнего парсинга сайтов",
+            "/force_update\t - проверить новинки сейчас"
         };
 
         string usageMessage = string.Join(Environment.NewLine, usageList);

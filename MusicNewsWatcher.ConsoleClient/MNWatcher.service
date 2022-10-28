@@ -1,0 +1,21 @@
+﻿#Установка
+#sudo cp MNWatcher.service /etc/systemd/system/MNWatcher.service
+#sudo systemctl daemon-reload
+#sudo systemctl start MNWatcher
+#Проверяем статус, работает сервис или нет
+#sudo journalctl -u WorkerApp -f
+
+[Unit]
+Description=MNWatcher parser / Telegram bot service
+
+[Service]
+WorkingDirectory=/home/mnwatcher/ftp/app
+ExecStart=/usr/bin/dotnet /home/mnwatcher/ftp/app/MusicNewsWatcher.ConsoleClient.dll
+SyslogIdentifier=WorkerApp
+User=mnwatcher
+Restart=always               
+RestartSec=15
+Environment=ASPNETCORE_ENVIRONMENT=Production
+
+[Install]
+WantedBy=multi-user.target

@@ -11,9 +11,8 @@ public class MusicUpdateManager : IDisposable
 {
     public event EventHandler<NewAlbumsFoundEventArgs> OnNewAlbumsFound;
 
-    public bool InProgress { get; private set; }
+    public bool CrawlerInProgress { get; private set; }
     public DateTime LastUpdate { get; private set; }
-
     public TimeSpan UpdateInterval
     {
         get => TimeSpan.FromMilliseconds(autoUpdateTimer.Interval);
@@ -76,6 +75,8 @@ public class MusicUpdateManager : IDisposable
 
     public async Task CheckUpdatesAllAsync()
     {
+        CrawlerInProgress = true;
+
         using var db = await dbFactory.CreateDbContextAsync();
 
         foreach (var provider in musicProviders)
@@ -90,7 +91,9 @@ public class MusicUpdateManager : IDisposable
             {
                 await CheckUpdatesForArtistAsync(db, provider, artist);
             }
-        }       
+        }
+
+        CrawlerInProgress = false;
     }
     
     public async Task CheckUpdatesForArtistAsync(MusicProviderBase provider, int artistId)
@@ -169,12 +172,18 @@ public class MusicUpdateManager : IDisposable
         Stopwatch sw = Stopwatch.StartNew();
         WriteMessageWithTime("Переобход запущен...");
 
-        await CheckUpdatesAllAsync();
-        LastUpdate = DateTime.Now;
-        await SaveLastUpdateTime();
-        RefreshInterval();
-
-        WriteMessageWithTime($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
+        if (!CrawlerInProgress)
+        {
+            await CheckUpdatesAllAsync();
+            LastUpdate = DateTime.Now;
+            await SaveLastUpdateTime();
+            RefreshInterval();
+            WriteMessageWithTime($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
+        }
+        else 
+        {
+            WriteMessageWithTime("Переобход не выполнен т.к. уже запущен в другом потоке");
+        }
     }
 
     private static void WriteMessageWithTime(string? message, ConsoleColor? color = null)

@@ -32,6 +32,8 @@ public static class Program
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
                     string connectionString = context.Configuration["ConnectionStrings:default"];
+                    Console.WriteLine(connectionString);
+
                     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
                 });
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
@@ -46,15 +48,30 @@ public static class Program
     private static async Task StartBot()
     {
         bot = host.Services.GetRequiredService<MusicNewsWatcherTelegramBot>();
+        bot.OnParsingReceived += Bot_OnParsingReceived;
         await bot.Start();
         Console.WriteLine($"Telegram bot listening, account @{bot.AccountName}");
+    }
+
+    private static async void Bot_OnParsingReceived()
+    {
+        if (!updateManager.CrawlerInProgress)
+        {
+            await updateManager.CheckUpdatesAllAsync();
+
+            await bot.SendCustomMessage("Переобход выполнен");
+        }
+        else
+        {
+            await bot.SendCustomMessage("Переобход уже в процессе выполнения");
+        }
     }
 
     private static void StartUpdateManager()
     {
         //получаем интервал обновления
         updateManager = host.Services.GetRequiredService<MusicUpdateManager>();
-        updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
+        updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;       
         updateManager.Start();
         Console.WriteLine($"Auto-update enabled, interval: {(int)updateManager.UpdateInterval.TotalMinutes} min.");
     }
