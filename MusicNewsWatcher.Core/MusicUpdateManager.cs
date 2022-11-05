@@ -43,16 +43,17 @@ public class MusicUpdateManager : IDisposable
         autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;       
     }
 
-    public async void Start()
+    public async Task Start()
     {
+        const int delayInSeconds = 5;
+
         RefreshInterval();        
         autoUpdateTimer.Start();
         
         //При запуске приложения проверяем когда был последний запуск.
-        //Если больше чем интервал, то запускаем проверку сразу (после небольшой задержки)
+        //Если больше чем интервал, то запускаем проверку сразу после небольшой задержки
         if(LastUpdate + UpdateInterval < DateTime.Now)
-        {
-            const int delayInSeconds = 5;
+        {          
             WriteMessageWithTime($"Проверка запустить через {delayInSeconds} секунд ...");
 
             await Task.Delay(TimeSpan.FromSeconds(delayInSeconds));

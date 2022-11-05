@@ -50,7 +50,7 @@ public partial class App : Application
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration["ConnectionStrings:default"];
+                    string connectionString = context.Configuration.GetConnectionString("default");
                     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
                 });
 
