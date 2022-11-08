@@ -55,7 +55,7 @@ public partial class App : Application
                 });
 
                 services.AddToasts();
-                services.AddNotifyIcon();
+                //services.AddNotifyIcon();
                 services.AddTelegramBot(context);
 
                 services.AddTransient<AddNewArtistDialogViewModel>();
