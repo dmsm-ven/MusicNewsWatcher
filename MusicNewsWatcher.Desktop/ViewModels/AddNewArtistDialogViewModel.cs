@@ -75,6 +75,8 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     private void Submit(object obj)
     {
+        if(SelectedMusicProvider == null) { return; }
+
         using (var db = contextFactory.CreateDbContext())
         {
             var entity = new ArtistEntity()
