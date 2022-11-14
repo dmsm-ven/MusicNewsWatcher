@@ -36,7 +36,7 @@ public partial class App : Application
     {
         mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
 
-        if (!mutex.WaitOne(500, false))
+        if (!mutex.WaitOne())
         {
             Application.Current.Shutdown();
         }
@@ -77,8 +77,7 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        
-
+       
         //Окно занимает 85% экрана
         double sizeRatio = 0.85;
 
@@ -89,7 +88,7 @@ public partial class App : Application
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
         mainWindow.Show();
 
-        HostContainer.Start();
+        await HostContainer.StartAsync();
     }
 
     protected override async void OnExit(ExitEventArgs e)

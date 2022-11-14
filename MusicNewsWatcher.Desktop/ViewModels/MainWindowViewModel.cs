@@ -66,7 +66,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        AddArtistCommand = new LambdaCommand(ShowNewArtistWindow);
+        AddArtistCommand = new LambdaCommand(ShowNewArtistWindow, e => SelectedMusicProvider != null);
         CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
         OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());       
         SettingsCommand = new LambdaCommand(ShowSettingsWindow);       

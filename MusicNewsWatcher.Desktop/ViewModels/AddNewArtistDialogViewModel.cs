@@ -46,8 +46,8 @@ public class AddNewArtistDialogViewModel : ViewModelBase
 
     public ArtistViewModel ContextArtist { get; private set; }
 
-    IEnumerable<ArtistViewModel> findedArtist;
-    public IEnumerable<ArtistViewModel> FindedArtists
+    List<ArtistViewModel> findedArtist;
+    public List<ArtistViewModel> FindedArtists
     {
         get => findedArtist;
         private set => Set(ref findedArtist, value);
@@ -98,7 +98,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             string.IsNullOrWhiteSpace(artistSearchName) || 
             artistSearchName.Length < 3)
         {
-            FindedArtists = Enumerable.Empty<ArtistViewModel>();
+            FindedArtists = Enumerable.Empty<ArtistViewModel>().ToList();
             return;
         }
 
@@ -118,7 +118,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
                 Image = i.Image,
                 Uri = i.Uri,
             })
-            .ToArray();
+            .ToList();
 
         FindedArtists = mappedArtists;
     }

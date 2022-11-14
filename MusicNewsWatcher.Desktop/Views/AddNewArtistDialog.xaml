@@ -9,17 +9,16 @@
         Background="Transparent"
         AllowsTransparency="True"
         WindowStyle="None"
+        Height="600" Width="400"
         MouseDown="addNewArtistDialogWindow_MouseDown"
         x:Name="addNewArtistDialogWindow"
-        MaxWidth="1200"  MinWidth="500" MinHeight="350"
-        SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance Type=vm:AddNewArtistDialogViewModel, IsDesignTimeCreatable=False}"
-        Title="Добавление/редактирование исполнителя" Height="297" Width="440">
+        Title="Добавление/редактирование исполнителя">
     <Border BorderBrush="#55737D"
-            Background="#9B323854"
+            Background="#E9323854"
             Padding="25 40 25 20"
-            BorderThickness="1" CornerRadius="8" Margin="0,0,0,-103">
+            BorderThickness="1" CornerRadius="8">
         <Grid >
             <Grid.Resources>
                 <Style TargetType="TextBlock">
@@ -50,10 +49,18 @@
                 <TextBlock Text="Артист" />
                 <TextBox Text="{Binding ArtistSearchName, UpdateSourceTrigger=PropertyChanged}" />
 
-                <ListBox ItemsSource="{Binding FindedArtists}" 
-                         SelectedValue="{Binding SelectedFindedArtists, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding FindedArtists.Length, Converter={StaticResource IntToVisibilityConverter}}" 
+                <StackPanel Visibility="{Binding FindedArtists.Count, Converter={StaticResource IntToVisibilityConverter}}">
+                    <TextBlock Text="Результат поиска по сайту" 
+                               Foreground="White" HorizontalAlignment="Right"/>
+                    <ListBox ItemsSource="{Binding FindedArtists}" 
+                             BorderThickness="0"
+                             MinHeight="40"
+                             Background="#E11B242B"
+                             Foreground="White"
+                         SelectedValue="{Binding SelectedFindedArtists, UpdateSourceTrigger=PropertyChanged}"                        
                          DisplayMemberPath="Name"/>
+                </StackPanel >
+
 
                 <TextBlock Text="URL" />
                 <TextBox Text="{Binding ContextArtist.Uri, UpdateSourceTrigger=PropertyChanged}" />
