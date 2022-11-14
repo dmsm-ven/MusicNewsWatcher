@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -28,51 +29,100 @@ public class AddNewArtistDialogViewModel : ViewModelBase
         }
     }
 
+    string artistSearchName;
+    public string ArtistSearchName
+    {
+        get => artistSearchName;
+        set
+        {
+            if(Set(ref artistSearchName, value))
+            {
+                LoadSearchResultsCommand.Execute(null);
+            }
+        }
+    }
+
     public bool IsEdit { get; private set; }
 
     public ArtistViewModel ContextArtist { get; private set; }
 
-    public ICommand SubmitCommand { get; }
-    public ICommand LoadedCommand { get; }
-
-    public AddNewArtistDialogViewModel()
+    IEnumerable<ArtistViewModel> findedArtist;
+    public IEnumerable<ArtistViewModel> FindedArtists
     {
-        LoadedCommand = new LambdaCommand(Loaded);
-        SubmitCommand = new LambdaCommand(Submit);
+        get => findedArtist;
+        private set => Set(ref findedArtist, value);
     }
 
-    public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory) : this()
+    ArtistViewModel selectedFindedArtist;
+    public ArtistViewModel SelectedFindedArtists
+    {
+        get => selectedFindedArtist;
+        set
+        {
+            if(Set(ref selectedFindedArtist, value) && selectedFindedArtist != null)
+            {
+                ArtistSearchName = selectedFindedArtist.Name;
+                ContextArtist.Name = selectedFindedArtist.Name;
+                ContextArtist.Image = selectedFindedArtist.Image;
+                ContextArtist.Uri = selectedFindedArtist.Uri;
+            }
+        }
+    }
+
+    public ICommand SubmitCommand { get; }
+    public ICommand LoadSearchResultsCommand { get; }
+
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider)
+    {
+        SubmitCommand = new LambdaCommand(Submit);
+        LoadSearchResultsCommand = new LambdaCommand(async e => await LoadSearchResults());
+        MusicProviders.Add(provider);
+        SelectedMusicProvider = provider;
+    }
+
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, IDbContextFactory<MusicWatcherDbContext> contextFactory) : this(provider)
     {
         this.contextFactory = contextFactory;
         ContextArtist = new ArtistViewModel();
     }
 
-    public AddNewArtistDialogViewModel(IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(contextFactory)
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(provider, contextFactory)
     {       
         ContextArtist = artist;
         IsEdit = true;
     }
-    
-    private void Loaded(object obj)
+
+    private async Task LoadSearchResults()
     {
-        using var db = contextFactory.CreateDbContext();
-
-        db.MusicProviders
-            .Select(mp => new MusicProviderViewModel()
-            {
-                MusicProviderId = mp.MusicProviderId,
-                Name = mp.Name,
-                Uri = mp.Uri
-            })
-            .ToList()
-            .ForEach(item => MusicProviders.Add(item));
-
-        if(ContextArtist.ParentProvider != null)
+        if (SelectedMusicProvider == null || 
+            string.IsNullOrWhiteSpace(artistSearchName) || 
+            artistSearchName.Length < 3)
         {
-            SelectedMusicProvider = MusicProviders.FirstOrDefault(mp => mp.MusicProviderId == (ContextArtist?.ParentProvider.MusicProviderId ?? 0));
+            FindedArtists = Enumerable.Empty<ArtistViewModel>();
+            return;
         }
-    }
 
+        if(ArtistSearchName == SelectedFindedArtists?.Name)
+        {
+            return;
+        }
+
+        var searchResult = await SelectedMusicProvider
+            .MusicProvider
+            .SerchArtist(artistSearchName);
+
+        var mappedArtists = searchResult
+            .Select(i => new ArtistViewModel()
+            {
+                Name = i.Name,
+                Image = i.Image,
+                Uri = i.Uri,
+            })
+            .ToArray();
+
+        FindedArtists = mappedArtists;
+    }
+    
     private void Submit(object obj)
     {
         if(SelectedMusicProvider == null) { return; }

@@ -17,10 +17,17 @@ public class ArtistViewModel : ViewModelBase
     public event Action<ArtistViewModel> OnArtistChanged;
 
     public int ArtistId { get; init; }
-    public string Name { get; set; }
+
+    string name;
+    public string Name { get => name; set => Set(ref name, value); }
+
     public string DisplayName => Name.ToDisplayName();
-    public string Uri { get; set; }
-    public string Image { get; set; }
+
+    string uri;
+    public string Uri { get => uri; set => Set(ref uri, value); }
+
+    string image;
+    public string Image { get => image; set => Set(ref image, value); }
 
     string cachedImage;
     public string CachedImage

@@ -73,7 +73,8 @@ public class MusicProviderViewModel : ViewModelBase
 
     private async void EditArtist(object obj)
     {
-        var dialogVm = new AddNewArtistDialogViewModel(dbContextFactory, SelectedArtist!);
+        var dialogVm = new AddNewArtistDialogViewModel(this, dbContextFactory, SelectedArtist!);
+
         var dialogWindow = new AddNewArtistDialog();
         dialogWindow.DataContext = dialogVm;
         if (dialogWindow.ShowDialog() == true)

@@ -4,8 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace MusicNewsWatcher.Core;
 
@@ -14,7 +17,16 @@ public sealed class MusifyMusicProvider : MusicProviderBase
     const string HOST = "https://musify.club";
     const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
 
-    public MusifyMusicProvider() : base(2, "Musify") { }
+    public MusifyMusicProvider() : base(2, "Musify") 
+    {
+        client.DefaultRequestHeaders.Add("Accept", "application/json, text/javascript, */*; q=0.01");
+        client.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+        client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+        client.DefaultRequestHeaders.Add("Pragma", "no-cache");
+        client.DefaultRequestHeaders.Add("User-Agent", "insomnia/2022.6.0");
+        client.DefaultRequestHeaders.Add("Referer", HOST);
+    }
 
     public override async Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist)
     {
@@ -87,6 +99,38 @@ public sealed class MusifyMusicProvider : MusicProviderBase
             }
         }
         return Enumerable.Empty<TrackEntity>().ToArray();
+    }
+
+    public override async Task<ArtistEntity[]> SerchArtist(string searchText)
+    {
+        string uri = $"{HOST}/search/suggestions?term={HttpUtility.UrlEncode(searchText)}";
+        
+        try
+        {
+            var response = await client.GetFromJsonAsync<MusifySearchResultDto[]>(uri);
+            if (response.Length > 0)
+            {
+                var data = response
+                    .Where(i => i.category == "Исполнители")
+                    .Take(10)
+                    .Select(i => new ArtistEntity()
+                    {
+                        Name = i.label,
+                        Image = i.image,
+                        Uri = HOST + i.url
+                    })
+                    .ToArray();
+
+                return data;
+            }
+        }
+        catch (Exception ex)
+        {
+            
+        }
+
+
+        return await base.SerchArtist(searchText);
     }
 
     enum MusifyAlbumType 
