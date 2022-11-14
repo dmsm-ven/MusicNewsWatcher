@@ -42,6 +42,8 @@ public class MainWindowViewModel : ViewModelBase
         get => selectedMusicProvider;
         set
         {
+            if (IsLoading) { return; }
+
             if(selectedMusicProvider != null)
             {
                 selectedMusicProvider.IsActiveProvider = false;
@@ -94,7 +96,7 @@ public class MainWindowViewModel : ViewModelBase
     private void ShowNewArtistWindow(object obj)
     {
         var dialogWindow = App.HostContainer.Services.GetRequiredService<AddNewArtistDialog>();
-        dialogWindow.DataContext = App.HostContainer.Services.GetRequiredService<AddNewArtistDialogViewModel>();
+        dialogWindow.DataContext = new AddNewArtistDialogViewModel(SelectedMusicProvider, dbCotextFactory);
         dialogWindow.ShowDialog();
     }
 
@@ -115,9 +117,9 @@ public class MainWindowViewModel : ViewModelBase
        
         using var db = await dbCotextFactory.CreateDbContextAsync();
 
-        var source = db.MusicProviders
+        var source = await db.MusicProviders
             .Include(p => p.Artists)
-            .ToList();
+            .ToListAsync();
 
         foreach(var provider in source)
         {           
@@ -149,8 +151,11 @@ public class MainWindowViewModel : ViewModelBase
             MusicProviders.Add(providerVm);
         }
 
-
         IsLoading = false;
+        SelectedMusicProvider = MusicProviders.LastOrDefault();
+
+
+        
     }
 
 }

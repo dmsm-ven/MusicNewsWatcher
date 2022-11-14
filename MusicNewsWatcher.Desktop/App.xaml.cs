@@ -77,7 +77,7 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        await HostContainer.StartAsync();
+        
 
         //Окно занимает 85% экрана
         double sizeRatio = 0.85;
@@ -88,6 +88,8 @@ public partial class App : Application
         mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
         mainWindow.Show();
+
+        HostContainer.Start();
     }
 
     protected override async void OnExit(ExitEventArgs e)

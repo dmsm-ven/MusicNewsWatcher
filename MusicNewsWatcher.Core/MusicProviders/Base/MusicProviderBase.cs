@@ -13,6 +13,10 @@ public abstract class MusicProviderBase
 
     public abstract Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist);
     public abstract Task<TrackEntity[]> GetTracksAsync(AlbumEntity album);
+    public virtual Task<ArtistEntity[]> SerchArtist(string searchText)
+    {
+        return Task.FromResult(Enumerable.Empty<ArtistEntity>().ToArray());
+    }
 
     protected MusicProviderBase(int id, string name)
     {
@@ -41,4 +45,5 @@ public abstract class MusicProviderBase
             return null;
         }
     }
+
 }
