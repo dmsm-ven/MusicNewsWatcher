@@ -37,6 +37,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
         {
             if(Set(ref artistSearchName, value))
             {
+                ContextArtist.Name = artistSearchName;
                 LoadSearchResultsCommand.Execute(null);
             }
         }
@@ -80,16 +81,20 @@ public class AddNewArtistDialogViewModel : ViewModelBase
         SelectedMusicProvider = provider;
     }
 
-    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, IDbContextFactory<MusicWatcherDbContext> contextFactory) : this(provider)
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, 
+        IDbContextFactory<MusicWatcherDbContext> contextFactory) : this(provider)
     {
         this.contextFactory = contextFactory;
         ContextArtist = new ArtistViewModel();
     }
 
-    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, IDbContextFactory<MusicWatcherDbContext> contextFactory, ArtistViewModel artist) : this(provider, contextFactory)
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, 
+        IDbContextFactory<MusicWatcherDbContext> contextFactory, 
+        ArtistViewModel artist) : this(provider, contextFactory)
     {       
         ContextArtist = artist;
         IsEdit = true;
+        artistSearchName = artist.Name;
     }
 
     private async Task LoadSearchResults()

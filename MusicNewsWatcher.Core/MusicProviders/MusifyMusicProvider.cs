@@ -16,16 +16,25 @@ public sealed class MusifyMusicProvider : MusicProviderBase
 {
     const string HOST = "https://musify.club";
     const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
+    private readonly HttpClient searchClient;
 
     public MusifyMusicProvider() : base(2, "Musify") 
     {
-        client.DefaultRequestHeaders.Add("Accept", "application/json, text/javascript, */*; q=0.01");
-        client.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-        client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
-        client.DefaultRequestHeaders.Add("Pragma", "no-cache");
-        client.DefaultRequestHeaders.Add("User-Agent", "insomnia/2022.6.0");
-        client.DefaultRequestHeaders.Add("Referer", HOST);
+        searchClient = new HttpClient(new HttpClientHandler()
+        {
+            AllowAutoRedirect = true,
+            CookieContainer = new CookieContainer(),
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            UseCookies = true
+        });
+
+        searchClient.DefaultRequestHeaders.Add("Accept", "application/json, text/javascript, */*; q=0.01");
+        searchClient.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
+        searchClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+        searchClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+        searchClient.DefaultRequestHeaders.Add("Pragma", "no-cache");
+        searchClient.DefaultRequestHeaders.Add("User-Agent", "insomnia/2022.6.0");
+        searchClient.DefaultRequestHeaders.Add("Referer", HOST);
     }
 
     public override async Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist)
@@ -107,7 +116,7 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         
         try
         {
-            var response = await client.GetFromJsonAsync<MusifySearchResultDto[]>(uri);
+            var response = await searchClient.GetFromJsonAsync<MusifySearchResultDto[]>(uri);
             if (response.Length > 0)
             {
                 var data = response

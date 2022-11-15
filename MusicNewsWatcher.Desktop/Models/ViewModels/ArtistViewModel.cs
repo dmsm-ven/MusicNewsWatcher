@@ -137,6 +137,11 @@ public class ArtistViewModel : ViewModelBase
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
     }
 
+    public ArtistViewModel(MusicProviderViewModel parent) : this()
+    {
+        ParentProvider = parent;
+    }
+
     private async Task DownloadCheckedAlbums()
     {
         foreach(var album in Albums.Where(a => a.IsChecked == true))
@@ -161,18 +166,13 @@ public class ArtistViewModel : ViewModelBase
         await RefreshSource();
     }
 
-    public ArtistViewModel(MusicProviderViewModel parent) : this()
-    {
-        ParentProvider = parent;
-    }
-
     private async Task RefreshSource()
     {
         InProgress = true;
 
         using var db = await dbFactory.CreateDbContextAsync();
 
-        if (await db.Albums.Where(a => a.ArtistId == ArtistId).CountAsync() != Albums.Count)
+        if (await db.Albums.Where(a => a.ArtistId == ArtistId).CountAsync() != Albums.Count || Albums.Count == 0)
         {
             Albums.Clear();
 
