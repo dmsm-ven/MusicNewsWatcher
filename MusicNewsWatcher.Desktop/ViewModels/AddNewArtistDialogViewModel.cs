@@ -39,6 +39,7 @@ public class AddNewArtistDialogViewModel : ViewModelBase
             {
                 ContextArtist.Name = artistSearchName;
                 LoadSearchResultsCommand.Execute(null);
+
             }
         }
     }
