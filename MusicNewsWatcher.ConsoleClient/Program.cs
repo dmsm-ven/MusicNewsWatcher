@@ -6,13 +6,9 @@ using MusicNewsWatcher.TelegramBot;
 
 public static class Program
 {
-    static MusicNewsWatcherTelegramBot bot;
-    static MusicUpdateManager updateManager;
-    static IHost host;
-    
     public static async Task Main(string[] args)
     {
-        host = Host.CreateDefaultBuilder(args)
+        var host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) =>
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
@@ -27,6 +23,8 @@ public static class Program
                 services.AddSingleton<MusicUpdateManager>();
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
                 services.AddSingleton<MusicNewsWatcherTelegramBot>();
+
+                services.AddHostedService<WindowsBackgroundService>();
             })
             .Build();
 
@@ -38,4 +36,31 @@ public static class Program
     }
 }
 
+
+public sealed class WindowsBackgroundService : BackgroundService
+{
+    private readonly MusicUpdateManager updateManager;
+
+    public WindowsBackgroundService(MusicUpdateManager updateManager)
+    {
+        this.updateManager = updateManager;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await updateManager.Start();
+
+            while (!stoppingToken.IsCancellationRequested)
+            {               
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            Environment.Exit(1);
+        }
+    }
+}
 

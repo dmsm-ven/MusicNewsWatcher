@@ -41,7 +41,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Provider Menu -->
-            <Border Grid.Column="0" Style="{StaticResource MainSectionBorder}"                    
+            <Border Grid.Column="0" Style="{StaticResource MainSectionBorder}"
                     Background="{StaticResource ProvidersMenuBackground}">
                 <vp:ProvidersMenuView Grid.Row="1" DataContext="{Binding}" />
             </Border>

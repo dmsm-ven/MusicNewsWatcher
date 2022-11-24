@@ -9,7 +9,7 @@
         Background="Transparent"
         AllowsTransparency="True"
         WindowStyle="None"
-        Height="396" Width="864"
+        Height="370" Width="864"
         MouseDown="addNewArtistDialogWindow_MouseDown"
         x:Name="addNewArtistDialogWindow"
         WindowStartupLocation="CenterScreen"
@@ -17,8 +17,8 @@
         Title="Добавление/редактирование исполнителя">
     <Border BorderBrush="#55737D"
             Background="#E9323854"
-            Padding="25 40 25 20"
-            BorderThickness="1" CornerRadius="8" Margin="0,0,0,-35">
+            Padding="20 10"
+            BorderThickness="1" CornerRadius="8">
         <Grid >
             <Grid.Resources>
                 <Style TargetType="TextBlock">
