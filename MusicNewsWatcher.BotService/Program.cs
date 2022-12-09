@@ -13,7 +13,7 @@ public static class Program
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration["ConnectionStrings:default"];
+                    string connectionString = context.Configuration["ConnectionStrings:docker"];
                     options.UseNpgsql(connectionString);
                 });
 

@@ -5,12 +5,12 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["MusicNewsWatcher.ConsoleClient/MusicNewsWatcher.BotService.csproj", "MusicNewsWatcher.ConsoleClient/"]
+COPY ["MusicNewsWatcher.BotService/MusicNewsWatcher.BotService.csproj", "MusicNewsWatcher.BotService/"]
 COPY ["MusicNewsWatcher.TelegramBot/MusicNewsWatcher.TelegramBot.csproj", "MusicNewsWatcher.TelegramBot/"]
 COPY ["MusicNewsWatcher.Core/MusicNewsWatcher.Core.csproj", "MusicNewsWatcher.Core/"]
-RUN dotnet restore "MusicNewsWatcher.ConsoleClient/MusicNewsWatcher.BotService.csproj"
+RUN dotnet restore "MusicNewsWatcher.BotService/MusicNewsWatcher.BotService.csproj"
 COPY . .
-WORKDIR "/src/MusicNewsWatcher.ConsoleClient"
+WORKDIR "/src/MusicNewsWatcher.BotService"
 RUN dotnet build "MusicNewsWatcher.BotService.csproj" -c Release -o /app/build
 
 FROM build AS publish

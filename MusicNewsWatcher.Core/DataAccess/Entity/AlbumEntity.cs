@@ -19,7 +19,7 @@ public class AlbumEntity
     public string Title { get; set; }
 
     [Column(name: "created")]
-    public DateTime Created { get; set; } = DateTime.Now.Date;
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
     [Column(name: "isviewed")]
     public bool IsViewed { get; set; }

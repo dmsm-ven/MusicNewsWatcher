@@ -184,7 +184,7 @@ public class MusicUpdateManager : IDisposable
         if (!CrawlerInProgress)
         {
             await CheckUpdatesAllAsync();
-            LastUpdate = DateTime.Now;
+            LastUpdate = DateTime.UtcNow;
             await SaveLastUpdateTime();
             RefreshInterval();
             logger.LogInformation($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
