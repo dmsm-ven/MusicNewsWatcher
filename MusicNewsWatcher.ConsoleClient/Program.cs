@@ -14,10 +14,9 @@ public static class Program
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
                     string connectionString = context.Configuration["ConnectionStrings:default"];
-                    Console.WriteLine(connectionString);
-
-                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    options.UseNpgsql(connectionString);
                 });
+
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
                 services.AddSingleton<MusicUpdateManager>();
@@ -33,34 +32,6 @@ public static class Program
 
         //Должен быть последним, что бы обрабатывать завершение от systemctl stop
         await host.RunAsync();
-    }
-}
-
-
-public sealed class WindowsBackgroundService : BackgroundService
-{
-    private readonly MusicUpdateManager updateManager;
-
-    public WindowsBackgroundService(MusicUpdateManager updateManager)
-    {
-        this.updateManager = updateManager;
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        try
-        {
-            await updateManager.Start();
-
-            while (!stoppingToken.IsCancellationRequested)
-            {               
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-            }
-        }
-        catch (Exception ex)
-        {
-            Environment.Exit(1);
-        }
     }
 }
 

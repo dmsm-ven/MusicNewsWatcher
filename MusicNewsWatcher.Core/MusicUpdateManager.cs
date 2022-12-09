@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Globalization;
 using System.Timers;
@@ -23,7 +24,7 @@ public class MusicUpdateManager : IDisposable
             {
                 throw new ArgumentOutOfRangeException(nameof(UpdateInterval), "cannot update often than 1 min.");
             }
-            if(inMs != autoUpdateTimer.Interval)
+            if (inMs != autoUpdateTimer.Interval)
             {
                 autoUpdateTimer.Interval = inMs;
             }
@@ -32,34 +33,40 @@ public class MusicUpdateManager : IDisposable
 
     private readonly List<MusicProviderBase> musicProviders;
     private readonly System.Timers.Timer autoUpdateTimer;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;  
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly ILogger<MusicUpdateManager> logger;
 
-    public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders, 
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
+    public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
+        IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
+        ILogger<MusicUpdateManager> logger)
     {
         this.musicProviders = musicProviders.ToList();
         this.dbFactory = dbContextFactory;
+        this.logger = logger;
         autoUpdateTimer = new System.Timers.Timer();
-        autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;       
+        autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
     }
 
     public async Task Start()
     {
+        logger.LogInformation("Запуск парсера");
         const int delayInSeconds = 5;
 
-        RefreshInterval();        
+        RefreshInterval();
         autoUpdateTimer.Start();
-        
+
         //При запуске приложения проверяем когда был последний запуск.
         //Если больше чем интервал, то запускаем проверку сразу после небольшой задержки
-        if(LastUpdate + UpdateInterval < DateTime.Now)
-        {          
-            WriteMessageWithTime($"Проверка запустить через {delayInSeconds} секунд ...");
+        if (LastUpdate + UpdateInterval < DateTime.Now)
+        {
+            logger.LogInformation($"Проверка запустить через {delayInSeconds} секунд ...");
 
             await Task.Delay(TimeSpan.FromSeconds(delayInSeconds));
 
             AutoUpdateTimer_Elapsed(this, null);
         }
+
+        logger.LogInformation("Парсер запущен");
     }
 
     private void RefreshInterval()
@@ -76,6 +83,8 @@ public class MusicUpdateManager : IDisposable
 
     public async Task CheckUpdatesAllAsync()
     {
+        logger.LogInformation("Запуск переобхода парсером");
+
         CrawlerInProgress = true;
 
         using var db = await dbFactory.CreateDbContextAsync();
@@ -88,18 +97,17 @@ public class MusicUpdateManager : IDisposable
                 .Single(p => p.MusicProviderId == provider.Id)
                 .Artists;
 
-            foreach (var artist in providerArtists)
-            {
-                await CheckUpdatesForArtistAsync(db, provider, artist);
-            }
+            var tasks = providerArtists.Select(a => CheckUpdatesForArtistAsync(db, provider, a));
+            await Task.WhenAll(tasks.ToArray());
         }
 
         CrawlerInProgress = false;
+        logger.LogInformation("Переобход парсером завершен");
     }
-    
+
     public async Task CheckUpdatesForArtistAsync(MusicProviderBase provider, int artistId)
     {
-        using(var db = await dbFactory.CreateDbContextAsync())
+        using (var db = await dbFactory.CreateDbContextAsync())
         {
             var artist = db.Artists.Include(x => x.Albums).Single(a => a.ArtistId == artistId);
 
@@ -141,7 +149,7 @@ public class MusicUpdateManager : IDisposable
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
-        var album = db.Albums.Find(albumId);       
+        var album = db.Albums.Find(albumId);
         var tracks = await provider.GetTracksAsync(album);
 
         album.Tracks.Clear();
@@ -165,13 +173,13 @@ public class MusicUpdateManager : IDisposable
         {
             db.Settings.Add(new SettingsEntity() { Name = settingsKey, Value = LastUpdate.ToString(dtFormat) });
         }
-        db.SaveChanges();     
+        db.SaveChanges();
     }
 
     private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
         Stopwatch sw = Stopwatch.StartNew();
-        WriteMessageWithTime("Переобход запущен...");
+        logger.LogInformation("Переобход запущен...");
 
         if (!CrawlerInProgress)
         {
@@ -179,26 +187,7 @@ public class MusicUpdateManager : IDisposable
             LastUpdate = DateTime.Now;
             await SaveLastUpdateTime();
             RefreshInterval();
-            WriteMessageWithTime($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
-        }
-        else 
-        {
-            WriteMessageWithTime("Переобход не выполнен т.к. уже запущен в другом потоке");
-        }
-    }
-
-    private static void WriteMessageWithTime(string? message, ConsoleColor? color = null)
-    {
-        if (color.HasValue)
-        {
-            Console.ForegroundColor = color.Value;
-        }
-
-        Console.WriteLine($"[{DateTime.Now.ToString()}] {message ?? "<пусто>"}");
-
-        if (color.HasValue)
-        {
-            Console.ResetColor();
+            logger.LogInformation($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
         }
     }
 

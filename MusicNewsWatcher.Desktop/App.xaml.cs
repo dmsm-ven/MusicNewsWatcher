@@ -46,12 +46,12 @@ public partial class App : Application
             {
                 options.AddUserSecrets(this.GetType().Assembly);
             })
-            .ConfigureServices((context,services) =>
+            .ConfigureServices((context, services) =>
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration.GetConnectionString("default");
-                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    string connectionString = context.Configuration.GetConnectionString("remote");
+                    options.UseNpgsql(connectionString);
                 });
 
                 services.AddToasts();
@@ -72,12 +72,12 @@ public partial class App : Application
                 services.AddSingleton<MainWindowViewModel>();
             })
             .Build();
-      
+
     }
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-       
+
         //Окно занимает 85% экрана
         double sizeRatio = 0.85;
 
@@ -87,19 +87,7 @@ public partial class App : Application
         mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
         mainWindow.Show();
-
-        await HostContainer.StartAsync();
     }
-
-    protected override async void OnExit(ExitEventArgs e)
-    {
-        await HostContainer.StopAsync();
-        mutex.ReleaseMutex();
-        mutex.Dispose();
-        base.OnExit(e);
-    }
-
-
 }
 
 public static class ConfigureServicesAppExtensions

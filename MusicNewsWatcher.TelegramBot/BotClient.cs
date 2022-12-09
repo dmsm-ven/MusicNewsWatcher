@@ -21,10 +21,10 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     private readonly string? consumerId;
 
     private TelegramBotClient botClient;
-    
+
     public MusicNewsWatcherTelegramBot(
         MusicUpdateManager updateManager,
-        IMusicNewsMessageFormatter formatter,  
+        IMusicNewsMessageFormatter formatter,
         IDbContextFactory<MusicWatcherDbContext> dbFactory,
         IConfiguration configuration)
     {
@@ -48,13 +48,15 @@ public class MusicNewsWatcherTelegramBot : IDisposable
 
     public async Task Start()
     {
+        Console.WriteLine($"[{DateTime.Now}]Запуск бота");
+
         if (IsStarted)
         {
             throw new NotSupportedException();
         }
 
         botClient = new TelegramBotClient(apiToken);
-    
+
         var thBotMessageHandler = new TelegramBotRoutes(botClient, dbFactory);
         botClient.StartReceiving(thBotMessageHandler);
 
@@ -67,6 +69,7 @@ public class MusicNewsWatcherTelegramBot : IDisposable
             var text = formatter.BuildNewAlbumsFoundMessage(e.Provider, e.Artist, e.NewAlbums);
             botClient.SendTextMessageAsync(consumerId, text, ParseMode.Html);
         };
+
         thBotMessageHandler.OnForceUpdateCommandRecevied += async () =>
         {
             await updateManager.CheckUpdatesAllAsync();
@@ -75,6 +78,7 @@ public class MusicNewsWatcherTelegramBot : IDisposable
         updateManager.Start();
 
         IsStarted = true;
+        Console.WriteLine($"[{DateTime.Now}] Бот запущен!");
     }
 
     public void Stop()

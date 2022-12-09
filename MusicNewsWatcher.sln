@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.Desktop", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.TelegramBot", "MusicNewsWatcher.TelegramBot\MusicNewsWatcher.TelegramBot.csproj", "{D489C84D-CB86-4939-BBE5-25A955C77DD9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.ConsoleClient", "MusicNewsWatcher.ConsoleClient\MusicNewsWatcher.ConsoleClient.csproj", "{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.BotService", "MusicNewsWatcher.ConsoleClient\MusicNewsWatcher.BotService.csproj", "{D5B2ECCE-4AB3-40C9-94D5-A84A6714D358}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewsWatcher.Core", "MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj", "{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.Core", "MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj", "{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
