@@ -13,7 +13,7 @@ public static class Program
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration["ConnectionStrings:docker"];
+                    string connectionString = context.Configuration["ConnectionStrings:remote_docker"];
                     options.UseNpgsql(connectionString);
                 });
 
@@ -23,12 +23,10 @@ public static class Program
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
                 services.AddSingleton<MusicNewsWatcherTelegramBot>();
 
-                services.AddHostedService<WindowsBackgroundService>();
+                // Запускает Телеграм бота и службу обновления(парсер)
+                services.AddHostedService<ServiceBackgroundWorker>();
             })
             .Build();
-
-        //запускает телеграм бота для оповещения об обновлениях/ответа на запросы
-        await host.Services.GetRequiredService<MusicNewsWatcherTelegramBot>().Start();
 
         //Должен быть последним, что бы обрабатывать завершение от systemctl stop
         await host.RunAsync();

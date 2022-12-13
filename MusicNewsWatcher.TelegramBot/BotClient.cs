@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
@@ -10,11 +11,23 @@ namespace MusicNewsWatcher.TelegramBot;
 
 public class MusicNewsWatcherTelegramBot : IDisposable
 {
+    private TelegramBotRoutes thBotMessageHandler;
     public bool IsStarted { get; private set; }
 
-    private readonly MusicUpdateManager updateManager;
-    private readonly IMusicNewsMessageFormatter formatter;
+    public event Action OnForceUpdateCommandReceved
+    {
+        add
+        {
+            thBotMessageHandler.OnForceUpdateCommandRecevied += value;
+        }
+        remove
+        {
+            thBotMessageHandler.OnForceUpdateCommandRecevied -= value;
+        }
+    }
+
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly ILogger<MusicNewsWatcherTelegramBot> logger;
 
     private readonly CancellationTokenSource cts;
     private readonly string? apiToken;
@@ -23,62 +36,44 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     private TelegramBotClient botClient;
 
     public MusicNewsWatcherTelegramBot(
-        MusicUpdateManager updateManager,
-        IMusicNewsMessageFormatter formatter,
         IDbContextFactory<MusicWatcherDbContext> dbFactory,
-        IConfiguration configuration)
+        ILogger<MusicNewsWatcherTelegramBot> logger)
     {
-        this.updateManager = updateManager;
-        this.formatter = formatter;
         this.dbFactory = dbFactory;
-
+        this.logger = logger;
         cts = new CancellationTokenSource();
-        apiToken = configuration["TelegramBot:ApiKey"];
-        if (string.IsNullOrWhiteSpace(apiToken))
-        {
-            throw new ArgumentNullException(nameof(apiToken), "Telegram api token not provided");
-        }
-
-        consumerId = configuration["TelegramBot:ClientId"];
-        if (string.IsNullOrWhiteSpace(consumerId))
-        {
-            throw new ArgumentNullException(nameof(consumerId), "Telegram consumerId not provided");
-        }
     }
 
-    public async Task Start()
+    public async Task Start(string apiToken, string consumerId)
     {
-        Console.WriteLine($"[{DateTime.Now}]Запуск бота");
-
         if (IsStarted)
         {
             throw new NotSupportedException();
         }
 
-        botClient = new TelegramBotClient(apiToken);
+        if (string.IsNullOrWhiteSpace(apiToken))
+        {
+            throw new ArgumentNullException(nameof(apiToken), "Telegram api token not provided");
+        }
 
-        var thBotMessageHandler = new TelegramBotRoutes(botClient, dbFactory);
+        if (string.IsNullOrWhiteSpace(consumerId))
+        {
+            throw new ArgumentNullException(nameof(consumerId), "Telegram consumerId not provided");
+        }
+
+        logger.LogInformation("Запуск бота");
+
+        botClient = new TelegramBotClient(apiToken);
+        thBotMessageHandler = new TelegramBotRoutes(botClient, dbFactory);
         botClient.StartReceiving(thBotMessageHandler);
 
-
-        //botInfo = await botClient.GetMeAsync(cts.Token); тут например можем узнать название бота
-
-
-        updateManager.OnNewAlbumsFound += (o, e) =>
-        {
-            var text = formatter.BuildNewAlbumsFoundMessage(e.Provider, e.Artist, e.NewAlbums);
-            botClient.SendTextMessageAsync(consumerId, text, ParseMode.Html);
-        };
-
-        thBotMessageHandler.OnForceUpdateCommandRecevied += async () =>
-        {
-            await updateManager.CheckUpdatesAllAsync();
-        };
-
-        updateManager.Start();
-
         IsStarted = true;
-        Console.WriteLine($"[{DateTime.Now}] Бот запущен!");
+        logger.LogInformation("Бот запущен!");
+    }
+
+    public async Task SendTextMessageAsync(string text)
+    {
+        await botClient.SendTextMessageAsync(consumerId, text, Telegram.Bot.Types.Enums.ParseMode.Html);
     }
 
     public void Stop()
@@ -90,6 +85,5 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     {
         cts?.Cancel();
         cts?.Dispose();
-        updateManager.Dispose();
     }
 }

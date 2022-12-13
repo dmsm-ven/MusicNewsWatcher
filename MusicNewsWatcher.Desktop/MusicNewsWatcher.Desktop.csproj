@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="appsettings.json" />
 		<None Remove="Assets\background-texture.jpg" />
 		<None Remove="Assets\bandcamp-logo.png" />
 		<None Remove="Assets\bricks.jpg" />
@@ -17,6 +18,12 @@
 		<None Remove="Assets\musify-logo.png" />
 		<None Remove="Assets\settings-window-background-texture.jpg" />
 		<None Remove="logo.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="appsettings.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<ItemGroup>

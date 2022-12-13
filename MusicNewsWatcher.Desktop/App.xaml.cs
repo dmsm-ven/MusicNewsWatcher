@@ -44,13 +44,13 @@ public partial class App : Application
         HostContainer = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(options =>
             {
-                options.AddUserSecrets(this.GetType().Assembly);
+                //options.AddUserSecrets(this.GetType().Assembly);
             })
             .ConfigureServices((context, services) =>
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration.GetConnectionString("remote");
+                    string connectionString = context.Configuration.GetConnectionString("default");
                     options.UseNpgsql(connectionString);
                 });
 

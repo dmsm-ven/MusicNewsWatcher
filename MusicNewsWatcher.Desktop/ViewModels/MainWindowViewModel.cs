@@ -18,7 +18,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
     private readonly IToastsNotifier toasts;
-    
+
     public string Title
     {
         get
@@ -29,7 +29,7 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    bool isLoading;
+    bool isLoading = true;
     public bool IsLoading
     {
         get => isLoading;
@@ -44,7 +44,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             if (IsLoading) { return; }
 
-            if(selectedMusicProvider != null)
+            if (selectedMusicProvider != null)
             {
                 selectedMusicProvider.IsActiveProvider = false;
             }
@@ -56,8 +56,8 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } 
-    
+    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; }
+
     public ICommand LoadedCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
     public ICommand SettingsCommand { get; }
@@ -68,14 +68,14 @@ public class MainWindowViewModel : ViewModelBase
     {
         AddArtistCommand = new LambdaCommand(ShowNewArtistWindow, e => SelectedMusicProvider != null);
         CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
-        OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());       
-        SettingsCommand = new LambdaCommand(ShowSettingsWindow);       
-        LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());       
+        OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());
+        SettingsCommand = new LambdaCommand(ShowSettingsWindow);
+        LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());
         MusicProviders = new ObservableCollection<MusicProviderViewModel>();
     }
 
     public MainWindowViewModel(
-        IEnumerable<MusicProviderBase> musicProviders, 
+        IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
         MusicUpdateManager updateManager,
         IToastsNotifier toasts) : this()
@@ -114,15 +114,15 @@ public class MainWindowViewModel : ViewModelBase
 
         Dictionary<int, MusicProviderBase> dic = musicProviders.ToDictionary(i => i.Id, i => i);
         IsLoading = true;
-       
+
         using var db = await dbCotextFactory.CreateDbContextAsync();
 
         var source = await db.MusicProviders
             .Include(p => p.Artists)
             .ToListAsync();
 
-        foreach(var provider in source)
-        {           
+        foreach (var provider in source)
+        {
             var providerVm = new MusicProviderViewModel()
             {
                 MusicProvider = dic[provider.MusicProviderId],
@@ -132,7 +132,7 @@ public class MainWindowViewModel : ViewModelBase
                 MusicProviderId = provider.MusicProviderId,
                 TrackedArtistsCount = provider.Artists.Count,
             };
-            
+
             foreach (var artist in provider.Artists)
             {
                 var artistVm = new ArtistViewModel(providerVm)
@@ -155,7 +155,7 @@ public class MainWindowViewModel : ViewModelBase
         SelectedMusicProvider = MusicProviders.LastOrDefault();
 
 
-        
+
     }
 
 }
