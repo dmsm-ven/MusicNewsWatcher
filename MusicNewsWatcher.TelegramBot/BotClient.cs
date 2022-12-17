@@ -1,11 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using MusicNewsWatcher.Core;
+﻿using Microsoft.Extensions.Logging;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace MusicNewsWatcher.TelegramBot;
 
@@ -14,71 +8,59 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     private TelegramBotRoutes thBotMessageHandler;
     public bool IsStarted { get; private set; }
 
-    public event Action OnForceUpdateCommandReceved
-    {
-        add
-        {
-            thBotMessageHandler.OnForceUpdateCommandRecevied += value;
-        }
-        remove
-        {
-            thBotMessageHandler.OnForceUpdateCommandRecevied -= value;
-        }
-    }
-
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly ITelegramBotClient botClient;
+    private readonly TelegramBotRoutes botRoutes;
     private readonly ILogger<MusicNewsWatcherTelegramBot> logger;
 
-    private readonly CancellationTokenSource cts;
-    private readonly string? apiToken;
-    private readonly string? consumerId;
+    private readonly CancellationTokenSource cts = new();
+    private string? consumerId;
 
-    private TelegramBotClient botClient;
-
-    public MusicNewsWatcherTelegramBot(
-        IDbContextFactory<MusicWatcherDbContext> dbFactory,
+    public MusicNewsWatcherTelegramBot(ITelegramBotClient botClient,
+        TelegramBotRoutes botRoutes,
         ILogger<MusicNewsWatcherTelegramBot> logger)
     {
-        this.dbFactory = dbFactory;
+        this.botClient = botClient ?? throw new ArgumentNullException(nameof(botClient));
+        this.botRoutes = botRoutes ?? throw new ArgumentNullException(nameof(botRoutes));
         this.logger = logger;
-        cts = new CancellationTokenSource();
     }
 
-    public async Task Start(string apiToken, string consumerId)
+    public void Start(string consumerId)
     {
+        this.consumerId = consumerId;
+
         if (IsStarted)
         {
+            logger.LogError("Бот был уже запущен");
             throw new NotSupportedException();
-        }
-
-        if (string.IsNullOrWhiteSpace(apiToken))
-        {
-            throw new ArgumentNullException(nameof(apiToken), "Telegram api token not provided");
         }
 
         if (string.IsNullOrWhiteSpace(consumerId))
         {
+            logger.LogError("Telegram consumerId not provided");
             throw new ArgumentNullException(nameof(consumerId), "Telegram consumerId not provided");
         }
 
-        logger.LogInformation("Запуск бота");
+        logger.LogInformation("Запуск бота ...");
 
-        botClient = new TelegramBotClient(apiToken);
-        thBotMessageHandler = new TelegramBotRoutes(botClient, dbFactory);
-        botClient.StartReceiving(thBotMessageHandler);
+        botClient.StartReceiving(botRoutes);
 
         IsStarted = true;
-        logger.LogInformation("Бот запущен!");
+
+        logger.LogInformation("Бот запущен");
     }
 
     public async Task SendTextMessageAsync(string text)
     {
         await botClient.SendTextMessageAsync(consumerId, text, Telegram.Bot.Types.Enums.ParseMode.Html);
+
+        logger.LogInformation("Отправка сообщения");
     }
 
     public void Stop()
     {
         cts.Cancel();
+
+        logger.LogInformation("Бот остановлен");
     }
 
     public void Dispose()

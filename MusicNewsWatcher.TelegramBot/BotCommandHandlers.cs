@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using System.Globalization;
 using System.Text;
@@ -9,15 +10,19 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-internal class TelegramBotCommandHandlers
+public class TelegramBotCommandHandlers
 {
     private readonly ITelegramBotClient botClient;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
+    private readonly ILogger<TelegramBotCommandHandlers> logger;
 
-    public TelegramBotCommandHandlers(ITelegramBotClient botClient, IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
+    public TelegramBotCommandHandlers(ITelegramBotClient botClient,
+        IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
+        ILogger<TelegramBotCommandHandlers> logger)
     {
         this.botClient = botClient;
         this.dbContextFactory = dbContextFactory;
+        this.logger = logger;
     }
 
     public async Task<Message> Usage(Message message)
@@ -63,9 +68,9 @@ internal class TelegramBotCommandHandlers
         string replyText = sb.ToString();
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                         text: replyText, ParseMode.Html);
-        
+
     }
-    
+
     public async Task<Message> TrackedArtistsForProvider(Update update, string providerName)
     {
         var chatId = update.CallbackQuery.From.Id;

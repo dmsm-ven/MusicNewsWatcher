@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -17,12 +18,13 @@ public class TelegramBotRoutes : IUpdateHandler
     private readonly TelegramBotCommandHandlers commandHandlers;
     private readonly ITelegramBotClient botClient;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
+    private readonly ILogger<TelegramBotRoutes> logger;
 
-    public TelegramBotRoutes(ITelegramBotClient botClient, IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
+    public TelegramBotRoutes(TelegramBotCommandHandlers commandHandlers,
+        ILogger<TelegramBotRoutes> looger)
     {
-        this.botClient = botClient;
-        this.dbContextFactory = dbContextFactory;
-        this.commandHandlers = new TelegramBotCommandHandlers(botClient, dbContextFactory);
+        this.commandHandlers = commandHandlers ?? throw new ArgumentNullException(nameof(commandHandlers));
+        this.logger = looger;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -57,12 +59,15 @@ public class TelegramBotRoutes : IUpdateHandler
 
     public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        logger.LogError(exception, "Ошибка роутинга");
+        return Task.CompletedTask;
     }
 
     private Task BotOnMessageReceived(Message message)
     {
-        if (string.IsNullOrWhiteSpace(message.Text))
+        logger.LogInformation("Получена команда: " + message?.Text ?? "<Пусто>");
+
+        if (string.IsNullOrWhiteSpace(message?.Text))
             return Task.CompletedTask;
 
         Dictionary<string, Func<Task<Message?>>> routes = new();
@@ -72,12 +77,13 @@ public class TelegramBotRoutes : IUpdateHandler
 
         if (routes.ContainsKey(message.Text))
         {
-            if(message.Text == "/force_update")
+            if (message.Text == "/force_update")
             {
                 OnForceUpdateCommandRecevied?.Invoke();
             }
             return routes[message.Text]();
         }
+
         return commandHandlers.Usage(message);
     }
 
@@ -85,7 +91,6 @@ public class TelegramBotRoutes : IUpdateHandler
     {
         var text = update.CallbackQuery.Data;
         var param = text.Substring(text.IndexOf(" ") + 1);
-
 
         if (text.StartsWith("/tracked_artists_for_provider"))
         {

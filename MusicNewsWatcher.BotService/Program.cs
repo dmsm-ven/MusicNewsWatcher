@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
+using Telegram.Bot;
 
 public static class Program
 {
@@ -13,7 +14,7 @@ public static class Program
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration["ConnectionStrings:remote_docker"];
+                    string? connectionString = context.Configuration["ConnectionStrings:default"];
                     options.UseNpgsql(connectionString);
                 });
 
@@ -21,6 +22,15 @@ public static class Program
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
                 services.AddSingleton<MusicUpdateManager>();
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+
+
+                services.AddSingleton<ITelegramBotClient>(options =>
+                {
+                    string? token = context.Configuration["TelegramBot:ApiKey"];
+                    return new TelegramBotClient(token);
+                });
+                services.AddSingleton<TelegramBotRoutes>();
+                services.AddSingleton<TelegramBotCommandHandlers>();
                 services.AddSingleton<MusicNewsWatcherTelegramBot>();
 
                 // Запускает Телеграм бота и службу обновления(парсер)
