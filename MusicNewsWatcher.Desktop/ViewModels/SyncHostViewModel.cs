@@ -1,14 +1,19 @@
 ﻿using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class SyncHostViewModel : ViewModelBase
 {
+    const string MISSING_TRACKS_FILE = "missing.txt";
+
     public Guid Id { get; init; }
 
     string name = string.Empty;
@@ -39,17 +44,38 @@ public class SyncHostViewModel : ViewModelBase
     {
         Tracks = new ObservableCollection<string>();
         LoadItemsCommand = new LambdaCommand(async (e) => await LoadTracks());
-        CheckDiffWithCommand = new LambdaCommand(async (e) => await CheckDiffWith(e), e => (e as SyncHostViewModel) != this);
+        CheckDiffWithCommand = new LambdaCommand(async (e) => await CheckDiffWith(e), e => (e as SyncHostViewModel) != this && e != null);
         UploadTracksCommand = new LambdaCommand(async (e) => await UploadTracks(), e => Directory.Exists(RootFolderPath));
     }
 
     private async Task CheckDiffWith(object e)
     {
-        if (e is SyncHostViewModel otherHost)
+        if (!(e is SyncHostViewModel otherHost))
         {
-            var msg = "";
+            return;
+        }
 
-            var data = await tracker.GetTracksDiff(this.Id, otherHost.Id);
+        var diffLines = await tracker.GetTracksDiff(this.Id, otherHost.Id);
+
+        if (diffLines.Length > 0)
+        {
+            string msg = new StringBuilder()
+                .AppendLine($"Найдены {diffLines.Length} новых файла(ов), в сравнении с текущей библиотекой")
+                .AppendLine($"Данные записаны в файл '{MISSING_TRACKS_FILE}'")
+                .Append("Открыть файл ?")
+                .ToString();
+            var result = MessageBox.Show(msg, "Информация", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+            File.WriteAllText(MISSING_TRACKS_FILE, string.Join("\r\n", diffLines));
+
+            if (result == MessageBoxResult.Yes)
+            {
+                Process.Start("notepad++", Path.Combine(Directory.GetCurrentDirectory(), MISSING_TRACKS_FILE));
+            }
+        }
+        else
+        {
+            MessageBox.Show("Библиотеки идентичны", "Информация", MessageBoxButton.OK, MessageBoxImage.Information); ;
         }
     }
 
