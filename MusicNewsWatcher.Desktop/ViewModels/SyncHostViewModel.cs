@@ -73,7 +73,7 @@ public class SyncHostViewModel : ViewModelBase
 
             if (result == MessageBoxResult.Yes)
             {
-                Process.Start("notepad++", MISSING_TRACKS_FILE);
+                Process.Start(new ProcessStartInfo { FileName = "notepad++", Arguments = MISSING_TRACKS_FILE, UseShellExecute = true });
             }
         }
         else
