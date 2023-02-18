@@ -31,12 +31,6 @@ public class SyncLibraryWindowViewModel : ViewModelBase
         }
     }
 
-    string newHostName;
-    public string NewHostName { get => newHostName; set => Set(ref newHostName, value); }
-
-    string newHostRootFolderPath;
-    public string NewHostRootFolderPath { get => newHostRootFolderPath; set => Set(ref newHostRootFolderPath, value); }
-
     public PackIconFontAwesomeKind AddIconState
     {
         get => isAppendClicked ? PackIconFontAwesomeKind.CheckSolid : PackIconFontAwesomeKind.PlusSolid;
@@ -47,6 +41,20 @@ public class SyncLibraryWindowViewModel : ViewModelBase
     public ICommand RemoveSelectedSyncHostCommand { get; }
 
     public ObservableCollection<SyncHostViewModel> Hosts { get; }
+
+    SyncHostViewModel selectedHost;
+    public SyncHostViewModel SelectedHost
+    {
+        get => selectedHost;
+        set => Set(ref selectedHost, value);
+    }
+
+    SyncHostViewModel newHost = new SyncHostViewModel();
+    public SyncHostViewModel NewHost
+    {
+        get => newHost;
+        set => Set(ref newHost, value);
+    }
 
     public SyncLibraryWindowViewModel()
     {
@@ -59,11 +67,11 @@ public class SyncLibraryWindowViewModel : ViewModelBase
 
     private bool CanAddNewHost(object arg)
     {
-        return !IsAppendClicked || 
-            (IsAppendClicked && 
-            !string.IsNullOrWhiteSpace(NewHostName) && 
-            !string.IsNullOrWhiteSpace(NewHostRootFolderPath) &&
-            Directory.Exists(NewHostRootFolderPath));
+        return !IsAppendClicked ||
+            (IsAppendClicked &&
+            !string.IsNullOrWhiteSpace(NewHost.Name) &&
+            !string.IsNullOrWhiteSpace(NewHost.RootFolderPath) &&
+            Directory.Exists(NewHost.RootFolderPath));
     }
 
     public SyncLibraryWindowViewModel(ISyncLibraryTracker tracker) : this()
@@ -75,20 +83,29 @@ public class SyncLibraryWindowViewModel : ViewModelBase
     {
         if (IsAppendClicked)
         {
-            await tracker.CreateHost(new SyncHostEntity()
+            try
             {
-                Id = Guid.NewGuid(),
-                Name = NewHostName,
-                RootFolderPath = NewHostRootFolderPath
-            })
-            IsAppendClicked = false;
+                InProgress = true;
+                var newHostEntity = new SyncHostEntity()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = NewHost.Name,
+                    RootFolderPath = NewHost.RootFolderPath,
+                    Icon = nameof(PackIconFontAwesomeKind.QuestionSolid)
+                };
+                await tracker.CreateHost(newHostEntity);
+            }
+            finally
+            {
+                NewHost = new SyncHostViewModel();
+                InProgress = false;
+                IsAppendClicked = false;
+            }
         }
         else
         {
             IsAppendClicked = true;
         }
-
-        
     }
 
     private async Task Loaded()
@@ -100,11 +117,16 @@ public class SyncLibraryWindowViewModel : ViewModelBase
             var list = await tracker.GetAllSyncHosts();
             foreach (var item in list)
             {
+                if (!Enum.TryParse<PackIconFontAwesomeKind>(item.Icon, out var iconKind))
+                {
+                    iconKind = PackIconFontAwesomeKind.QuestionSolid;
+                }
                 Hosts.Add(new SyncHostViewModel()
                 {
                     Id = item.Id,
                     Name = item.Name,
                     RootFolderPath = item.RootFolderPath,
+                    Icon = iconKind
                 });
             }
         }
@@ -117,17 +139,6 @@ public class SyncLibraryWindowViewModel : ViewModelBase
 
 
     }
-}
-
-public class SyncHostViewModel : ViewModelBase
-{
-    public Guid Id { get; init; }
-
-    string name = string.Empty;
-    public string Name { get => name; set => Set(ref name, value); }
-
-    string rootFolderPath = string.Empty;
-    public string RootFolderPath { get => rootFolderPath; set => Set(ref rootFolderPath, value); }
 }
 
 

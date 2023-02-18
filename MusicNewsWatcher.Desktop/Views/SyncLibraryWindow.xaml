@@ -25,7 +25,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0">
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
             <Button
                 Command="{Binding AddNewSyncHostCommand}"
                 Style="{StaticResource ToolButtonStyle}"
@@ -39,21 +39,90 @@
                 <icons:PackIconFontAwesome Kind="TrashSolid" Style="{StaticResource LargeIconSize}" />
             </Button>
         </StackPanel>
-        <DockPanel LastChildFill="True"  Grid.Row="1"
-                   d:Visibility="Visible"
-                   Visibility="{Binding IsAppendClicked, Converter={StaticResource BoolToVisibilityConverter}}">
-            <TextBlock Text="Название хоста" VerticalAlignment="Center" Style="{StaticResource ToolPanelSectionCaption}"/>
-            <TextBox Text="{Binding NewHostName}" Width="200" Margin="4 1" Padding="2" Height="24"/>
-            <TextBlock Text="Путь до папки с музыкой" VerticalAlignment="Center" Style="{StaticResource ToolPanelSectionCaption}"/>
-            <TextBox Text="{Binding NewHostRootFolderPath}" Margin="4 1 1 1" Padding="2" Height="24"/>
+        <DockPanel
+            Grid.Row="1"
+            d:Visibility="Visible"
+            LastChildFill="True"
+            Visibility="{Binding IsAppendClicked, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock
+                VerticalAlignment="Center"
+                Style="{StaticResource ToolPanelSectionCaption}"
+                Text="Название хоста" />
+            <TextBox
+                Width="200"
+                Height="24"
+                Margin="4,1"
+                Padding="2"
+                Text="{Binding NewHost.Name}" />
+
+            <TextBlock
+                VerticalAlignment="Center"
+                Style="{StaticResource ToolPanelSectionCaption}"
+                Text="Путь до папки с музыкой" />
+            <TextBox
+                Height="24"
+                Margin="4,1,1,1"
+                Padding="2"
+                Text="{Binding NewHost.RootFolderPath}" />
         </DockPanel>
 
-        <Grid Grid.Row="2">
-            <ss:LoadingSpinner
-            Panel.ZIndex="99"
-            Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" />
-            <ItemsControl  />
-        </Grid>
+        <Border
+            Grid.Row="2"
+            Padding="2,6"
+            BorderBrush="LightGray"
+            BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ss:LoadingSpinner
+                    Grid.ColumnSpan="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Panel.ZIndex="99"
+                    Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" />
+
+                <ListBox
+                    Grid.Column="0"
+                    BorderThickness="0"
+                    ItemsSource="{Binding Hosts}"
+                    SelectedValue="{Binding SelectedHost}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <icons:PackIconFontAwesome
+                                    Grid.Column="0"
+                                    Margin="1,2,6,2"
+                                    VerticalAlignment="Center"
+                                    Foreground="Navy"
+                                    Kind="{Binding Icon}"
+                                    Style="{StaticResource MediumIconSize}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="2,6,2,2"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource MainSectionTitle}"
+                                    Text="{Binding Name}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Grid.Column="1" Visibility="{Binding SelectedHost, Converter={StaticResource NotNullToVisibilityConverter}}">
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Id}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Name}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.RootFolderPath}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
 
 
     </Grid>

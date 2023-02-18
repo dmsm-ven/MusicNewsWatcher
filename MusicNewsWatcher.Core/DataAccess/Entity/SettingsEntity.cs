@@ -13,17 +13,3 @@ public class SettingsEntity
     [Column(name: "value")]
     public string Value { get; set; } = string.Empty;
 }
-
-[Table(name: "sync_host")]
-public class SyncHostEntity
-{
-    [Key]
-    [Column(name: "id")]
-    public Guid Id { get; set; }
-
-    [Column(name: "name")]
-    public string Name { get; set; }
-
-    [Column(name: "root_folder_path")]
-    public string RootFolderPath { get; set; } = string.Empty;
-}
