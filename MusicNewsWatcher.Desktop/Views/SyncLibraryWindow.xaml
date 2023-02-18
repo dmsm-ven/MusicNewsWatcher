@@ -117,16 +117,31 @@
 
                 <StackPanel
                     Grid.Column="1"
-                    DataContext="{Binding SelectedHost}"
+                    d:Visibility="Visible"
                     Visibility="{Binding SelectedHost, Converter={StaticResource NotNullToVisibilityConverter}}">
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Id}" />
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Name}" />
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding RootFolderPath}" />
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Tracks.Count, StringFormat={}{0} Треков в списке}" />
-                    <StackPanel DataContext="{Binding SelectedHost}" Orientation="Horizontal">
+
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Id, StringFormat={}ID: {0}, FallbackValue='ID: 0000'}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.RootFolderPath, StringFormat={}Рабочая папка - {0}, FallbackValue='Рабочая папка - C:\\Music'}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Tracks.Count, StringFormat={}{0} Треков в списке, FallbackValue='Треков 0'}" />
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                         <TextBlock Text="Выгрузить с этого компьютера" />
-                        <Button Command="{Binding UploadTracksCommand}">
-                            <icons:PackIconFontAwesome Kind="UploadSolid" />
+                        <Button Command="{Binding SelectedHost.UploadTracksCommand}" Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="UploadSolid" Style="{StaticResource MediumIconSize}" />
+                        </Button>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                        <TextBlock Margin="4,2,8,2" Text="Найти разность с" />
+                        <ComboBox
+                            x:Name="cmbxDiff"
+                            MinWidth="90"
+                            DisplayMemberPath="Name"
+                            ItemsSource="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.Hosts}" />
+
+                        <Button
+                            Command="{Binding SelectedHost.CheckDiffWithCommand}"
+                            CommandParameter="{Binding ElementName=cmbxDiff, Path=SelectedItem}"
+                            Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="AdjustSolid" Style="{StaticResource MediumIconSize}" />
                         </Button>
                     </StackPanel>
                 </StackPanel>

@@ -31,6 +31,7 @@ public class SyncHostViewModel : ViewModelBase
 
     public ICommand LoadItemsCommand { get; }
     public ICommand UploadTracksCommand { get; }
+    public ICommand CheckDiffWithCommand { get; }
 
     public ObservableCollection<string> Tracks { get; }
 
@@ -38,7 +39,18 @@ public class SyncHostViewModel : ViewModelBase
     {
         Tracks = new ObservableCollection<string>();
         LoadItemsCommand = new LambdaCommand(async (e) => await LoadTracks());
+        CheckDiffWithCommand = new LambdaCommand(async (e) => await CheckDiffWith(e), e => (e as SyncHostViewModel) != this);
         UploadTracksCommand = new LambdaCommand(async (e) => await UploadTracks(), e => Directory.Exists(RootFolderPath));
+    }
+
+    private async Task CheckDiffWith(object e)
+    {
+        if (e is SyncHostViewModel otherHost)
+        {
+            var msg = "";
+
+            var data = await tracker.GetTracksDiff(this.Id, otherHost.Id);
+        }
     }
 
     public SyncHostViewModel(ISyncLibraryTracker tracker) : this()

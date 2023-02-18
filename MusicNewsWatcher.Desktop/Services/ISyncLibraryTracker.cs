@@ -8,6 +8,7 @@ public interface ISyncLibraryTracker
     Task<List<SyncHostEntity>> GetAllSyncHosts();
     Task<List<SyncTrackEntity>> GetAllTracksForHost(Guid hostId);
     Task AddTrackedItemsForHost(Guid hostId, string[] tracks);
+    Task<string[]> GetTracksDiff(Guid id_left, Guid id_right);
 }
 
 public class SyncLibraryTracker : ISyncLibraryTracker
@@ -76,5 +77,23 @@ public class SyncLibraryTracker : ISyncLibraryTracker
             .ToListAsync();
 
         return list;
+    }
+
+    public async Task<string[]> GetTracksDiff(Guid id_left, Guid id_right)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+
+        var leftHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_left);
+        var rightHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_right);
+
+        var filesLeft = leftHost.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();
+        var filesRight = rightHost.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();
+
+        if (filesLeft.Any() && filesRight.Any())
+        {
+            return filesRight.Except(filesLeft).ToArray();
+        }
+
+        return Enumerable.Empty<string>().ToArray();
     }
 }
