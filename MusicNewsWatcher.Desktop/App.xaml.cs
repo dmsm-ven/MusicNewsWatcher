@@ -1,26 +1,25 @@
 ﻿global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Core;
-global using System.Collections.Generic;
+global using MusicNewsWatcher.Desktop.Models;
+global using MusicNewsWatcher.Desktop.Services;
+global using MusicNewsWatcher.Desktop.ViewModels;
+global using MusicNewsWatcher.Desktop.Views;
 global using System;
+global using System.Collections.Generic;
 global using System.Linq;
 global using ToastNotifications;
 global using ToastNotifications.Messages;
-global using MusicNewsWatcher.Desktop.ViewModels;
-global using MusicNewsWatcher.Desktop.Views;
-global using MusicNewsWatcher.Desktop.Models;
-global using Microsoft.Extensions.DependencyInjection;
-global using MusicNewsWatcher.Desktop.Services;
-
+using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.TelegramBot;
+using System.Drawing;
 using System.Threading;
 using System.Windows;
-using MusicNewsWatcher.TelegramBot;
-using Hardcodet.Wpf.TaskbarNotification;
 using System.Windows.Controls;
-using System.Drawing;
-using ToastNotifications.Position;
 using ToastNotifications.Lifetime;
+using ToastNotifications.Position;
 
 namespace MusicNewsWatcher.Desktop;
 /// <summary>
@@ -29,7 +28,6 @@ namespace MusicNewsWatcher.Desktop;
 public partial class App : Application
 {
     public static IHost HostContainer { get; private set; }
-
     public static Mutex mutex;
 
     public App()
@@ -58,16 +56,20 @@ public partial class App : Application
                 //services.AddNotifyIcon();
                 services.AddTelegramBot(context);
 
+                services.AddTransient<IDialogWindowService, DialogWindowService>();
+
                 services.AddTransient<AddNewArtistDialogViewModel>();
                 services.AddTransient<AddNewArtistDialog>();
 
-                services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
-                services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+                services.AddMusicProviders();
                 services.AddSingleton<MusicDownloadManager>();
                 services.AddSingleton<MusicUpdateManager>();
 
                 services.AddSingleton<SettingsWindowViewModel>();
                 services.AddTransient<SettingsWindow>();
+
+                services.AddTransient<SyncLibraryWindow>();
+                services.AddTransient<SyncLibraryWindowViewModel>();
 
                 services.AddSingleton<MainWindowViewModel>();
             })
@@ -88,10 +90,23 @@ public partial class App : Application
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
         mainWindow.Show();
     }
+
+    protected override async void OnExit(ExitEventArgs e)
+    {
+        mutex?.ReleaseMutex();
+        await HostContainer.StopAsync();
+        HostContainer.Dispose();
+    }
 }
 
 public static class ConfigureServicesAppExtensions
 {
+    public static void AddMusicProviders(this IServiceCollection services)
+    {
+        services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
+        services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+    }
+
     public static void AddNotifyIcon(this IServiceCollection services)
     {
         var tbi = new TaskbarIcon();

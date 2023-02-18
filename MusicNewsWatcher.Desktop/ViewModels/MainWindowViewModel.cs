@@ -18,6 +18,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
     private readonly IToastsNotifier toasts;
+    private readonly IDialogWindowService dialogWindowService;
 
     public string Title
     {
@@ -61,6 +62,7 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand LoadedCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
     public ICommand SettingsCommand { get; }
+    public ICommand SyncLibraryCommand { get; }
     public ICommand OpenDownloadsFolderCommand { get; }
     public ICommand AddArtistCommand { get; }
 
@@ -70,20 +72,22 @@ public class MainWindowViewModel : ViewModelBase
         CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
         OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());
         SettingsCommand = new LambdaCommand(ShowSettingsWindow);
+        SyncLibraryCommand = new LambdaCommand(ShowSyncLibraryWindow);
         LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());
         MusicProviders = new ObservableCollection<MusicProviderViewModel>();
     }
 
-    public MainWindowViewModel(
+    public MainWindowViewModel(MusicUpdateManager updateManager,
         IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
-        MusicUpdateManager updateManager,
-        IToastsNotifier toasts) : this()
+        IToastsNotifier toasts,
+        IDialogWindowService dialogWindowService) : this()
     {
 
         this.musicProviders = musicProviders;
         this.dbCotextFactory = dbCotextFactory;
         this.toasts = toasts;
+        this.dialogWindowService = dialogWindowService;
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
     }
 
@@ -95,16 +99,18 @@ public class MainWindowViewModel : ViewModelBase
 
     private void ShowNewArtistWindow(object obj)
     {
-        var dialogWindow = App.HostContainer.Services.GetRequiredService<AddNewArtistDialog>();
-        dialogWindow.DataContext = new AddNewArtistDialogViewModel(SelectedMusicProvider, dbCotextFactory);
-        dialogWindow.ShowDialog();
+        dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);
     }
 
     private void ShowSettingsWindow(object obj)
     {
-        var window = App.HostContainer.Services.GetRequiredService<SettingsWindow>();
-        window.DataContext = App.HostContainer.Services.GetRequiredService<SettingsWindowViewModel>();
-        window.ShowDialog();
+        dialogWindowService.ShowSettingsWindow();
+
+    }
+
+    private void ShowSyncLibraryWindow(object obj)
+    {
+        dialogWindowService.ShowSyncLibraryWindow();
     }
 
     private async Task LoadItemsSource()
@@ -153,9 +159,6 @@ public class MainWindowViewModel : ViewModelBase
 
         IsLoading = false;
         SelectedMusicProvider = MusicProviders.LastOrDefault();
-
-
-
     }
 
 }

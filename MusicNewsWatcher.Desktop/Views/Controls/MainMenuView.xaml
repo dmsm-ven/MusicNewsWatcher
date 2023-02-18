@@ -1,38 +1,52 @@
-﻿<UserControl x:Class="MusicNewsWatcher.Desktop.Views.MainMenuView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels" 
-             xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks" 
-             mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
-             d:DesignHeight="100" d:DesignWidth="600">
-    <StackPanel Orientation="Horizontal" Background="{StaticResource MainWindowTransparentBrush}">
+﻿<UserControl
+    x:Class="MusicNewsWatcher.Desktop.Views.MainMenuView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel,
+                                     IsDesignTimeCreatable=True}"
+    d:DesignHeight="100"
+    d:DesignWidth="600"
+    mc:Ignorable="d">
+    <StackPanel Background="{StaticResource MainWindowTransparentBrush}" Orientation="Horizontal">
 
-        <Button Command="{Binding AddArtistCommand}" 
-                ToolTip="Добавить исполнителя на отслеживание"
-                Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="PlusSolid" Style="{StaticResource LargeIconSize}"/>
+        <Button
+            Command="{Binding AddArtistCommand}"
+            Style="{StaticResource ToolButtonStyle}"
+            ToolTip="Добавить исполнителя на отслеживание">
+            <icons:PackIconFontAwesome Kind="PlusSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
-        
-        
-        <Button Command="{Binding CheckUpdatesAllCommand}" 
-                ToolTip="Закачать обновленные данные из БД"
-                Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="CircleNotchSolid" Style="{StaticResource LargeIconSize}"/>
+
+
+        <Button
+            Command="{Binding CheckUpdatesAllCommand}"
+            Style="{StaticResource ToolButtonStyle}"
+            ToolTip="Закачать обновленные данные из БД">
+            <icons:PackIconFontAwesome Kind="SyncSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
-        
-        <Button Command="{Binding OpenDownloadsFolderCommand}" 
-                ToolTip="Папка с загруженными альбомами"
-                Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="FolderOpenSolid" Style="{StaticResource LargeIconSize}"/>
+
+        <Button
+            Command="{Binding OpenDownloadsFolderCommand}"
+            Style="{StaticResource ToolButtonStyle}"
+            ToolTip="Папка с загруженными альбомами">
+            <icons:PackIconFontAwesome Kind="FolderOpenSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
-        
-        <Button Command="{Binding SettingsCommand}" 
-                ToolTip="Настройки"
-                Style="{StaticResource ToolButtonStyle}">
-            <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}"/>
+
+        <Button
+            Command="{Binding SyncLibraryCommand}"
+            Style="{StaticResource ToolButtonStyle}"
+            ToolTip="Синхронизация библиотеки на разных устройствах">
+            <icons:PackIconFontAwesome Kind="ServerSolid" Style="{StaticResource LargeIconSize}" />
+        </Button>
+
+        <Button
+            Command="{Binding SettingsCommand}"
+            Style="{StaticResource ToolButtonStyle}"
+            ToolTip="Настройки">
+            <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 
 
