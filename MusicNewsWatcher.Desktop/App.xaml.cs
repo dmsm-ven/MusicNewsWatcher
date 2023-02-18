@@ -13,6 +13,7 @@ global using ToastNotifications.Messages;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.Services;
 using MusicNewsWatcher.TelegramBot;
 using System.Drawing;
 using System.Threading;
@@ -56,6 +57,7 @@ public partial class App : Application
                 //services.AddNotifyIcon();
                 services.AddTelegramBot(context);
 
+                services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
                 services.AddTransient<AddNewArtistDialogViewModel>();

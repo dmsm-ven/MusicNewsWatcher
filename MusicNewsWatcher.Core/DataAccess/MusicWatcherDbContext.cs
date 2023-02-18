@@ -11,20 +11,10 @@ public class MusicWatcherDbContext : DbContext
     public DbSet<AlbumEntity> Albums { get; set; }
     public DbSet<TrackEntity> Tracks { get; set; }
     public DbSet<SettingsEntity> Settings { get; set; }
+    public DbSet<SyncHostEntity> SyncHosts { get; set; }
 
     public MusicWatcherDbContext(DbContextOptions<MusicWatcherDbContext> options) : base(options)
     {
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 }
-
-/*public class MusicWatcherDbContextFactory : IDesignTimeDbContextFactory<MusicWatcherDbContext>
-{
-    public MusicWatcherDbContext CreateDbContext(string[] args)
-    {
-        //var optionsBuilder = new DbContextOptionsBuilder<MusicWatcherDbContext>();
-        //optionsBuilder.UseMys("Data Source=settings.db");
-        //
-        //return new MusicWatcherDbContext(optionsBuilder.Options);
-    }
-}*/
