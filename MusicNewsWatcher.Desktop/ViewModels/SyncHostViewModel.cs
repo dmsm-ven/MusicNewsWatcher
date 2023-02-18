@@ -12,7 +12,10 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class SyncHostViewModel : ViewModelBase
 {
-    const string MISSING_TRACKS_FILE = "missing.txt";
+    private string MISSING_TRACKS_FILE 
+    { 
+        get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "missing.txt");
+    }
 
     public Guid Id { get; init; }
 
@@ -70,7 +73,7 @@ public class SyncHostViewModel : ViewModelBase
 
             if (result == MessageBoxResult.Yes)
             {
-                Process.Start("notepad++", Path.Combine(Directory.GetCurrentDirectory(), MISSING_TRACKS_FILE));
+                Process.Start("notepad++", MISSING_TRACKS_FILE);
             }
         }
         else
@@ -94,11 +97,13 @@ public class SyncHostViewModel : ViewModelBase
             .ToArray();
 
         await tracker.AddTrackedItemsForHost(Id, files);
+
+        await LoadTracks();
     }
 
     private async Task LoadTracks()
     {
-        if (Tracks.Any()) { return; }
+        Tracks.Clear();
 
         var tracks = await tracker.GetAllTracksForHost(Id);
 
