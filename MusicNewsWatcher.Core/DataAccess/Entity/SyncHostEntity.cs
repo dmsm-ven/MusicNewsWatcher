@@ -18,4 +18,9 @@ public class SyncHostEntity
 
     [Column(name: "icon")]
     public string Icon { get; set; }
+
+    [Column(name: "last_update")]
+    public DateTimeOffset? LastUpdate { get; set; }
+
+    public ICollection<SyncTrackEntity> SyncTracks { get; set; } = new List<SyncTrackEntity>();
 }

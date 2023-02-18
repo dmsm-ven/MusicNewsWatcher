@@ -46,10 +46,16 @@ public class SyncLibraryWindowViewModel : ViewModelBase
     public SyncHostViewModel SelectedHost
     {
         get => selectedHost;
-        set => Set(ref selectedHost, value);
+        set
+        {
+            if (Set(ref selectedHost, value))
+            {
+                selectedHost.LoadItemsCommand.Execute(null);
+            }
+        }
     }
 
-    SyncHostViewModel newHost = new SyncHostViewModel();
+    SyncHostViewModel newHost;
     public SyncHostViewModel NewHost
     {
         get => newHost;
@@ -77,6 +83,7 @@ public class SyncLibraryWindowViewModel : ViewModelBase
     public SyncLibraryWindowViewModel(ISyncLibraryTracker tracker) : this()
     {
         this.tracker = tracker;
+        this.newHost = new SyncHostViewModel(tracker);
     }
 
     private async Task AddNewSyncHost()
@@ -97,7 +104,7 @@ public class SyncLibraryWindowViewModel : ViewModelBase
             }
             finally
             {
-                NewHost = new SyncHostViewModel();
+                NewHost = new SyncHostViewModel(tracker);
                 InProgress = false;
                 IsAppendClicked = false;
             }
@@ -121,12 +128,13 @@ public class SyncLibraryWindowViewModel : ViewModelBase
                 {
                     iconKind = PackIconFontAwesomeKind.QuestionSolid;
                 }
-                Hosts.Add(new SyncHostViewModel()
+                Hosts.Add(new SyncHostViewModel(tracker)
                 {
                     Id = item.Id,
                     Name = item.Name,
                     RootFolderPath = item.RootFolderPath,
-                    Icon = iconKind
+                    Icon = iconKind,
+                    LastUpdate = item.LastUpdate
                 });
             }
         }

@@ -12,6 +12,7 @@ public class MusicWatcherDbContext : DbContext
     public DbSet<TrackEntity> Tracks { get; set; }
     public DbSet<SettingsEntity> Settings { get; set; }
     public DbSet<SyncHostEntity> SyncHosts { get; set; }
+    public DbSet<SyncTrackEntity> SyncTracks { get; set; }
 
     public MusicWatcherDbContext(DbContextOptions<MusicWatcherDbContext> options) : base(options)
     {

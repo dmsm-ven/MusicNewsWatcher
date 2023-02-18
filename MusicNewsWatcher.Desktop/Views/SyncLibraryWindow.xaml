@@ -115,10 +115,20 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <StackPanel Grid.Column="1" Visibility="{Binding SelectedHost, Converter={StaticResource NotNullToVisibilityConverter}}">
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Id}" />
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.Name}" />
-                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding SelectedHost.RootFolderPath}" />
+                <StackPanel
+                    Grid.Column="1"
+                    DataContext="{Binding SelectedHost}"
+                    Visibility="{Binding SelectedHost, Converter={StaticResource NotNullToVisibilityConverter}}">
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Id}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Name}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding RootFolderPath}" />
+                    <TextBlock Style="{StaticResource MainSectionTitle}" Text="{Binding Tracks.Count, StringFormat={}{0} Треков в списке}" />
+                    <StackPanel DataContext="{Binding SelectedHost}" Orientation="Horizontal">
+                        <TextBlock Text="Выгрузить с этого компьютера" />
+                        <Button Command="{Binding UploadTracksCommand}">
+                            <icons:PackIconFontAwesome Kind="UploadSolid" />
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
