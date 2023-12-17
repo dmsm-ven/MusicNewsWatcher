@@ -13,6 +13,7 @@ global using ToastNotifications.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.Services;
+using MusicNewWatcher.BL;
 using System.Threading;
 using System.Windows;
 
@@ -58,7 +59,8 @@ public partial class App : Application
                 services.AddTransient<AddNewArtistDialog>();
 
                 services.AddMusicProviders();
-                services.AddSingleton<MusicDownloadManager>();
+                services.AddSingleton<IMusicDownloadManager, MultithreadHttpMusicDownloadManager>();
+                services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
                 services.AddSingleton<MusicUpdateManager>();
 
                 services.AddSingleton<SettingsWindowViewModel>();

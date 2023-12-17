@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
+using MusicNewWatcher.BL;
 using Telegram.Bot;
 
 public static class Program
@@ -20,7 +21,9 @@ public static class Program
 
                 services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
                 services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
+                services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
                 services.AddSingleton<MusicUpdateManager>();
+
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
 
 

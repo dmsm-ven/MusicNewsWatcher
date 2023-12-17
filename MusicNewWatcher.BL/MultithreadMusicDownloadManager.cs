@@ -1,16 +1,11 @@
-﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
-using MusicNewsWatcher.Infrastructure.Helpers;
-using System.IO;
+﻿using MusicNewsWatcher.Core;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Desktop.Services;
+namespace MusicNewWatcher.BL;
 
 //TODO убрать прямое обращение через ViewModel
-public class MusicDownloadManager : IDisposable
-{   
+public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager, IDisposable
+{
     private readonly HttpClient client;
     private SemaphoreSlim semaphor;
 
@@ -20,9 +15,9 @@ public class MusicDownloadManager : IDisposable
         get => threadLimit;
         set
         {
-            if(threadLimit != value)
+            if (threadLimit != value)
             {
-                if ((value >= 1 && value <= 8))
+                if (value >= 1 && value <= 8)
                 {
                     threadLimit = value;
                     semaphor?.Dispose();
@@ -36,19 +31,19 @@ public class MusicDownloadManager : IDisposable
         }
     }
 
-    public MusicDownloadManager()
+    public MultithreadHttpMusicDownloadManager()
     {
         client = new HttpClient(new HttpClientHandler()
         {
             AllowAutoRedirect = true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             CookieContainer = new CookieContainer(),
-            UseCookies = true,            
+            UseCookies = true,
         });
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Add("Accept", "*/*");
     }
-
+    /*
     public async Task<string> DownloadFullAlbum(AlbumViewModel album, string downloadDirectory, CancellationToken token)
     {
         string albumDirectory = GetAlbumLocalPath(album, downloadDirectory);
@@ -91,7 +86,7 @@ public class MusicDownloadManager : IDisposable
             return TrackDownloadResult.Error;
         }
 
-        if(File.Exists(localName))
+        if (File.Exists(localName))
         {
             if (new FileInfo(localName).Length == 0)
             {
@@ -118,7 +113,7 @@ public class MusicDownloadManager : IDisposable
             }
             return TrackDownloadResult.Cancelled;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return TrackDownloadResult.Error;
         }
@@ -138,6 +133,18 @@ public class MusicDownloadManager : IDisposable
         }
 
         return directoryPath;
+    }
+
+    public void Dispose()
+    {
+        client?.Dispose();
+        semaphor?.Dispose();
+    }
+    */
+
+    public Task<string> DownloadFullAlbum(string albumUri, string downloadDirectory, CancellationToken? token = null)
+    {
+        throw new NotImplementedException();
     }
 
     public void Dispose()

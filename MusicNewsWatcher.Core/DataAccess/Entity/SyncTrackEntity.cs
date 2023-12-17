@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.Core.DataAccess.Entity;
 
 [PrimaryKey(nameof(HostId), nameof(Path))]
 [Table(name: "sync_track")]
@@ -18,5 +17,5 @@ public class SyncTrackEntity
     public string Hash { get; set; } = string.Empty;
 
     [ForeignKey(nameof(HostId))]
-    public SyncHostEntity Host { get; set; }
+    public SyncHostEntity? Host { get; set; }
 }

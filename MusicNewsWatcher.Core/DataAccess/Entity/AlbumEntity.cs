@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.Core.DataAccess.Entity;
 
 [Table(name: "albums")]
 public class AlbumEntity
@@ -16,7 +14,7 @@ public class AlbumEntity
     public int ArtistId { get; set; }
 
     [Column(name: "title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     [Column(name: "created")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -28,7 +26,7 @@ public class AlbumEntity
     public string? Image { get; set; }
 
     [Column(name: "uri")]
-    public string Uri { get; set; }
+    public string Uri { get; set; } = string.Empty;
 
     public ArtistEntity Artist { get; set; }
     public List<TrackEntity> Tracks { get; set; } = new List<TrackEntity>();

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
+using MusicNewWatcher.BL;
 
 public sealed class ServiceBackgroundWorker : BackgroundService
 {
@@ -39,7 +40,9 @@ public sealed class ServiceBackgroundWorker : BackgroundService
             botClient.Start(consumerId);
 
             updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
-            updateManager.Start();
+
+            //убрать await ? иначе не будет прослушиватся остановка, а без await не отлавливает исключения
+            await updateManager.Start();
 
             logger.LogInformation("BackgroundSerivce запущен");
 

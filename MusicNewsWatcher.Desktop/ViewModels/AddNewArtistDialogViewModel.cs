@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;

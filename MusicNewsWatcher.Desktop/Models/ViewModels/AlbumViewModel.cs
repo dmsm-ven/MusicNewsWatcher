@@ -1,5 +1,6 @@
 ﻿using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.Infrastructure.Helpers;
+using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading;
@@ -10,8 +11,9 @@ namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
 public class AlbumViewModel : ViewModelBase
 {
-    private readonly MusicDownloadManager downloadManager;
     private readonly MusicUpdateManager updateManager;
+
+    private readonly IMusicDownloadManager downloadManager;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly IToastsNotifier toasts;
 
@@ -113,8 +115,9 @@ public class AlbumViewModel : ViewModelBase
 
     public AlbumViewModel()
     {
-        downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
+        //TODO: заменить на внедрение через параметры ctor
         updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
+        downloadManager = App.HostContainer.Services.GetRequiredService<IMusicDownloadManager>();
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
 
@@ -147,7 +150,7 @@ public class AlbumViewModel : ViewModelBase
         try
         {
             cts = new CancellationTokenSource();
-            string albumDir = await downloadManager.DownloadFullAlbum(this, FileBrowserHelper.DownloadDirectory, cts.Token);
+            string albumDir = await downloadManager.DownloadFullAlbum(this.Uri, FileBrowserHelper.DownloadDirectory, cts.Token);
 
             if (!cts.IsCancellationRequested)
             {

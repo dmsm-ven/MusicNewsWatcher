@@ -27,18 +27,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.55" />
 		<PackageReference Include="LoadingSpinner.WPF" Version="1.0.0" />
 		<PackageReference Include="MahApps.Metro.IconPacks.FontAwesome" Version="4.11.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.7">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.25">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
 		<PackageReference Include="ToastNotifications" Version="2.5.1" />
 		<PackageReference Include="ToastNotifications.Messages" Version="2.5.1" />
@@ -72,6 +72,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
 		<ProjectReference Include="..\MusicNewsWatcher.TelegramBot\MusicNewsWatcher.TelegramBot.csproj" />
+		<ProjectReference Include="..\MusicNewWatcher.BL\MusicNewWatcher.BL.csproj" />
 	</ItemGroup>
 
 </Project>

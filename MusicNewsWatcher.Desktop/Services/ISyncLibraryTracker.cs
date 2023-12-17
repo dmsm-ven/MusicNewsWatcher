@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using MusicNewsWatcher.Core.DataAccess.Entity;
+using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Services;
 

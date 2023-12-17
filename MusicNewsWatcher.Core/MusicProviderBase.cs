@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using MusicNewsWatcher.Core.DataAccess.Entity;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;

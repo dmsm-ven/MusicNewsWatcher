@@ -1,15 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using MusicNewsWatcher.Desktop.Services;
-using MusicNewsWatcher.Desktop.Views;
-using System;
-using System.Collections.Generic;
+﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using ToastNotifications;
-using ToastNotifications.Messages;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
 
@@ -30,14 +23,14 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    bool isLoading = true;
+    private bool isLoading = true;
     public bool IsLoading
     {
         get => isLoading;
         set => Set(ref isLoading, value);
     }
 
-    MusicProviderViewModel selectedMusicProvider;
+    private MusicProviderViewModel selectedMusicProvider;
     public MusicProviderViewModel SelectedMusicProvider
     {
         get => selectedMusicProvider;

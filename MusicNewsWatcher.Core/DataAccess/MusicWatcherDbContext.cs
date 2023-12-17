@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using MusicNewsWatcher.Core.DataAccess.Entity;
 using System;
 
 namespace MusicNewsWatcher.Core;

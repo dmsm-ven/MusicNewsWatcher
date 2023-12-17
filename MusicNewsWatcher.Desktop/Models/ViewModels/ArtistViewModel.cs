@@ -1,17 +1,16 @@
 ﻿using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
-using MusicNewsWatcher.Desktop.Services;
 using MusicNewsWatcher.Infrastructure.Helpers;
+using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
 public class ArtistViewModel : ViewModelBase
 {
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory; 
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly IToastsNotifier toasts;
     private readonly MusicUpdateManager updateManager;
 
@@ -19,18 +18,18 @@ public class ArtistViewModel : ViewModelBase
 
     public int ArtistId { get; init; }
 
-    string name;
+    private string name;
     public string Name { get => name; set => Set(ref name, value); }
 
     public string DisplayName => Name.ToDisplayName();
 
-    string uri;
+    private string uri;
     public string Uri { get => uri; set => Set(ref uri, value); }
 
-    string image;
+    private string image;
     public string Image { get => image; set => Set(ref image, value); }
 
-    string cachedImage;
+    private string cachedImage;
     public string CachedImage
     {
         get => cachedImage ??= GetCachedImage(Image);
@@ -48,13 +47,13 @@ public class ArtistViewModel : ViewModelBase
         }
     }
 
-    bool multiselectEnabled;
+    private bool multiselectEnabled;
     public bool MultiselectEnabled
     {
         get => multiselectEnabled;
         set
         {
-            if(Set(ref multiselectEnabled, value))
+            if (Set(ref multiselectEnabled, value))
             {
                 Albums.ToList().ForEach(a => a.IsChecked = value ? false : null);
                 RaisePropertyChanged(nameof(CurrentMultiselectIcon));
@@ -69,12 +68,12 @@ public class ArtistViewModel : ViewModelBase
 
     public PackIconFontAwesomeKind CurrentMultiselectIcon
     {
-        get => MultiselectEnabled ? 
+        get => MultiselectEnabled ?
             PackIconFontAwesomeKind.SquareRegular :
             PackIconFontAwesomeKind.CheckDoubleSolid;
     }
 
-    bool isActiveArtist;
+    private bool isActiveArtist;
     public bool IsActiveArtist
     {
         get => isActiveArtist;
@@ -86,31 +85,31 @@ public class ArtistViewModel : ViewModelBase
         get => Albums.Count == 0 && !InProgress;
     }
 
-    bool inProgress;
+    private bool inProgress;
     public bool InProgress
     {
         get => inProgress;
         set
         {
-            if(Set(ref inProgress, value))
+            if (Set(ref inProgress, value))
             {
                 RaisePropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
             }
         }
     }
 
-    AlbumViewModel selectedAlbum;
+    private AlbumViewModel selectedAlbum;
     public AlbumViewModel SelectedAlbum
     {
         get => selectedAlbum;
         set
         {
-            if(selectedAlbum != null)
+            if (selectedAlbum != null)
             {
                 selectedAlbum.IsActiveAlbum = false;
             }
 
-            if(Set(ref selectedAlbum, value) && value != null)
+            if (Set(ref selectedAlbum, value) && value != null)
             {
                 selectedAlbum!.IsActiveAlbum = true;
             }
@@ -145,7 +144,7 @@ public class ArtistViewModel : ViewModelBase
 
     private async Task DownloadCheckedAlbums()
     {
-        foreach(var album in Albums.Where(a => a.IsChecked == true))
+        foreach (var album in Albums.Where(a => a.IsChecked == true))
         {
             await album.RefreshTracksSource();
             await album.DownloadAlbum(openFolder: false);
@@ -155,7 +154,7 @@ public class ArtistViewModel : ViewModelBase
     private async Task GetAlbumsFromProviderForArtist()
     {
         InProgress = true;
-        await updateManager.CheckUpdatesForArtistAsync(ParentProvider.MusicProvider, ArtistId);
+        await updateManager.CheckUpdatesForArtistForProvider(ParentProvider.MusicProvider, ArtistId, Name, Uri);
         await RefreshSource();
         InProgress = false;
     }
@@ -173,7 +172,9 @@ public class ArtistViewModel : ViewModelBase
 
         using var db = await dbFactory.CreateDbContextAsync();
 
-        if (await db.Albums.Where(a => a.ArtistId == ArtistId).CountAsync() != Albums.Count || Albums.Count == 0)
+        int freshParsedAlbumsCount = await db.Albums.Where(a => a.ArtistId == ArtistId).CountAsync();
+
+        if (freshParsedAlbumsCount != Albums.Count || Albums.Count == 0)
         {
             Albums.Clear();
 
@@ -198,7 +199,7 @@ public class ArtistViewModel : ViewModelBase
                 album.OnAlbumChanged += (e) => SelectedAlbum = e;
                 album.PropertyChanged += (o, e) =>
                 {
-                    if(e.PropertyName == nameof(AlbumViewModel.IsChecked))
+                    if (e.PropertyName == nameof(AlbumViewModel.IsChecked))
                     {
                         RaisePropertyChanged(nameof(HasCheckedAlbums));
                     }

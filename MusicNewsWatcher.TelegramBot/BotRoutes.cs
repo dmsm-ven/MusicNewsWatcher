@@ -2,12 +2,9 @@
 using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InlineQueryResults;
-using Telegram.Bot.Types.InputFiles;
 
 namespace MusicNewsWatcher.TelegramBot;
 

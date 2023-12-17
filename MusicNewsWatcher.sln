@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.BotService
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicNewsWatcher.Core", "MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj", "{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicNewWatcher.BL", "MusicNewWatcher.BL\MusicNewWatcher.BL.csproj", "{2FCBFDBE-2CF4-42AC-B913-79FCA0C3706E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBD76232-C2D7-4950-A3D2-2F5BF7C91186}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FCBFDBE-2CF4-42AC-B913-79FCA0C3706E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FCBFDBE-2CF4-42AC-B913-79FCA0C3706E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FCBFDBE-2CF4-42AC-B913-79FCA0C3706E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FCBFDBE-2CF4-42AC-B913-79FCA0C3706E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

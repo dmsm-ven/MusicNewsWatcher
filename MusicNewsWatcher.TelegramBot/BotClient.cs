@@ -5,7 +5,7 @@ namespace MusicNewsWatcher.TelegramBot;
 
 public class MusicNewsWatcherTelegramBot : IDisposable
 {
-    private TelegramBotRoutes thBotMessageHandler;
+    private readonly TelegramBotRoutes thBotMessageHandler;
     public bool IsStarted { get; private set; }
 
     private readonly ITelegramBotClient botClient;
@@ -16,7 +16,7 @@ public class MusicNewsWatcherTelegramBot : IDisposable
     private string? consumerId;
 
     public MusicNewsWatcherTelegramBot(ITelegramBotClient botClient,
-        TelegramBotRoutes botRoutes,
+        TelegramBotRoutes? botRoutes,
         ILogger<MusicNewsWatcherTelegramBot> logger)
     {
         this.botClient = botClient ?? throw new ArgumentNullException(nameof(botClient));
