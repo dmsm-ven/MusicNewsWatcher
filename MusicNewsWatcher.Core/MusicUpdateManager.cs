@@ -2,12 +2,15 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using System.Timers;
 
 namespace MusicNewsWatcher.Core;
 
-//Переодически опрашивает сайты музыки и сохраняет результат, если в базе данных еще нет нового альбома для отслеживаемых исполнителей
+//Переодически опрашивает сайты с треками и сохраняет результат, если в базе данных еще нет нового альбома для отслеживаемых исполнителей
 //Запускается отдельно на консольном клиенте и на WPF Desktop приложении
+
+//TODO: разбить класс
 public class MusicUpdateManager : IDisposable
 {
     public event EventHandler<NewAlbumsFoundEventArgs> OnNewAlbumsFound;
@@ -50,7 +53,7 @@ public class MusicUpdateManager : IDisposable
     public async Task Start()
     {
         logger.LogInformation("Запуск парсера");
-        const int delayInSeconds = 5;
+        TimeSpan startDelay = TimeSpan.FromSeconds(5);
 
         RefreshInterval();
         autoUpdateTimer.Start();
@@ -59,14 +62,15 @@ public class MusicUpdateManager : IDisposable
         //Если больше чем интервал, то запускаем проверку сразу после небольшой задержки
         if (LastUpdate + UpdateInterval < DateTime.Now)
         {
-            logger.LogInformation($"Проверка запустить через {delayInSeconds} секунд ...");
+            logger.LogInformation($"Запуск переобхода через {(int)startDelay.TotalSeconds} секунд ...");
 
-            await Task.Delay(TimeSpan.FromSeconds(delayInSeconds));
+            await Task.Delay(startDelay);
 
             AutoUpdateTimer_Elapsed(this, null);
         }
 
         logger.LogInformation("Парсер запущен");
+
     }
 
     private void RefreshInterval()
@@ -87,56 +91,74 @@ public class MusicUpdateManager : IDisposable
 
         CrawlerInProgress = true;
 
-        using var db = await dbFactory.CreateDbContextAsync();
+        var proviiderToArtists = new Dictionary<MusicProviderBase?, List<ArtistEntity>>();
 
-        foreach (var provider in musicProviders)
+        using (var db = await dbFactory.CreateDbContextAsync())
         {
-            var providerArtists = db.MusicProviders
-                .Include(i => i.Artists)
-                .ThenInclude(a => a.Albums)
-                .Single(p => p.MusicProviderId == provider.Id)
-                .Artists;
+            foreach (var provider in musicProviders)
+            {
+                var providerArtists = db.MusicProviders
+                    .Include(i => i.Artists)
+                    .ThenInclude(a => a.Albums)
+                    .Single(p => p.MusicProviderId == provider.Id)
+                    .Artists
+                    .ToList();
 
-            var tasks = providerArtists.Select(a => CheckUpdatesForArtistAsync(db, provider, a));
-            await Task.WhenAll(tasks.ToArray());
+                proviiderToArtists[provider] = providerArtists;
+            }
+        }
+
+        foreach (var kvp in proviiderToArtists)
+        {
+            foreach (var artist in kvp.Value)
+            {
+                await CheckUpdatesForArtistAsync(kvp.Key, artist.ArtistId);
+            }
         }
 
         CrawlerInProgress = false;
-        logger.LogInformation("Переобход парсером завершен");
     }
 
     public async Task CheckUpdatesForArtistAsync(MusicProviderBase provider, int artistId)
     {
-        using (var db = await dbFactory.CreateDbContextAsync())
+        using var db = await dbFactory.CreateDbContextAsync();
+
+        var artist = await db.Artists.FindAsync(artistId);
+        if (artist == null)
         {
-            var artist = db.Artists.Include(x => x.Albums).Single(a => a.ArtistId == artistId);
-
-            await CheckUpdatesForArtistAsync(db, provider, artist);
+            return;
         }
-    }
 
-    public async Task CheckUpdatesForArtistAsync(MusicWatcherDbContext db, MusicProviderBase provider, ArtistEntity artist)
-    {
         var albums = await provider.GetAlbumsAsync(artist);
 
-        var notAddedAlbums = albums
-            .Where(album => artist.Albums.FirstOrDefault(a => a.Uri.Equals(album.Uri, StringComparison.OrdinalIgnoreCase)) == null)
+        //var newAlbums = albums
+        //    .Where(album => !string.IsNullOrWhiteSpace(album.Uri))
+        //    .Where(album => artist.Albums.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.Uri) && a.Uri.Equals(album.Uri, StringComparison.OrdinalIgnoreCase)) == null)
+        //    .ToArray();
+
+        var newAlbums = artist.Albums
+            .Where(album => album != null && !string.IsNullOrWhiteSpace(album.Uri))
+            .ExceptByProperty(albums, album => album.Uri)
             .ToArray();
 
-        if (notAddedAlbums.Any())
+        if (newAlbums.Length == 0)
         {
-            bool isFirstUpdate = artist.Albums.Count() == 0;
-
-            artist.Albums.AddRange(notAddedAlbums);
-            await db.SaveChangesAsync();
-
-            OnNewAlbumsFound?.Invoke(this, new NewAlbumsFoundEventArgs()
-            {
-                Provider = provider.Name,
-                Artist = new ArtistDto(artist.Name, artist.Uri),
-                NewAlbums = notAddedAlbums.Select(a => new AlbumDto(a.Title, a.Uri)).ToArray()
-            });
+            return;
         }
+
+        var entity = db.Artists.Attach(artist);
+
+        artist.Albums.AddRange(newAlbums);
+        entity.State = EntityState.Modified;
+
+        await db.SaveChangesAsync();
+
+        OnNewAlbumsFound?.Invoke(this, new NewAlbumsFoundEventArgs()
+        {
+            Provider = provider.Name,
+            Artist = new ArtistDto(artist.Name, artist.Uri),
+            NewAlbums = newAlbums.Select(a => new AlbumDto(a.Title, a.Uri)).ToArray()
+        });
     }
 
     /// <summary>
@@ -149,11 +171,12 @@ public class MusicUpdateManager : IDisposable
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
-        var album = db.Albums.Find(albumId);
+        var album = await db.Albums.FindAsync(albumId);
         var tracks = await provider.GetTracksAsync(album);
 
         album.Tracks.Clear();
         album.Tracks.AddRange(tracks);
+
         await db.SaveChangesAsync();
     }
 
@@ -164,42 +187,61 @@ public class MusicUpdateManager : IDisposable
         string dtFormat = "dd.MM.yyyy HH:mm:ss";
         string settingsKey = "LastFullUpdateDateTime";
 
-        var item = db.Settings.Find(settingsKey);
+        var item = await db.Settings.FindAsync(settingsKey);
+
         if (item != null)
         {
             item.Value = LastUpdate.ToString(dtFormat);
         }
         else
         {
-            db.Settings.Add(new SettingsEntity() { Name = settingsKey, Value = LastUpdate.ToString(dtFormat) });
+            var settingRecord = new SettingsEntity()
+            {
+                Name = settingsKey,
+                Value = LastUpdate.ToString(dtFormat)
+            };
+
+            db.Settings.Add(settingRecord);
+
         }
-        db.SaveChanges();
+
+        await db.SaveChangesAsync();
+
+        logger.LogInformation($"Дата последнего обновления сохранена. Новое значение: {LastUpdate.ToString(dtFormat)}");
     }
 
     private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
-        Stopwatch sw = Stopwatch.StartNew();
-        logger.LogInformation("Переобход запущен...");
-
-        if (!CrawlerInProgress)
+        if (CrawlerInProgress)
         {
-            await CheckUpdatesAllAsync();
-            LastUpdate = DateTime.UtcNow;
-            await SaveLastUpdateTime();
-            RefreshInterval();
-            logger.LogInformation($"Переобход закончен. Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
+            return;
         }
+
+        Stopwatch sw = Stopwatch.StartNew();
+        DateTime started = DateTime.UtcNow;
+
+        await CheckUpdatesAllAsync();
+        LastUpdate = DateTime.UtcNow;
+        await SaveLastUpdateTime();
+        RefreshInterval();
+
+        var sb = new StringBuilder()
+            .Append("Переобход по таймеру выполнен. ")
+            .Append($"Начало: [{started.ToShortTimeString()}] | ")
+            .Append($"Конец [{LastUpdate.ToShortTimeString()}] | ")
+            .Append($"Длительность выполнения: {(int)sw.Elapsed.TotalSeconds} сек.");
+
+        logger.LogInformation(sb.ToString());
+
     }
 
     public void Dispose()
     {
-        autoUpdateTimer.Elapsed -= AutoUpdateTimer_Elapsed;
-        autoUpdateTimer.Stop();
-        autoUpdateTimer.Dispose();
+        if (autoUpdateTimer != null)
+        {
+            autoUpdateTimer.Elapsed -= AutoUpdateTimer_Elapsed;
+            autoUpdateTimer.Stop();
+            autoUpdateTimer.Dispose();
+        }
     }
 }
-
-
-
-
-

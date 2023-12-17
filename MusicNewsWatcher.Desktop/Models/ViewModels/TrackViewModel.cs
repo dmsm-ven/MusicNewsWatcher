@@ -1,5 +1,6 @@
 ﻿using MusicNewsWatcher.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Services;
+using MusicNewsWatcher.Desktop.Models.ViewModels;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
 

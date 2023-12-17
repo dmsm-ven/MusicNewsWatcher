@@ -1,4 +1,5 @@
 ﻿using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Desktop.Models.ViewModels;
 using MusicNewsWatcher.Desktop.Services;
 using MusicNewsWatcher.Infrastructure.Helpers;
 using System.Collections.ObjectModel;

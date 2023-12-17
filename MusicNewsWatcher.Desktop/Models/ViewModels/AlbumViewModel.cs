@@ -1,14 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.Infrastructure.Helpers;
-using MusicNewsWatcher.Desktop.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using MahApps.Metro.IconPacks;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
 public class AlbumViewModel : ViewModelBase
 {
@@ -19,13 +17,13 @@ public class AlbumViewModel : ViewModelBase
 
     public event Action<AlbumViewModel> OnAlbumChanged;
 
-    string title;
+    private string title;
     public string Title
     {
         get => title;
         set
         {
-            if(Set(ref title, value))
+            if (Set(ref title, value))
             {
                 RaisePropertyChanged(nameof(DisplayName));
             }
@@ -33,7 +31,7 @@ public class AlbumViewModel : ViewModelBase
     }
     public string DisplayName => Title.ToDisplayName();
 
-    string cachedImage;
+    private string cachedImage;
     public string CachedImage
     {
         get => cachedImage ??= GetCachedImage(Image);
@@ -42,7 +40,7 @@ public class AlbumViewModel : ViewModelBase
     public DateTime Created { get; init; }
     public int AlbumId { get; init; }
 
-    bool isActiveAlbum;
+    private bool isActiveAlbum;
     public bool IsActiveAlbum
     {
         get => isActiveAlbum;
@@ -54,13 +52,13 @@ public class AlbumViewModel : ViewModelBase
         get => Tracks.Count > 0 && !InProgress;
     }
 
-    bool inProgress;
+    private bool inProgress;
     public bool InProgress
     {
         get => inProgress;
         set
         {
-            if(Set(ref inProgress, value))
+            if (Set(ref inProgress, value))
             {
                 RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
                 RaisePropertyChanged(nameof(Tracks));
@@ -69,13 +67,13 @@ public class AlbumViewModel : ViewModelBase
         }
     }
 
-    bool? isChecked = null;
+    private bool? isChecked = null;
     public bool? IsChecked
     {
         get => isChecked;
         set
         {
-            if(Set(ref isChecked, value))
+            if (Set(ref isChecked, value))
             {
                 RaisePropertyChanged(nameof(CurrentMultiselectStateIcon));
             }
@@ -111,8 +109,8 @@ public class AlbumViewModel : ViewModelBase
     public ICommand ToggleMultiselectStateCommand { get; }
     public ArtistViewModel ParentArtist { get; }
 
-    CancellationTokenSource cts;
-    
+    private CancellationTokenSource cts;
+
     public AlbumViewModel()
     {
         downloadManager = App.HostContainer.Services.GetRequiredService<MusicDownloadManager>();
@@ -137,7 +135,7 @@ public class AlbumViewModel : ViewModelBase
     public async Task DownloadAlbum(bool openFolder)
     {
         InProgress = true;
-       
+
         Stopwatch sw = Stopwatch.StartNew();
         using (var db = dbFactory.CreateDbContext())
         {
@@ -145,15 +143,15 @@ public class AlbumViewModel : ViewModelBase
 
             downloadManager.ThreadLimit = parallelDownloads;
         }
-           
+
         try
         {
             cts = new CancellationTokenSource();
             string albumDir = await downloadManager.DownloadFullAlbum(this, FileBrowserHelper.DownloadDirectory, cts.Token);
-          
+
             if (!cts.IsCancellationRequested)
             {
-                string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{this.DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
+                string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
                 toasts.ShowSuccess(msg);
             }
 
@@ -161,7 +159,7 @@ public class AlbumViewModel : ViewModelBase
 
             FileBrowserHelper.OpenFolderInFileBrowser(albumDir);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             if (!cts.IsCancellationRequested)
             {
@@ -177,30 +175,29 @@ public class AlbumViewModel : ViewModelBase
     public async Task RefreshTracksSource()
     {
         using var db = await dbFactory.CreateDbContextAsync();
+        var tracksSource = await db.Tracks.Where(t => t.AlbumId == this.AlbumId).CountAsync();
 
-        if (await db.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync() != Tracks.Count)
+        if (tracksSource == Tracks.Count)
         {
-            Tracks.Clear();
-
-            var tracks = (await db
-                .Tracks
-                .Where(a => a.AlbumId == AlbumId)
-                .ToListAsync())
-                .Select(i => new TrackViewModel(this)
-                {
-                    AlbumId = i.AlbumId,
-                    Id = i.Id,
-                    Name = i.Name,
-                    DownloadUri = i.DownloadUri,
-                })
-                .OrderBy(a => a.Id)
-                .ToList();
-
-            foreach (var track in tracks)
-            {
-                Tracks.Add(track);
-            }
+            return;
         }
+
+
+        Tracks.Clear();
+
+        var tracksEntities = await db.Tracks.Where(a => a.AlbumId == this.AlbumId).ToListAsync();
+
+        tracksEntities
+            .Select(i => new TrackViewModel(this)
+            {
+                AlbumId = i.AlbumId,
+                Id = i.Id,
+                Name = i.Name,
+                DownloadUri = i.DownloadUri,
+            })
+            .OrderBy(a => a.Id)
+            .ToList()
+            .ForEach(t => Tracks.Add(t));
     }
 
     private async Task GetTracksFromProvider()

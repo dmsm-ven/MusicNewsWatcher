@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.Infrastructure.Helpers;
+﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Infrastructure.Helpers;
 using System.IO;
 using System.Net;
 using System.Net.Http;
