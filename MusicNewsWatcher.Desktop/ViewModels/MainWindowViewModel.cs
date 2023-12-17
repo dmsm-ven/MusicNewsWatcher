@@ -1,4 +1,6 @@
-﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
+﻿using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -30,8 +32,8 @@ public class MainWindowViewModel : ViewModelBase
         set => Set(ref isLoading, value);
     }
 
-    private MusicProviderViewModel selectedMusicProvider;
-    public MusicProviderViewModel SelectedMusicProvider
+    private MusicProviderViewModel? selectedMusicProvider;
+    public MusicProviderViewModel? SelectedMusicProvider
     {
         get => selectedMusicProvider;
         set

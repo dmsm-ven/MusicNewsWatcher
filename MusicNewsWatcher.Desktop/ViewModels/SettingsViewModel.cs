@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using MusicNewsWatcher.Core.DataAccess.Entity;
+using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using System.Windows.Input;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
@@ -6,8 +8,7 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 public class SettingsWindowViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-
-    int updateManagerIntervalInMinutes = 30;
+    private int updateManagerIntervalInMinutes = 30;
     public int UpdateManagerIntervalInMinutes
     {
         get => updateManagerIntervalInMinutes;
@@ -24,7 +25,7 @@ public class SettingsWindowViewModel : ViewModelBase
         }
     }
 
-    int downloadThreadsNumber = 2;
+    private int downloadThreadsNumber = 2;
     public int DownloadThreadsNumber
     {
         get => downloadThreadsNumber;
@@ -41,7 +42,7 @@ public class SettingsWindowViewModel : ViewModelBase
         }
     }
 
-    string telegramApiToken;
+    private string telegramApiToken;
     public string TelegramApiToken
     {
         get => telegramApiToken;
@@ -55,7 +56,7 @@ public class SettingsWindowViewModel : ViewModelBase
         }
     }
 
-    string telegramChatId;
+    private string telegramChatId;
     public string TelegramChatId
     {
         get => telegramChatId;
@@ -72,7 +73,7 @@ public class SettingsWindowViewModel : ViewModelBase
     public bool HasChanges => settingsChanges.Values.Any(v => v != null);
     public bool IsLoaded { get; private set; }
 
-    Dictionary<string, string?> settingsChanges;
+    private readonly Dictionary<string, string?> settingsChanges;
 
     public ICommand SaveCommand { get; }
     public ICommand LoadedCommand { get; }
@@ -111,7 +112,7 @@ public class SettingsWindowViewModel : ViewModelBase
     private void SaveSettings(object obj)
     {
         using var db = dbFactory.CreateDbContext();
-        
+
         foreach (var kvp in settingsChanges.Where(i => i.Value != null))
         {
             var alreadyAddedSetting = db.Settings.FirstOrDefault(i => i.Name.Equals(kvp.Key));
@@ -127,7 +128,7 @@ public class SettingsWindowViewModel : ViewModelBase
             settingsChanges[kvp.Key] = null;
         }
         db.SaveChanges();
-        
+
         RaisePropertyChanged(nameof(HasChanges));
     }
 }

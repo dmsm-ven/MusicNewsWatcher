@@ -1,8 +1,7 @@
-﻿using MusicNewsWatcher.Core.DataAccess.Entity;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.Core.DataAccess.Entity;
 
 [Table(name: "tracks")]
 public class TrackEntity
@@ -15,10 +14,10 @@ public class TrackEntity
     public int AlbumId { get; set; }
 
     [Column(name: "name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [Column(name: "downloaduri")]
     public string? DownloadUri { get; set; }
 
-    public AlbumEntity Album { get; set; }
+    public AlbumEntity? Album { get; set; }
 }

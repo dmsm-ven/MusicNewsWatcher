@@ -1,10 +1,10 @@
-﻿using MusicNewsWatcher.Desktop.Models.ViewModels;
+﻿using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
 public class MusicProviderViewModel : ViewModelBase
 {
@@ -19,28 +19,28 @@ public class MusicProviderViewModel : ViewModelBase
     public string Image { get; init; }
     public string Uri { get; init; }
 
-    int trackedArtistsCount;
+    private int trackedArtistsCount;
     public int TrackedArtistsCount
     {
         get => TrackedArtists.Count > 0 ? TrackedArtists.Count : trackedArtistsCount;
         set => Set(ref trackedArtistsCount, value);
     }
 
-    bool inProgress = false;
+    private bool inProgress = false;
     public bool InProgress
     {
         get => inProgress;
         set => Set(ref inProgress, value);
     }
 
-    bool isActiveProvider;
+    private bool isActiveProvider;
     public bool IsActiveProvider
     {
         get => isActiveProvider;
         set => Set(ref isActiveProvider, value);
     }
 
-    ArtistViewModel? selectedArtist;
+    private ArtistViewModel? selectedArtist;
     public ArtistViewModel? SelectedArtist
     {
         get => selectedArtist;
@@ -61,7 +61,7 @@ public class MusicProviderViewModel : ViewModelBase
     public ICommand ChangeSelectedArtistCommand { get; }
     public ICommand EditArtistCommand { get; }
     public ICommand DeleteArtistCommand { get; }
-    
+
     public MusicProviderViewModel()
     {
         dbContextFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();

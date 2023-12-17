@@ -1,33 +1,37 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Telegram.Bot;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class MusicNewsWatcherTelegramBot : IDisposable
+public sealed class MusicNewsWatcherTelegramBot : IDisposable
 {
-    private readonly TelegramBotRoutes thBotMessageHandler;
     public bool IsStarted { get; private set; }
+
+    public event Action? OnForceUpdateCommandRecevied;
 
     private readonly ITelegramBotClient botClient;
     private readonly TelegramBotRoutes botRoutes;
     private readonly ILogger<MusicNewsWatcherTelegramBot> logger;
 
     private readonly CancellationTokenSource cts = new();
-    private string? consumerId;
+    private readonly string consumerId;
 
     public MusicNewsWatcherTelegramBot(ITelegramBotClient botClient,
         TelegramBotRoutes? botRoutes,
-        ILogger<MusicNewsWatcherTelegramBot> logger)
+        ILogger<MusicNewsWatcherTelegramBot> logger,
+        IOptions<TelegramBotConfiguration> telegramBotConfigurationOptions)
     {
         this.botClient = botClient ?? throw new ArgumentNullException(nameof(botClient));
         this.botRoutes = botRoutes ?? throw new ArgumentNullException(nameof(botRoutes));
+        this.consumerId = telegramBotConfigurationOptions?.Value?.ClientId ?? throw new ArgumentNullException(nameof(consumerId));
         this.logger = logger;
+
+        this.botRoutes.OnForceUpdateCommandRecevied += () => OnForceUpdateCommandRecevied?.Invoke();
     }
 
-    public void Start(string consumerId)
+    public void Start()
     {
-        this.consumerId = consumerId;
-
         if (IsStarted)
         {
             logger.LogError("Бот был уже запущен");

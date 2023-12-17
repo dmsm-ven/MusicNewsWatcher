@@ -1,18 +1,19 @@
-﻿using MusicNewsWatcher.Infrastructure.Helpers;
-using System;
+﻿using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Infrastructure.Helpers;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Base;
 
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler PropertyChanged;
+    private static readonly string PLACEHOLDER = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Assets", "image-placeholder.jpg");
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public ICommand OpenInBrowserCommand { get; } = new LambdaCommand(OpenInBrowser);
 
@@ -41,16 +42,15 @@ public abstract class ViewModelBase : INotifyPropertyChanged
         }
     }
 
-    protected string GetCachedImage(string originalSourceUri)
+    protected string GetCachedImageAndCreate(string originalSourceUri)
     {
         string[] VALID_EXT = new[] { ".jpg", ".png", ".jpeg" };
-        const string PLACEHOLDER = @"D:\Programming\CSharp\Парсеры\BadicampWatcher\BadicampWatcher\Assets\image-placeholder.jpg";
 
         if (string.IsNullOrEmpty(originalSourceUri)) { return PLACEHOLDER; }
         if (!originalSourceUri.StartsWith("http")) { return PLACEHOLDER; }
         if (!Uri.IsWellFormedUriString(originalSourceUri, UriKind.Absolute)) { return PLACEHOLDER; }
 
-        string clearName = new string(originalSourceUri.Except(Path.GetInvalidFileNameChars()).ToArray());
+        string clearName = new(originalSourceUri.Except(Path.GetInvalidFileNameChars()).ToArray());
         string ext = Path.GetExtension(clearName);
 
         if (!VALID_EXT.Contains(ext.ToLower())) { ext = VALID_EXT[0]; }
@@ -62,7 +62,7 @@ public abstract class ViewModelBase : INotifyPropertyChanged
             {
                 new WebClient().DownloadFile(originalSourceUri, cachedName);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 File.Copy(PLACEHOLDER, cachedName);
                 return PLACEHOLDER;

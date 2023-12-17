@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using MusicNewsWatcher.Core;
+﻿using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
@@ -10,14 +8,14 @@ namespace MusicNewsWatcher.TelegramBot;
 
 public class TelegramBotRoutes : IUpdateHandler
 {
-    public event Action OnForceUpdateCommandRecevied;
+    public event Action? OnForceUpdateCommandRecevied;
 
     private readonly TelegramBotCommandHandlers commandHandlers;
-    private readonly ITelegramBotClient botClient;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
+    //private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
     private readonly ILogger<TelegramBotRoutes> logger;
 
-    public TelegramBotRoutes(TelegramBotCommandHandlers commandHandlers,
+    public TelegramBotRoutes(
+        TelegramBotCommandHandlers commandHandlers,
         ILogger<TelegramBotRoutes> looger)
     {
         this.commandHandlers = commandHandlers ?? throw new ArgumentNullException(nameof(commandHandlers));
@@ -62,15 +60,17 @@ public class TelegramBotRoutes : IUpdateHandler
 
     private Task BotOnMessageReceived(Message message)
     {
-        logger.LogInformation("Получена команда: " + message?.Text ?? "<Пусто>");
+        logger.LogInformation("Получена команда для телеграм бота: {message}", message?.Text);
 
         if (string.IsNullOrWhiteSpace(message?.Text))
             return Task.CompletedTask;
 
-        Dictionary<string, Func<Task<Message?>>> routes = new();
-        routes["/last_update"] = () => commandHandlers.LastUpdate(message);
-        routes["/force_update"] = () => commandHandlers.ForceUpdate(message);
-        routes["/tracked_artists"] = () => commandHandlers.ProviderList(message);
+        Dictionary<string, Func<Task<Message?>>> routes = new()
+        {
+            ["/last_update"] = () => commandHandlers.LastUpdateCommand(message)!,
+            ["/force_update"] = () => commandHandlers.ForceUpdateCommand(message)!,
+            ["/tracked_artists"] = () => commandHandlers.ProviderListCommand(message)!
+        };
 
         if (routes.ContainsKey(message.Text))
         {
@@ -81,19 +81,21 @@ public class TelegramBotRoutes : IUpdateHandler
             return routes[message.Text]();
         }
 
-        return commandHandlers.Usage(message);
+        return commandHandlers.UsageCommand(message);
     }
 
     private Task<Message> BotOnCallbackQueryReceived(Update update)
     {
-        var text = update.CallbackQuery.Data;
-        var param = text.Substring(text.IndexOf(" ") + 1);
-
-        if (text.StartsWith("/tracked_artists_for_provider"))
+        if (!string.IsNullOrWhiteSpace(update?.CallbackQuery?.Data))
         {
-            return commandHandlers.TrackedArtistsForProvider(update, param);
-        }
+            string text = update.CallbackQuery.Data;
+            string param = text.Substring(text.IndexOf(" ") + 1);
 
-        throw new NotImplementedException();
+            if (text.StartsWith("/tracked_artists_for_provider"))
+            {
+                return commandHandlers.TrackedArtistsForProviderCommand(update, param);
+            }
+        }
+        return Task.FromResult(new Message());
     }
 }

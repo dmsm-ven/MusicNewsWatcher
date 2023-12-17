@@ -1,8 +1,8 @@
 ﻿using MusicNewsWatcher.Core;
-using System.Collections.Generic;
+using MusicNewsWatcher.Core.Dto;
 using System.Text;
 
-namespace MusicNewsWatcher.TelegramBot;
+namespace MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 {
@@ -10,7 +10,7 @@ public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
     {
         var sb = new StringBuilder()
             .AppendLine($"На сайте <b>{provider}</b> появились альбомы для отслеживаемого исполнителя")
-            .AppendLine($"<a href=\"{artist.uri}\"><b>{artist.name}</b></a>");
+            .AppendLine($"<a href=\"{artist.Uri}\"><b>{artist.Name}</b></a>");
 
         foreach (var album in newAlbums)
         {

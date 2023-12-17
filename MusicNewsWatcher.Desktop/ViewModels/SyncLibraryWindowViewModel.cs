@@ -1,5 +1,7 @@
 ﻿using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Core.DataAccess.Entity;
+using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,15 +12,14 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 public class SyncLibraryWindowViewModel : ViewModelBase
 {
     private readonly ISyncLibraryTracker tracker;
-
-    bool inProgress = true;
+    private bool inProgress = true;
     public bool InProgress
     {
         get => inProgress;
         set => Set(ref inProgress, value);
     }
 
-    bool isAppendClicked = false;
+    private bool isAppendClicked = false;
     public bool IsAppendClicked
     {
         get => isAppendClicked;
@@ -42,7 +43,7 @@ public class SyncLibraryWindowViewModel : ViewModelBase
 
     public ObservableCollection<SyncHostViewModel> Hosts { get; }
 
-    SyncHostViewModel selectedHost;
+    private SyncHostViewModel selectedHost;
     public SyncHostViewModel SelectedHost
     {
         get => selectedHost;
@@ -55,7 +56,7 @@ public class SyncLibraryWindowViewModel : ViewModelBase
         }
     }
 
-    SyncHostViewModel newHost;
+    private SyncHostViewModel newHost;
     public SyncHostViewModel NewHost
     {
         get => newHost;

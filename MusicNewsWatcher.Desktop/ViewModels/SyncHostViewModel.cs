@@ -1,5 +1,6 @@
 ﻿using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.Services;
+using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -12,23 +13,23 @@ namespace MusicNewsWatcher.Desktop.ViewModels;
 
 public class SyncHostViewModel : ViewModelBase
 {
-    private string MISSING_TRACKS_FILE 
-    { 
+    private string MISSING_TRACKS_FILE
+    {
         get => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "missing.txt");
     }
 
     public Guid Id { get; init; }
 
-    string name = string.Empty;
+    private string name = string.Empty;
     public string Name { get => name; set => Set(ref name, value); }
 
-    string rootFolderPath = string.Empty;
+    private string rootFolderPath = string.Empty;
     public string RootFolderPath { get => rootFolderPath; set => Set(ref rootFolderPath, value); }
 
-    DateTimeOffset? lastUpdate = null;
+    private DateTimeOffset? lastUpdate = null;
     public DateTimeOffset? LastUpdate { get => lastUpdate; set => Set(ref lastUpdate, value); }
 
-    PackIconFontAwesomeKind icon;
+    private PackIconFontAwesomeKind icon;
     private readonly ISyncLibraryTracker tracker;
 
     public PackIconFontAwesomeKind Icon

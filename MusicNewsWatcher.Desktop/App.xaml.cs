@@ -12,7 +12,6 @@ global using ToastNotifications;
 global using ToastNotifications.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.Services;
 using MusicNewWatcher.BL;
 using System.Threading;
 using System.Windows;
@@ -44,13 +43,12 @@ public partial class App : Application
             {
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
-                    string connectionString = context.Configuration.GetConnectionString("default");
-                    options.UseNpgsql(connectionString);
+                    options.UseNpgsql(context.Configuration.GetConnectionString("default"));
                 });
 
                 services.AddToasts();
                 //services.AddNotifyIcon();
-                services.AddTelegramBot(context);
+                services.AddTelegramBot(context.Configuration);
 
                 services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
@@ -90,7 +88,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        HostContainer.StopAsync();
+        await HostContainer.StopAsync();
         mutex?.ReleaseMutex();
 
         base.OnExit(e);

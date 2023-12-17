@@ -1,8 +1,5 @@
 ﻿using HtmlAgilityPack;
 using MusicNewsWatcher.Core.DataAccess.Entity;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Core;
 
@@ -32,7 +29,7 @@ public abstract class MusicProviderBase
 
     }
 
-    protected async Task<HtmlDocument> GetDocument(string uri)
+    protected async Task<HtmlDocument?> GetDocument(string uri)
     {
         try
         {

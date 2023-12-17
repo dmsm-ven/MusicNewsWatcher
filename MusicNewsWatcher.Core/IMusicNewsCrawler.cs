@@ -5,7 +5,15 @@ namespace MusicNewsWatcher.Core;
 
 public interface IMusicNewsCrawler
 {
-    Task CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders);
     Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId);
-    Task<AlbumEntity[]> CheckUpdatesForArtistAndSaveIfHasAsync(MusicProviderBase provider, int artistId);
+    Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders);
+    Task<IReadOnlyList<AlbumEntity>> CheckUpdatesForArtistAndSaveIfHasAsync(MusicProviderBase provider, int artistId);
+}
+
+public class NewAlbumFoundResult
+{
+    public string ProviderName { get; init; } = string.Empty;
+    public string ArtistName { get; init; } = string.Empty;
+    public string ArtistUri { get; init; } = string.Empty;
+    public IReadOnlyList<AlbumEntity> Albums { get; init; } = new List<AlbumEntity>();
 }

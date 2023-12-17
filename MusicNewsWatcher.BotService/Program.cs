@@ -1,9 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.BotService;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
+using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using MusicNewWatcher.BL;
+using MusicNewWatcher.BL.MusicProviders;
 using Telegram.Bot;
 
 public static class Program
@@ -26,18 +30,19 @@ public static class Program
 
                 services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
 
-
+                services.Configure<TelegramBotConfiguration>(context.Configuration.GetSection("TelegramBot"));
                 services.AddSingleton<ITelegramBotClient>(options =>
                 {
-                    string? token = context.Configuration["TelegramBot:ApiKey"];
-                    return new TelegramBotClient(token);
+                    var tgConfig = new TelegramBotConfiguration();
+                    context.Configuration.GetSection("TelegramBot").Bind(tgConfig);
+                    return new TelegramBotClient(tgConfig.ApiKey);
                 });
                 services.AddSingleton<TelegramBotRoutes>();
                 services.AddSingleton<TelegramBotCommandHandlers>();
                 services.AddSingleton<MusicNewsWatcherTelegramBot>();
 
-                // Запускает Телеграм бота и службу обновления(парсер)
-                services.AddHostedService<ServiceBackgroundWorker>();
+                services.AddHostedService<TelegramBotHostedService>();
+                services.AddHostedService<CrawlerHostedService>();
             })
             .Build();
 

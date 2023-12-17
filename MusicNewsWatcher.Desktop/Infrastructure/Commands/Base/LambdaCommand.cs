@@ -1,16 +1,15 @@
-﻿using System;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
-namespace MusicNewsWatcher;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
 
 public class LambdaCommand : Command
 {
     private readonly Action<object> action;
     private readonly Func<object, bool> canExecute;
-    private ICommand? cancelDownloading;
-    private Func<object, bool> p;
+    private readonly ICommand? cancelDownloading;
+    private readonly Func<object, bool> p;
 
-    public LambdaCommand(Action<object> action, Func<object, bool> canExecute = null)
+    public LambdaCommand(Action<object> action, Func<object, bool>? canExecute = null)
     {
         this.action = action ?? throw new ArgumentNullException(nameof(action));
         this.canExecute = canExecute;

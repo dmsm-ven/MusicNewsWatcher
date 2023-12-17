@@ -1,4 +1,6 @@
 ﻿using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.ViewModels.Base;
 using MusicNewsWatcher.Infrastructure.Helpers;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
@@ -32,7 +34,7 @@ public class ArtistViewModel : ViewModelBase
     private string cachedImage;
     public string CachedImage
     {
-        get => cachedImage ??= GetCachedImage(Image);
+        get => cachedImage ??= GetCachedImageAndCreate(Image);
     }
 
     public DateTime LastAlbumDate

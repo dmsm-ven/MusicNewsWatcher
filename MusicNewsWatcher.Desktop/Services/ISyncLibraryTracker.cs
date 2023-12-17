@@ -1,7 +1,7 @@
 ﻿using MusicNewsWatcher.Core.DataAccess.Entity;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Services;
+namespace MusicNewsWatcher.Desktop.Services;
 
 public interface ISyncLibraryTracker
 {
@@ -87,8 +87,8 @@ public class SyncLibraryTracker : ISyncLibraryTracker
         var leftHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_left);
         var rightHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_right);
 
-        var filesLeft = leftHost.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();
-        var filesRight = rightHost.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();
+        var filesLeft = leftHost!.SyncTracks.AsEnumerable().Select(f => f.Path).ToList()!;
+        var filesRight = rightHost!.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();
 
         if (filesLeft.Any() && filesRight.Any())
         {

@@ -1,10 +1,7 @@
 ﻿using MusicNewsWatcher.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MusicNewsWatcher.Core.Dto;
 
-namespace MusicNewsWatcher.TelegramBot;
+namespace MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 public interface IMusicNewsMessageFormatter
 {

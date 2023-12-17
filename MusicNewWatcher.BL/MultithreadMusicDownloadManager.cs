@@ -4,10 +4,10 @@ using System.Net;
 namespace MusicNewWatcher.BL;
 
 //TODO убрать прямое обращение через ViewModel
-public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager, IDisposable
+public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
 {
     private readonly HttpClient client;
-    private SemaphoreSlim semaphor;
+    private SemaphoreSlim? semaphor;
 
     private int threadLimit;
     public int ThreadLimit
@@ -145,12 +145,6 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager, IDispo
     public Task<string> DownloadFullAlbum(string albumUri, string downloadDirectory, CancellationToken? token = null)
     {
         throw new NotImplementedException();
-    }
-
-    public void Dispose()
-    {
-        client?.Dispose();
-        semaphor?.Dispose();
     }
 }
 

@@ -1,25 +1,20 @@
-﻿using HtmlAgilityPack;
+﻿using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using MusicNewsWatcher.Core.Dto;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewWatcher.BL.MusicProviders;
 
 public sealed class MusifyMusicProvider : MusicProviderBase
 {
-    const string HOST = "https://musify.club";
-    const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
+    private const string HOST = "https://musify.club";
+    private const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
     private readonly HttpClient searchClient;
 
-    public MusifyMusicProvider() : base(2, "Musify") 
+    public MusifyMusicProvider() : base(2, "Musify")
     {
         searchClient = new HttpClient(new HttpClientHandler()
         {
@@ -46,14 +41,14 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         {
             return Enumerable.Empty<AlbumEntity>().ToArray();
         }
-        
+
         var parsedAlbums = doc.DocumentNode
             .SelectNodes("//div[@id='divAlbumsList']/div")
             .Select(div => new
             {
                 Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty).Trim(),
-                Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", String.Empty).Trim(),
-                Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", String.Empty).Trim(),
+                Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", string.Empty).Trim(),
+                Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", string.Empty).Trim(),
                 DateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim(),
                 AlbumType = int.Parse(div.GetAttributeValue("data-type", "0"))
 
@@ -65,7 +60,7 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         {
             AlbumEntity[] albums = new AlbumEntity[parsedAlbums.Length];
 
-            for(int i = 0; i< parsedAlbums.Length; i++)
+            for (int i = 0; i < parsedAlbums.Length; i++)
             {
                 albums[i] = new AlbumEntity()
                 {
@@ -83,7 +78,7 @@ public sealed class MusifyMusicProvider : MusicProviderBase
 
             return albums;
         }
-        
+
 
         return Enumerable.Empty<AlbumEntity>().ToArray();
     }
@@ -114,36 +109,36 @@ public sealed class MusifyMusicProvider : MusicProviderBase
     public override async Task<ArtistEntity[]> SerchArtist(string searchText)
     {
         string uri = $"{HOST}/search/suggestions?term={HttpUtility.UrlEncode(searchText)}";
-        
+
         try
         {
             var response = await searchClient.GetFromJsonAsync<MusifySearchResultDto[]>(uri);
-            if (response.Length > 0)
+            if (response != null && response.Length > 0)
             {
                 var data = response
-                    .Where(i => i.category == "Исполнители")
+                    .Where(i => i.Category == "Исполнители")
                     .Take(10)
                     .Select(i => new ArtistEntity()
                     {
-                        Name = i.label,
-                        Image = i.image,
-                        Uri = HOST + i.url
+                        Name = i.Label,
+                        Image = i.Image,
+                        Uri = HOST + i.Uri
                     })
                     .ToArray();
 
                 return data;
             }
         }
-        catch (Exception ex)
+        catch
         {
-            
+            //ignore search errors
         }
 
 
         return await base.SerchArtist(searchText);
     }
 
-    enum MusifyAlbumType 
+    private enum MusifyAlbumType
     {
         Album = 2,//Студийный альбом = 2,
         EP = 3,//EP = 3,

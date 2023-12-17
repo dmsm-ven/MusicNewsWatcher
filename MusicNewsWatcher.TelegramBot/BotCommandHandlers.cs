@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using System.Globalization;
 using System.Text;
@@ -14,18 +13,15 @@ public class TelegramBotCommandHandlers
 {
     private readonly ITelegramBotClient botClient;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
-    private readonly ILogger<TelegramBotCommandHandlers> logger;
 
     public TelegramBotCommandHandlers(ITelegramBotClient botClient,
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
-        ILogger<TelegramBotCommandHandlers> logger)
+        IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
     {
         this.botClient = botClient;
         this.dbContextFactory = dbContextFactory;
-        this.logger = logger;
     }
 
-    public async Task<Message> Usage(Message message)
+    public async Task<Message> UsageCommand(Message message)
     {
         var usageList = new List<string>() {
             "Команды:",
@@ -41,16 +37,14 @@ public class TelegramBotCommandHandlers
                                                     replyMarkup: new ReplyKeyboardRemove());
     }
 
-    public async Task<Message> ForceUpdate(Message message)
+    public async Task<Message> ForceUpdateCommand(Message message)
     {
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                 text: "Запуск ...", ParseMode.Html);
     }
 
-    public async Task<Message> LastUpdate(Message message)
+    public async Task<Message> LastUpdateCommand(Message message)
     {
-        const int textProgressBarLength = 30;
-
         using var db = await dbContextFactory.CreateDbContextAsync();
 
         string lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value ?? "01.01.2000 00:00:00";
@@ -71,8 +65,13 @@ public class TelegramBotCommandHandlers
 
     }
 
-    public async Task<Message> TrackedArtistsForProvider(Update update, string providerName)
+    public async Task<Message> TrackedArtistsForProviderCommand(Update update, string providerName)
     {
+        if (update == null || update.CallbackQuery == null)
+        {
+            throw new ArgumentNullException(nameof(update));
+        }
+
         var chatId = update.CallbackQuery.From.Id;
 
         using var db = dbContextFactory.CreateDbContext();
@@ -97,13 +96,13 @@ public class TelegramBotCommandHandlers
         return await botClient.SendTextMessageAsync(chatId: chatId, text: $"Провайдер '{providerName}' не найден", replyMarkup: new ReplyKeyboardRemove());
     }
 
-    public async Task<Message> ProviderList(Message message)
+    public async Task<Message> ProviderListCommand(Message message)
     {
         using var db = await dbContextFactory.CreateDbContextAsync();
 
         var providersData = db.MusicProviders.Select(mp => new
         {
-            Name = mp.Name,
+            mp.Name,
             TrackedArtists = mp.Artists.Count()
         }).ToArray();
 

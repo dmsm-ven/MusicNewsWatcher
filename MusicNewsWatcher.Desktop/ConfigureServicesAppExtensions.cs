@@ -1,6 +1,8 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using MusicNewsWatcher.TelegramBot;
+using MusicNewsWatcher.TelegramBot.MessageFormatters;
+using MusicNewWatcher.BL.MusicProviders;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
@@ -41,9 +43,10 @@ public static class ConfigureServicesAppExtensions
         services.AddSingleton<TaskbarIcon>(tbi);
     }
 
-    public static void AddTelegramBot(this IServiceCollection services, HostBuilderContext context)
+    public static void AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+        services.Configure<TelegramBotConfiguration>(configuration.GetSection("TelegramBot"));
         services.AddTransient<MusicNewsWatcherTelegramBot>();
         services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
     }

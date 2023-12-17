@@ -28,6 +28,6 @@ public class AlbumEntity
     [Column(name: "uri")]
     public string Uri { get; set; } = string.Empty;
 
-    public ArtistEntity Artist { get; set; }
-    public List<TrackEntity> Tracks { get; set; } = new List<TrackEntity>();
+    public ArtistEntity? Artist { get; set; }
+    public List<TrackEntity> Tracks { get; set; } = new();
 }

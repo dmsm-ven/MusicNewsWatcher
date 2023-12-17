@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MusicNewsWatcher.Core.Dto;
 
 namespace MusicNewsWatcher.Core;
 
 public class NewAlbumsFoundEventArgs
 {
-    public string Provider { get; init; }
-    public ArtistDto Artist { get; init; }
-    public AlbumDto[] NewAlbums { get; init; }
+    public string Provider { get; init; } = string.Empty;
+    public ArtistDto? Artist { get; init; }
+    public AlbumDto[]? NewAlbums { get; init; }
 }

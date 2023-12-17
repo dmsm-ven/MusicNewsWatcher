@@ -1,13 +1,13 @@
-﻿namespace MusicNewsWatcher.Core;
+﻿namespace MusicNewsWatcher.Core.Dto;
 
-public record ArtistDto(string name, string uri);
+public record ArtistDto(string Name, string Uri);
 
 public record MusifySearchResultDto
 {
-    public string id { get; init; }
-    public string label { get; init; }
-    public string value { get; init; }
-    public string category { get; init; }
-    public string image { get; init; }
-    public string url { get; init; }
+    public string Id { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
+    public string Category { get; init; } = string.Empty;
+    public string Image { get; init; } = string.Empty;
+    public string Uri { get; init; } = string.Empty;
 }
