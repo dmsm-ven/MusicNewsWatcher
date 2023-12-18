@@ -52,11 +52,12 @@ public class TelegramBotCommandHandlers
         TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(db.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
         int updateIntervalMinutes = (int)updateInterval.TotalMinutes;
         DateTime nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
+        int nextUpdateLeft = (int)(nextUpdate - DateTime.UtcNow).TotalMinutes;
 
         var sb = new StringBuilder()
-            .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToString("dd.MM.yyyy HH:mm")}</b>")
             .AppendLine($"Интервал обновления: <b>{updateIntervalMinutes} мин.</b>")
-            .Append($"Следующий запуск: <b>{nextUpdate.ToString("dd.MM.yyyy HH:mm")}</b>");
+            .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")}</b>")
+            .Append($"Следующий запуск: <b>{nextUpdate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")}</b> (через {nextUpdateLeft} мин.)");
 
 
         string replyText = sb.ToString();
