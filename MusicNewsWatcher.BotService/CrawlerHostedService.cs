@@ -28,11 +28,26 @@ public sealed class CrawlerHostedService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
-        await updateManager.Start();
+
+        TimeSpan startDelay = TimeSpan.FromSeconds(5);
+
+        await updateManager.RefreshInterval();
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            logger.LogInformation("Следующий переобход парсера будет запущен через ... {interval}", updateManager.UpdateInterval);
+
+            await Task.Delay(updateManager.UpdateInterval, stoppingToken);
+            try
+            {
+                logger.LogInformation("[{now}] Запуск переобхода", DateTime.Now);
+                await updateManager.RunCrawler(stoppingToken);
+                logger.LogInformation("[{now}] Переобход выполнен", DateTime.Now);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("[{now}] Ошибка выполнения переобхода: {error}", DateTime.Now, ex.Message);
+            }
         }
     }
 
@@ -52,6 +67,12 @@ public sealed class CrawlerHostedService : BackgroundService
             logger.LogError("Ошибка при нахождении нового альбома");
             throw;
         }
+    }
+
+    public override void Dispose()
+    {
+        updateManager.OnNewAlbumsFound -= UpdateManager_OnNewAlbumsFound;
+        base.Dispose();
     }
 }
 

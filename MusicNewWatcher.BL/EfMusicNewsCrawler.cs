@@ -17,8 +17,10 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         this.logger = logger;
     }
 
-    public async Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders)
+    public async Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders, CancellationToken stoppingToken)
     {
+        stoppingToken.ThrowIfCancellationRequested();
+
         if (musicProviders == null || musicProviders.Count() == 0)
         {
             logger.LogWarning("Нет доступных провайдеров. Отмена поиска новинок");
@@ -60,6 +62,8 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         {
             foreach (var artist in kvp.Value)
             {
+                stoppingToken.ThrowIfCancellationRequested();
+
                 var result = await CheckUpdatesForArtistAndSaveIfHasAsync(kvp.Key, artist.ArtistId);
 
                 if (result != null && result.Any())

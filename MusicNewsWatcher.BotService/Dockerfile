@@ -23,8 +23,7 @@ RUN dotnet publish "./MusicNewsWatcher.BotService.csproj" -c $BUILD_CONFIGURATIO
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MusicNewsWatcher.BotService.dll"]
-
 RUN apt-get update && apt-get install -y tzdata
 ENV TZ=Europe/Moscow
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENTRYPOINT ["dotnet", "MusicNewsWatcher.BotService.dll"]

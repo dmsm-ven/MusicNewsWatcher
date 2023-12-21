@@ -69,7 +69,6 @@ public sealed class MusicNewsWatcherTelegramBot : IDisposable
 
     public void Dispose()
     {
-        cts?.Cancel();
         cts?.Dispose();
     }
 }

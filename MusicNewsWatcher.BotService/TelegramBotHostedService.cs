@@ -45,7 +45,7 @@ public sealed class TelegramBotHostedService : BackgroundService
         try
         {
             logger.LogInformation("Начало выполнения команды форсированного выполнения");
-            await updateManager.CheckUpdatesAllAsync();
+            await updateManager.CheckUpdatesAllAsync(CancellationToken.None);
             logger.LogInformation("Конец выполнения команды форсированного выполнения");
         }
         catch
@@ -57,6 +57,7 @@ public sealed class TelegramBotHostedService : BackgroundService
 
     public override void Dispose()
     {
+        botClient?.Dispose();
         base.Dispose();
     }
 }
