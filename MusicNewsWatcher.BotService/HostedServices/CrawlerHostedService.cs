@@ -38,24 +38,33 @@ public sealed class CrawlerHostedService : BackgroundService
 
             await Task.Delay(updateManager.UpdateInterval, stoppingToken);
 
-            try
-            {
-                logger.LogInformation("Запуск переобхода");
+            await RunCrawlerTask(stoppingToken);
 
-                await updateManager.RunCrawler(stoppingToken);
-
-                var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: true) / 1E6);
-
-                logger.LogInformation("Переобход выполнен");
-                logger.LogInformation("Занимаемая память приложения: {memoryUsage} мб.", memoryUsageInMb);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError("Ошибка выполнения переобхода: {error}", ex.Message);
-            }
+            await updateManager.RefreshIntervalAndLastUpdate();
         }
 
         logger.LogInformation("Выход из службы парсера. Токен отмены: {stoppingToken}", stoppingToken);
+    }
+
+    private async Task RunCrawlerTask(CancellationToken stoppingToken)
+    {
+        try
+        {
+            logger.LogInformation("Запуск переобхода");
+
+            await updateManager.RunCrawler(stoppingToken);
+
+            await updateManager.RefreshIntervalAndLastUpdate();
+
+            var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: true) / 1E6);
+
+            logger.LogInformation("Переобход выполнен");
+            logger.LogInformation("Занимаемая память приложения: {memoryUsage} мб.", memoryUsageInMb);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Ошибка выполнения переобхода: {error}", ex.Message);
+        }
     }
 
     private async void UpdateManager_OnNewAlbumsFound(object? sender, NewAlbumsFoundEventArgs e)

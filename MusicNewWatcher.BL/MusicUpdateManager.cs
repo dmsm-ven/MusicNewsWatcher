@@ -200,8 +200,6 @@ public sealed class MusicUpdateManager
 
             const string message = "Переобход по таймеру выполнен. [{started}] - [{LastUpdate}] (за {duration} сек.)";
             logger.LogInformation(message, started.ToLocalRuDateAndTime(), LastUpdate.ToLocalRuDateAndTime(), (int)sw.Elapsed.TotalSeconds);
-
-            await RefreshIntervalAndLastUpdate();
         }
         catch (Exception ex)
         {
@@ -210,6 +208,7 @@ public sealed class MusicUpdateManager
         }
         finally
         {
+            await RefreshIntervalAndLastUpdate();
             CrawlerInProgress = false;
         }
     }
