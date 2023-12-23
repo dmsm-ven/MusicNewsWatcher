@@ -150,7 +150,7 @@ public class ArtistViewModel : ViewModelBase
     private async Task DownloadCheckedAlbums()
     {
         var checkedAlbums = Albums.Where(a => a?.IsChecked ?? false);
-        await downloadHelper.DownloadCheckedAlbums(checkedAlbums, );
+        await downloadHelper.DownloadCheckedAlbums(checkedAlbums);
     }
 
     private async Task GetAlbumsFromProviderForArtist()

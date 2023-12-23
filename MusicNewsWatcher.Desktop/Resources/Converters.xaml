@@ -1,10 +1,11 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:con="clr-namespace:MusicNewsWatcher.Infrastructure.Converters">
-    <con:StringToImageSourceConverter x:Key="StringToImageSourceConverter"></con:StringToImageSourceConverter>
-    <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"></con:NotNullToVisibilityConverter>
-    <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"></con:BoolToVisibilityConverter>
-    <con:IntToVisibilityConverter x:Key="IntToVisibilityConverter"></con:IntToVisibilityConverter>
-    <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter"></con:BoolToForegroundColorConverter>
-    <con:TrackDownloadResultToIconKind x:Key="TrackDownloadResultToIconKind"></con:TrackDownloadResultToIconKind>
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:con="clr-namespace:MusicNewsWatcher.Desktop.Infrastructure.Converters">
+    <con:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
+    <con:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter" />
+    <con:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    <con:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
+    <con:BoolToForegroundColorConverter x:Key="BoolToForegroundColorConverter" />
+    <con:TrackDownloadResultToIconKind x:Key="TrackDownloadResultToIconKind" />
 </ResourceDictionary>

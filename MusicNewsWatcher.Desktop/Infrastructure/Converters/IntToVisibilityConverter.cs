@@ -1,9 +1,8 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace MusicNewsWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Converters;
 
 public class IntToVisibilityConverter : IValueConverter
 {
@@ -13,12 +12,12 @@ public class IntToVisibilityConverter : IValueConverter
 
         if (value is int v)
         {
-            result = (v == 0 ? Visibility.Collapsed : Visibility.Visible);
+            result = v == 0 ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        if(parameter is string par && par == "inverse")
+        if (parameter is string par && par == "inverse")
         {
-            result = (result == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed);
+            result = result == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         }
 
         return result;
