@@ -1,25 +1,24 @@
 ﻿using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
 using MusicNewsWatcher.Desktop.ViewModels.Base;
-using MusicNewsWatcher.Infrastructure.Helpers;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
+//TODO разбить/упростить класс делает слишком много лишнего
 public class AlbumViewModel : ViewModelBase
 {
-    private readonly MusicUpdateManager updateManager;
+    public event Action<AlbumViewModel> OnAlbumChanged;
 
-    private readonly IMusicDownloadManager downloadManager;
+    private readonly MusicUpdateManager updateManager;
+    private readonly MusicDownloadHelper downloadHelper;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly IToastsNotifier toasts;
-
-    public event Action<AlbumViewModel> OnAlbumChanged;
 
     private string title;
     public string Title
@@ -33,6 +32,7 @@ public class AlbumViewModel : ViewModelBase
             }
         }
     }
+
     public string DisplayName => Title.ToDisplayName();
 
     private string cachedImage;
@@ -113,23 +113,26 @@ public class AlbumViewModel : ViewModelBase
     public ICommand ToggleMultiselectStateCommand { get; }
     public ArtistViewModel ParentArtist { get; }
 
-    private CancellationTokenSource cts;
+    private readonly CancellationTokenSource cts;
 
     public AlbumViewModel()
     {
         //TODO: заменить на внедрение через параметры ctor
+
+        downloadHelper = App.HostContainer.Services.GetRequiredService<MusicDownloadHelper>();
         updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
-        downloadManager = App.HostContainer.Services.GetRequiredService<IMusicDownloadManager>();
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
 
-        ToggleMultiselectStateCommand = new LambdaCommand(e => IsChecked = !IsChecked.Value, e => IsChecked.HasValue);
+        ToggleMultiselectStateCommand = new LambdaCommand(e => IsChecked = (IsChecked.HasValue ? (!IsChecked.Value) : null), e => IsChecked.HasValue);
         CancelDownloadingCommand = new LambdaCommand(CancelDownloading, e => InProgress);
         DownloadAlbumCommand = new LambdaCommand(async e => await DownloadAlbum(openFolder: true), e => CanDownloadAlbum);
         AlbumChangedCommand = new LambdaCommand(AlbumChanged);
         Tracks.CollectionChanged += (o, e) => RaisePropertyChanged(nameof(IsUpdateTracksButtonVisibile));
 
         RefreshTracksCommand = new LambdaCommand(async e => await GetTracksFromProvider());
+
+        cts = new CancellationTokenSource();
     }
 
     public AlbumViewModel(ArtistViewModel parent) : this()
@@ -137,47 +140,12 @@ public class AlbumViewModel : ViewModelBase
         ParentArtist = parent;
     }
 
-    public async Task DownloadAlbum(bool openFolder)
+    private async Task DownloadAlbum(bool openFolder)
     {
-        InProgress = true;
-
-        Stopwatch sw = Stopwatch.StartNew();
-        using (var db = dbFactory.CreateDbContext())
-        {
-            int parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
-
-            downloadManager.ThreadLimit = parallelDownloads;
-        }
-
-        try
-        {
-            cts = new CancellationTokenSource();
-            string albumDir = await downloadManager.DownloadFullAlbum(this.Uri, FileBrowserHelper.DownloadDirectory, cts.Token);
-
-            if (!cts.IsCancellationRequested)
-            {
-                string msg = $"[{DateTime.Now.ToShortTimeString()}] Альбом '{DisplayName}' загружен за {sw.Elapsed.ToString("hh\\:mm\\:ss")}";
-                toasts.ShowSuccess(msg);
-            }
-
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            FileBrowserHelper.OpenFolderInFileBrowser(albumDir);
-        }
-        catch (Exception ex)
-        {
-            if (!cts.IsCancellationRequested)
-            {
-                toasts.ShowError($"Ошибка загрузки альбома '{DisplayName}'\r\n{ex.Message}");
-            }
-        }
-        finally
-        {
-            InProgress = false;
-        }
+        await downloadHelper.DownloadAlbum(this, openFolder, cts.Token);
     }
 
-    public async Task RefreshTracksSource()
+    private async Task RefreshTracksSource()
     {
         using var db = await dbFactory.CreateDbContextAsync();
         var tracksSource = await db.Tracks.Where(t => t.AlbumId == this.AlbumId).CountAsync();
@@ -233,5 +201,4 @@ public class AlbumViewModel : ViewModelBase
         toasts.ShowError("Загрузка альбома отменена");
         cts.Cancel();
     }
-
 }

@@ -1,7 +1,6 @@
 ﻿global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Core;
-global using MusicNewsWatcher.Desktop.Models;
 global using MusicNewsWatcher.Desktop.Services;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
@@ -57,8 +56,9 @@ public partial class App : Application
                 services.AddTransient<AddNewArtistDialog>();
 
                 services.AddMusicProviders();
-                services.AddSingleton<IMusicDownloadManager, MultithreadHttpMusicDownloadManager>();
+                services.AddSingleton<IMusicDownloadManager, SimpleHttpMusicDownloadManager>();
                 services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
+                services.AddSingleton<MusicDownloadHelper>();
                 services.AddSingleton<MusicUpdateManager>();
 
                 services.AddSingleton<SettingsWindowViewModel>();

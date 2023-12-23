@@ -11,6 +11,8 @@ public abstract class MusicProviderBase
 
     public abstract Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist);
     public abstract Task<TrackEntity[]> GetTracksAsync(AlbumEntity album);
+
+    //Переопределяем метод если провайдера позволяет делать поиск по сайту, иначе просто возвращаем пустой массив
     public virtual Task<ArtistEntity[]> SerchArtist(string searchText)
     {
         return Task.FromResult(Enumerable.Empty<ArtistEntity>().ToArray());

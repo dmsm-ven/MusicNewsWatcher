@@ -1,7 +1,7 @@
 ﻿using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
 using MusicNewsWatcher.Desktop.ViewModels.Base;
-using MusicNewsWatcher.Infrastructure.Helpers;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -10,11 +10,13 @@ using System.Windows.Input;
 
 namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
+//TODO разбить/упростить, класс делает слишком много лишнего
 public class ArtistViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly IToastsNotifier toasts;
     private readonly MusicUpdateManager updateManager;
+    private readonly MusicDownloadHelper downloadHelper;
 
     public event Action<ArtistViewModel> OnArtistChanged;
 
@@ -134,6 +136,7 @@ public class ArtistViewModel : ViewModelBase
         GetAlbumsFromProviderForArtistCommand = new LambdaCommand(async e => await GetAlbumsFromProviderForArtist());
         ArtistChangedCommand = new LambdaCommand(ArtistChanged);
 
+        downloadHelper = App.HostContainer.Services.GetRequiredService<MusicDownloadHelper>();
         updateManager = App.HostContainer.Services.GetRequiredService<MusicUpdateManager>();
         toasts = App.HostContainer.Services.GetRequiredService<IToastsNotifier>();
         dbFactory = App.HostContainer.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
@@ -146,11 +149,8 @@ public class ArtistViewModel : ViewModelBase
 
     private async Task DownloadCheckedAlbums()
     {
-        foreach (var album in Albums.Where(a => a.IsChecked == true))
-        {
-            await album.RefreshTracksSource();
-            await album.DownloadAlbum(openFolder: false);
-        }
+        var checkedAlbums = Albums.Where(a => a?.IsChecked ?? false);
+        await downloadHelper.DownloadCheckedAlbums(checkedAlbums, );
     }
 
     private async Task GetAlbumsFromProviderForArtist()

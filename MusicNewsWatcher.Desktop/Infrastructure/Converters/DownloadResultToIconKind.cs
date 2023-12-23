@@ -1,20 +1,15 @@
 ﻿using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.Desktop.Services;
-using System;
-using System.Collections.Generic;
+using MusicNewsWatcher.Core.Models;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace MusicNewsWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Converters;
 
 public class TrackDownloadResultToIconKind : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if(value is TrackDownloadResult d)
+        if (value is TrackDownloadResult d)
         {
             PackIconFontAwesomeKind result = d switch
             {
