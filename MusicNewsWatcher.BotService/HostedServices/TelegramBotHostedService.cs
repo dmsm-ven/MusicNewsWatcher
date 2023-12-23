@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewWatcher.BL;
 
-namespace MusicNewsWatcher.BotService;
+namespace MusicNewsWatcher.BotService.HostedServices;
 
 public sealed class TelegramBotHostedService : BackgroundService
 {
@@ -22,15 +22,17 @@ public sealed class TelegramBotHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation($"Запуск службы telegram бота ...");
+        logger.LogInformation($"Запуск службы Telegram бота ...");
 
         botClient.OnForceUpdateCommandRecevied += BotRoutes_OnForceUpdateCommandRecevied;
         try
         {
             botClient.Start();
+            logger.LogInformation("Telegram бот запущен");
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError("Ошибка при выполнении Telegram бота {message}", ex.Message);
             throw;
         }
 
@@ -38,15 +40,17 @@ public sealed class TelegramBotHostedService : BackgroundService
         {
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
+
+        logger.LogInformation("Выход из службы телеграм бота. Токен отмены: {stoppingToken}", stoppingToken);
     }
 
     private async void BotRoutes_OnForceUpdateCommandRecevied()
     {
         try
         {
-            logger.LogInformation("Начало выполнения команды форсированного выполнения");
+            logger.LogTrace("Начало выполнения команды форсированного выполнения");
             await updateManager.CheckUpdatesAllAsync(CancellationToken.None);
-            logger.LogInformation("Конец выполнения команды форсированного выполнения");
+            logger.LogTrace("Конец выполнения команды форсированного выполнения");
         }
         catch
         {

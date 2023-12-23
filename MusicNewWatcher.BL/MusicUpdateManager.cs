@@ -30,7 +30,7 @@ public sealed class MusicUpdateManager
             if (lastUpdate != value)
             {
                 lastUpdate = value;
-                logger.LogInformation("Обновление даты последнего переобхода [{lastUpdate}]", LastUpdate.ToLocalRuDateAndTime());
+                logger.LogTrace("Обновление даты последнего переобхода [{lastUpdate}]", LastUpdate.ToLocalRuDateAndTime());
             }
         }
     }
@@ -44,14 +44,14 @@ public sealed class MusicUpdateManager
 
             if (value < DefaultMinInterval)
             {
-                logger.LogInformation("Попытка назначить интервал обновления в недопустимом диапазоне ({value})", value);
+                logger.LogWarning("Попытка назначить интервал обновления в недопустимом диапазоне ({value})", value);
                 throw new ArgumentOutOfRangeException(nameof(UpdateInterval), "Сannot change update interval to les than 1 min.");
             }
 
             if (updateInterval != value)
             {
                 updateInterval = value;
-                logger.LogInformation("Интервал переобхода изменен на {updateInterval}", updateInterval);
+                logger.LogTrace("Интервал переобхода изменен на {updateInterval}", updateInterval);
             }
         }
     }
@@ -72,7 +72,7 @@ public sealed class MusicUpdateManager
         this.crawler = crawler;
     }
 
-    public async Task RefreshInterval()
+    public async Task RefreshIntervalAndLastUpdate()
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
@@ -109,8 +109,6 @@ public sealed class MusicUpdateManager
 
     public async Task CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Запуск переобхода парсером");
-
         var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
@@ -126,7 +124,6 @@ public sealed class MusicUpdateManager
                 .ForEach(i => OnNewAlbumsFound?.Invoke(this, i));
         }
 
-        LastUpdate = DateTimeOffset.UtcNow;
         await SaveLastUpdateTime();
     }
 
@@ -181,7 +178,7 @@ public sealed class MusicUpdateManager
 
         await db.SaveChangesAsync();
 
-        logger.LogInformation("Дата последнего обновления сохранена. Новое значение: {updated}", LastUpdate.ToLocalRuDateAndTime());
+        logger.LogTrace("Дата последнего обновления сохранена. Новое значение: {updated}", LastUpdate.ToLocalRuDateAndTime());
     }
 
     public async Task RunCrawler(CancellationToken stoppingToken)
@@ -204,7 +201,7 @@ public sealed class MusicUpdateManager
             const string message = "Переобход по таймеру выполнен. [{started}] - [{LastUpdate}] (за {duration} сек.)";
             logger.LogInformation(message, started.ToLocalRuDateAndTime(), LastUpdate.ToLocalRuDateAndTime(), (int)sw.Elapsed.TotalSeconds);
 
-            await RefreshInterval();
+            await RefreshIntervalAndLastUpdate();
         }
         catch (Exception ex)
         {

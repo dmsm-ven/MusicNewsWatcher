@@ -5,7 +5,7 @@ using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using MusicNewWatcher.BL;
 
-namespace MusicNewsWatcher.BotService;
+namespace MusicNewsWatcher.BotService.HostedServices;
 
 public sealed class CrawlerHostedService : BackgroundService
 {
@@ -29,38 +29,41 @@ public sealed class CrawlerHostedService : BackgroundService
     {
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
 
-        TimeSpan startDelay = TimeSpan.FromSeconds(5);
-
-        await updateManager.RefreshInterval();
+        await updateManager.RefreshIntervalAndLastUpdate();
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Следующий переобход парсера будет запущен через ... {interval}", updateManager.UpdateInterval);
+            logger.LogInformation("Следующий переобход парсера будет запущен через ... {interval} мин.",
+                (int)updateManager.UpdateInterval.TotalMinutes);
 
             await Task.Delay(updateManager.UpdateInterval, stoppingToken);
+
             try
             {
-                logger.LogInformation("[{now}] Запуск переобхода", DateTime.Now);
+                logger.LogInformation("Запуск переобхода");
+
                 await updateManager.RunCrawler(stoppingToken);
-                logger.LogInformation("[{now}] Переобход выполнен", DateTime.Now);
+
+                var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: true) / 1E6);
+
+                logger.LogInformation("Переобход выполнен");
+                logger.LogInformation("Занимаемая память приложения: {memoryUsage} мб.", memoryUsageInMb);
             }
             catch (Exception ex)
             {
-                logger.LogError("[{now}] Ошибка выполнения переобхода: {error}", DateTime.Now, ex.Message);
+                logger.LogError("Ошибка выполнения переобхода: {error}", ex.Message);
             }
         }
+
+        logger.LogInformation("Выход из службы парсера. Токен отмены: {stoppingToken}", stoppingToken);
     }
 
     private async void UpdateManager_OnNewAlbumsFound(object? sender, NewAlbumsFoundEventArgs e)
     {
         try
         {
-            logger.LogInformation("Начало отправки сообщения о нахождении нового альбома");
-
             var text = telegramMessageFormatter.BuildNewAlbumsFoundMessage(e.Provider, e.Artist!, e.NewAlbums!);
             await botClient.SendTextMessageAsync(text);
-
-            logger.LogInformation("Конец отправки сообщения о нахождении нового альбома");
         }
         catch
         {
