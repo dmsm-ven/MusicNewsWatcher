@@ -34,7 +34,7 @@ public sealed class CrawlerHostedService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Следующий переобход парсера будет запущен [{{nextExecuteDt}}] (через {interval} мин.)",
+            logger.LogInformation("Следующий переобход парсера будет запущен [{nextExecuteDt}] (через {interval} мин.)",
                 DateTimeOffset.UtcNow.Add(updateManager.UpdateInterval).ToLocalRuDateAndTime(),
                 (int)updateManager.UpdateInterval.TotalMinutes);
 
