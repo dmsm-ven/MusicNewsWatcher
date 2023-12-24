@@ -60,6 +60,7 @@ public sealed class MusicUpdateManager
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly ILogger<MusicUpdateManager> logger;
     private readonly IMusicNewsCrawler crawler;
+    private bool firstUpdate = true;
 
     public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
@@ -99,12 +100,14 @@ public sealed class MusicUpdateManager
             newInterval = DefaultTimerInterval;
         }
 
-        if (LastUpdate + newInterval < DateTimeOffset.Now)
+        if (firstUpdate && LastUpdate + newInterval < DateTimeOffset.UtcNow)
         {
             newInterval = DefaultMinInterval;
         }
 
         UpdateInterval = newInterval;
+
+        firstUpdate = false;
     }
 
     public async Task CheckUpdatesAllAsync(CancellationToken stoppingToken)
@@ -125,6 +128,7 @@ public sealed class MusicUpdateManager
         }
 
         await SaveLastUpdateTime();
+        await RefreshIntervalAndLastUpdate();
     }
 
     public async Task CheckUpdatesForArtistForProvider(MusicProviderBase provider, int artistId, string artistName, string artistUri)
@@ -208,7 +212,7 @@ public sealed class MusicUpdateManager
         }
         finally
         {
-            await RefreshIntervalAndLastUpdate();
+
             CrawlerInProgress = false;
         }
     }

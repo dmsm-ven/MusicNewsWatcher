@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
+using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using MusicNewWatcher.BL;
@@ -33,14 +34,13 @@ public sealed class CrawlerHostedService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Следующий переобход парсера будет запущен через ... {interval} мин.",
+            logger.LogInformation("Следующий переобход парсера будет запущен [{{nextExecuteDt}}] (через {interval} мин.)",
+                DateTimeOffset.UtcNow.Add(updateManager.UpdateInterval).ToLocalRuDateAndTime(),
                 (int)updateManager.UpdateInterval.TotalMinutes);
 
             await Task.Delay(updateManager.UpdateInterval, stoppingToken);
 
             await RunCrawlerTask(stoppingToken);
-
-            await updateManager.RefreshIntervalAndLastUpdate();
         }
 
         logger.LogInformation("Выход из службы парсера. Токен отмены: {stoppingToken}", stoppingToken);
@@ -50,16 +50,13 @@ public sealed class CrawlerHostedService : BackgroundService
     {
         try
         {
-            logger.LogInformation("Запуск переобхода");
+            logger.LogTrace("Запуск переобхода");
 
             await updateManager.RunCrawler(stoppingToken);
 
-            await updateManager.RefreshIntervalAndLastUpdate();
-
             var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: true) / 1E6);
 
-            logger.LogInformation("Переобход выполнен");
-            logger.LogInformation("Занимаемая память приложения: {memoryUsage} мб.", memoryUsageInMb);
+            logger.LogTrace("Занимаемая память приложением: {memoryUsage} мб.", memoryUsageInMb);
         }
         catch (Exception ex)
         {
