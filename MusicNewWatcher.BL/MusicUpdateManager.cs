@@ -3,9 +3,8 @@ using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
 using MusicNewsWatcher.Core.Dto;
+using MusicNewsWatcher.Core.Extensions;
 using System.Diagnostics;
-using System.Globalization;
-using System.Timers;
 
 namespace MusicNewWatcher.BL;
 
@@ -13,34 +12,56 @@ namespace MusicNewWatcher.BL;
 //Запускается отдельно на консольном клиенте и на WPF Desktop приложении
 
 //TODO: разбить класс
-public sealed class MusicUpdateManager : IDisposable
+public sealed class MusicUpdateManager
 {
     public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
 
+    public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
+    public static readonly TimeSpan DefaultTimerInterval = TimeSpan.FromMinutes(60);
+    public static readonly TimeSpan DefaultMinInterval = TimeSpan.FromMinutes(1);
+
     public bool CrawlerInProgress { get; private set; }
-    public DateTime LastUpdate { get; private set; }
-    public TimeSpan UpdateInterval
+
+    private DateTimeOffset lastUpdate;
+    public DateTimeOffset LastUpdate
     {
-        get => TimeSpan.FromMilliseconds(autoUpdateTimer.Interval);
+        get => lastUpdate;
         private set
         {
-            double inMs = (int)value.TotalMilliseconds;
-            if (value <= TimeSpan.FromMinutes(1))
+            if (lastUpdate != value)
             {
-                throw new ArgumentOutOfRangeException(nameof(UpdateInterval), "cannot update often than 1 min.");
+                lastUpdate = value;
+                logger.LogTrace("Обновление даты последнего переобхода [{lastUpdate}]", LastUpdate.ToLocalRuDateAndTime());
             }
-            if (inMs != autoUpdateTimer.Interval)
+        }
+    }
+
+    private TimeSpan updateInterval;
+    public TimeSpan UpdateInterval
+    {
+        get => updateInterval;
+        private set
+        {
+
+            if (value < DefaultMinInterval)
             {
-                autoUpdateTimer.Interval = inMs;
+                logger.LogWarning("Попытка назначить интервал обновления в недопустимом диапазоне ({value})", value);
+                throw new ArgumentOutOfRangeException(nameof(UpdateInterval), "Сannot change update interval to les than 1 min.");
+            }
+
+            if (updateInterval != value)
+            {
+                updateInterval = value;
+                logger.LogTrace("Интервал переобхода изменен на {updateInterval}", updateInterval);
             }
         }
     }
 
     private readonly List<MusicProviderBase> musicProviders;
-    private readonly System.Timers.Timer autoUpdateTimer;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly ILogger<MusicUpdateManager> logger;
     private readonly IMusicNewsCrawler crawler;
+    private bool firstUpdate = true;
 
     public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
@@ -51,57 +72,59 @@ public sealed class MusicUpdateManager : IDisposable
         dbFactory = dbContextFactory;
         this.logger = logger;
         this.crawler = crawler;
-        autoUpdateTimer = new System.Timers.Timer();
-        autoUpdateTimer.Elapsed += AutoUpdateTimer_Elapsed;
     }
 
-    public async Task Start()
-    {
-        TimeSpan startDelay = TimeSpan.FromSeconds(5);
-
-        await RefreshInterval();
-        //При запуске приложения проверяем когда был последний запуск.
-        //Если нужно, то запускаем проверку сразу после небольшой задержки при старте приложения
-        if (LastUpdate + UpdateInterval < DateTime.Now)
-        {
-            logger.LogInformation("Запуск парсера будет выполнен через ... {startDelay}", startDelay);
-            await Task.Delay(startDelay);
-            try
-            {
-                await RunCrawler();
-            }
-            catch
-            {
-                throw;
-            }
-        }
-        else
-        {
-            logger.LogInformation("Следующий переобход будет запущен в: {time}", LastUpdate + UpdateInterval);
-        }
-
-        //И запускаем таймер проверки
-        autoUpdateTimer.Start();
-    }
-
-    private async Task RefreshInterval()
+    /// <summary>
+    /// Обновляет дату последнего переобхода
+    /// </summary>
+    /// <returns></returns>
+    public async Task RefreshIntervalAndLastUpdate()
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
-        string intervalStr = (await db.Settings.FindAsync("UpdateManagerIntervalInMinutes"))?.Value ?? "30";
-        string dateTimeStr = (await db.Settings.FindAsync("LastFullUpdateDateTime"))?.Value ?? DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss");
+        string? dateTimeStr = (await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
+        if (DateTimeOffset.TryParse(dateTimeStr, out var lastUpdate))
+        {
+            LastUpdate = lastUpdate;
+        }
+        else
+        {
+            LastUpdate = new DateTimeOffset();
+        }
 
-        UpdateInterval = TimeSpan.FromMinutes(int.Parse(intervalStr));
-        LastUpdate = DateTime.Parse(dateTimeStr, new CultureInfo("ru-RU"));
+        TimeSpan newInterval = TimeSpan.Zero;
 
-        logger.LogInformation("Обновление даты последнего переобхода [{lastUpdate}] и интервала [{}]", LastUpdate, UpdateInterval);
+        string? intervalStr = (await db.Settings.FindAsync("UpdateManagerIntervalInMinutes"))?.Value;
+        if (int.TryParse(intervalStr, out var intervalMin))
+        {
+            newInterval = TimeSpan.FromMinutes(intervalMin);
+        }
+        else
+        {
+            //Если интервал не задан берем дефолтное хардкод значение
+            newInterval = DefaultTimerInterval;
+        }
+
+        if (firstUpdate && LastUpdate + newInterval < DateTimeOffset.UtcNow)
+        {
+            newInterval = DefaultMinInterval;
+        }
+
+        UpdateInterval = newInterval;
+
+        firstUpdate = false;
     }
 
-    public async Task CheckUpdatesAllAsync()
+    /// <summary>
+    /// Выполяет переобход по всем сохраненным артистам для всех провайдеров и возращает общее количество новых найденных альбомов
+    /// </summary>
+    /// <param name="stoppingToken"></param>
+    /// <returns></returns>
+    public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Запуск переобхода парсером");
+        int newAlbumsFound = 0;
 
-        var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders);
+        var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
             newAlbumsByProvider
@@ -113,12 +136,21 @@ public sealed class MusicUpdateManager : IDisposable
                 })
                 .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
                 .ToList()
-                .ForEach(i => OnNewAlbumsFound?.Invoke(this, i));
+                .ForEach(i =>
+                {
+                    newAlbumsFound += i.NewAlbums!.Length;
+                    OnNewAlbumsFound?.Invoke(this, i);
+                });
+
+
         }
 
-        LastUpdate = DateTime.UtcNow;
+        LastUpdate = DateTimeOffset.UtcNow;
+
         await SaveLastUpdateTime();
-        await RefreshInterval();
+        await RefreshIntervalAndLastUpdate();
+
+        return newAlbumsFound;
     }
 
     public async Task CheckUpdatesForArtistForProvider(MusicProviderBase provider, int artistId, string artistName, string artistUri)
@@ -151,21 +183,18 @@ public sealed class MusicUpdateManager : IDisposable
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
-        string dtFormat = "dd.MM.yyyy HH:mm:ss";
-        string settingsKey = "LastFullUpdateDateTime";
-
-        var item = await db.Settings.FindAsync(settingsKey);
+        var item = await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey);
 
         if (item != null)
         {
-            item.Value = LastUpdate.ToString(dtFormat);
+            item.Value = LastUpdate.ToString();
         }
         else
         {
             var settingRecord = new SettingsEntity()
             {
-                Name = settingsKey,
-                Value = LastUpdate.ToString(dtFormat)
+                Name = LastFullUpdateDateTimeSettingsKey,
+                Value = LastUpdate.ToString()
             };
 
             db.Settings.Add(settingRecord);
@@ -174,24 +203,10 @@ public sealed class MusicUpdateManager : IDisposable
 
         await db.SaveChangesAsync();
 
-        logger.LogInformation("Дата последнего обновления сохранена. Новое значение: {updated}", LastUpdate.ToString(dtFormat));
+        logger.LogTrace("Дата последнего обновления сохранена. Новое значение: {updated}", LastUpdate.ToLocalRuDateAndTime());
     }
 
-    private async void AutoUpdateTimer_Elapsed(object? sender, ElapsedEventArgs e)
-    {
-
-
-        try
-        {
-            await RunCrawler();
-        }
-        catch
-        {
-            throw;
-        }
-    }
-
-    private async Task RunCrawler()
+    public async Task RunCrawler(CancellationToken stoppingToken)
     {
         if (CrawlerInProgress)
         {
@@ -204,12 +219,16 @@ public sealed class MusicUpdateManager : IDisposable
         try
         {
             Stopwatch sw = Stopwatch.StartNew();
-            DateTime started = DateTime.UtcNow;
+            DateTimeOffset started = DateTimeOffset.UtcNow;
 
-            await CheckUpdatesAllAsync();
+            var newAlbumsCount = await CheckUpdatesAllAsync(stoppingToken);
 
-            const string message = "Переобход по таймеру выполнен. Начало: [{started}] | Конец [{LastUpdate}] | Длительность выполнения: {duration} сек.";
-            logger.LogInformation(message, started, LastUpdate, (int)sw.Elapsed.TotalSeconds);
+            const string message = "[{started}] - [{finished}] Переобход выполнен за {duration} сек. Найдено {newAlbumsCount} новых альбомов";
+            logger.LogInformation(message,
+                started.ToLocalRuDateAndTime(),
+                LastUpdate.ToLocalRuDateAndTime(),
+                (int)sw.Elapsed.TotalSeconds,
+                newAlbumsCount);
         }
         catch (Exception ex)
         {
@@ -219,16 +238,6 @@ public sealed class MusicUpdateManager : IDisposable
         finally
         {
             CrawlerInProgress = false;
-        }
-    }
-
-    public void Dispose()
-    {
-        if (autoUpdateTimer != null)
-        {
-            autoUpdateTimer.Elapsed -= AutoUpdateTimer_Elapsed;
-            autoUpdateTimer.Stop();
-            autoUpdateTimer.Dispose();
         }
     }
 }

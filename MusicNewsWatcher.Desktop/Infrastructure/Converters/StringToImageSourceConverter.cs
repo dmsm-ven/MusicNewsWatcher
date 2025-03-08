@@ -1,12 +1,11 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace MusicNewsWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Converters;
 
-[ValueConversion(typeof(String), typeof(ImageSource))]
+[ValueConversion(typeof(string), typeof(ImageSource))]
 public class StringToImageSourceConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

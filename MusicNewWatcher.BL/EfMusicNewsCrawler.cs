@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
+using System.Diagnostics;
 
 namespace MusicNewWatcher.BL;
 
@@ -16,12 +17,18 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         this.logger = logger;
     }
 
-    public async Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders)
+    public async Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders, CancellationToken stoppingToken)
     {
+        stoppingToken.ThrowIfCancellationRequested();
+
         if (musicProviders == null || musicProviders.Count() == 0)
         {
+            logger.LogWarning("Нет доступных провайдеров. Отмена поиска новинок");
             return Enumerable.Empty<NewAlbumFoundResult>().ToList();
         }
+
+        logger.LogTrace("Запуск парсера по поиску новинок для всех провайдеров ({providerNames})",
+        string.Join(", ", musicProviders.Select(m => m.Name)));
 
         var providerToArtists = new Dictionary<MusicProviderBase, List<ArtistEntity>>();
 
@@ -40,10 +47,14 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
             }
         }
 
-        if (providerToArtists.Count == 0)
+        int totalAristsInDictionary = providerToArtists.Values.Sum(i => i.Count);
+        if (totalAristsInDictionary == 0)
         {
+            logger.LogWarning("Нет доступных артистов. Отмена поиска новинок");
             return Enumerable.Empty<NewAlbumFoundResult>().ToList();
         }
+        logger.LogTrace("Запуск парсера по поиску новинок для {totalAristsInDictionary} артистов", totalAristsInDictionary);
+
 
         var list = new List<NewAlbumFoundResult>();
 
@@ -51,14 +62,20 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         {
             foreach (var artist in kvp.Value)
             {
+                stoppingToken.ThrowIfCancellationRequested();
+
                 var result = await CheckUpdatesForArtistAndSaveIfHasAsync(kvp.Key, artist.ArtistId);
-                list.Add(new NewAlbumFoundResult()
+
+                if (result != null && result.Any())
                 {
-                    ProviderName = kvp.Key.Name,
-                    ArtistName = artist.Name,
-                    ArtistUri = artist.Uri,
-                    Albums = result
-                });
+                    list.Add(new NewAlbumFoundResult()
+                    {
+                        ProviderName = kvp.Key.Name,
+                        ArtistName = artist.Name,
+                        ArtistUri = artist.Uri,
+                        Albums = result
+                    });
+                }
             }
         }
 
@@ -67,11 +84,25 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
     public async Task<IReadOnlyList<AlbumEntity>> CheckUpdatesForArtistAndSaveIfHasAsync(MusicProviderBase provider, int artistId)
     {
+        if (provider == null)
+        {
+            logger.LogError("Провайдер не может быть null");
+            throw new ArgumentNullException(nameof(provider));
+        }
+        if (string.IsNullOrWhiteSpace(provider?.Name))
+        {
+            logger.LogError("Пустое имя провайдера (ID {providerId})", provider!.Id);
+            throw new ArgumentNullException("Имя провайдера не может быть пустым");
+        }
+
+        Stopwatch sw = Stopwatch.StartNew();
+
         using var db = await dbFactory.CreateDbContextAsync();
 
         var artist = await db.Artists.Include(a => a.Albums).FirstOrDefaultAsync(a => a.ArtistId == artistId);
         if (artist == null)
         {
+            logger.LogWarning("{providerName} -- Артист с ID {artistId} не найден", provider.Name, artistId);
             return Enumerable.Empty<AlbumEntity>().ToArray();
         }
 
@@ -82,24 +113,20 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
             .ExceptByProperty(artist.Albums, album => album.Uri)
             .ToArray();
 
-        if (newAlbums.Length == 0)
+        if (newAlbums != null && newAlbums.Length > 0)
         {
-            return Enumerable.Empty<AlbumEntity>().ToArray();
+            artist.Albums.AddRange(newAlbums);
+            db.Entry(artist).State = EntityState.Modified;
+
+            await db.SaveChangesAsync();
         }
 
-        db.Artists.Attach(artist);
-        db.Entry(artist).State = EntityState.Modified;
-        artist.Albums.AddRange(newAlbums);
+        sw.Stop();
 
-        await db.SaveChangesAsync();
+        logger.LogTrace("{providerName} -- Парсинг новинок артиста {artistName} (ID {artistId}) выполнен за [{parseDuration}]. Новых альбомов найдено: {newAlbumsCount}",
+                provider.Name, artist.Name, artistId, sw.Elapsed, (newAlbums?.Length ?? 0));
 
-        foreach (var album in newAlbums)
-        {
-            logger.LogInformation("Парсер: Найден новый альбом '{albumName}' у исполнителя '{artistName}' ({providerName})",
-                album.Title, artist.Name, provider.Name);
-        }
-
-        return newAlbums;
+        return newAlbums ?? Enumerable.Empty<AlbumEntity>().ToArray();
     }
 
     public async Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId)
@@ -111,10 +138,22 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         {
             var tracks = await provider.GetTracksAsync(album);
 
+            int oldTracksCount = album.Tracks.Count;
+            int newTracksCount = tracks.Count();
+
             album.Tracks.Clear();
             album.Tracks.AddRange(tracks);
+            db.Entry(album).State = EntityState.Modified;
 
             await db.SaveChangesAsync();
+
+            logger.LogTrace("Треки альбома '{albumName}' сохранены. Было [{oldTracksCount}] стало [{newTracksCount}] треков",
+                    album.Title, oldTracksCount, newTracksCount);
+        }
+        else
+        {
+            logger.LogWarning("--{providerName} Альбом с ID [{albumId}] не найден",
+                provider.Name, albumId);
         }
     }
 }

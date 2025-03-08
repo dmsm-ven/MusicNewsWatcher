@@ -25,7 +25,7 @@
             Command="{Binding CheckUpdatesAllCommand}"
             Style="{StaticResource ToolButtonStyle}"
             ToolTip="Закачать обновленные данные из БД">
-            <icons:PackIconFontAwesome Kind="SyncSolid" Style="{StaticResource LargeIconSize}" />
+            <icons:PackIconFontAwesome Kind="CircleArrowRightSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 
         <Button
@@ -46,7 +46,7 @@
             Command="{Binding SettingsCommand}"
             Style="{StaticResource ToolButtonStyle}"
             ToolTip="Настройки">
-            <icons:PackIconFontAwesome Kind="CogSolid" Style="{StaticResource LargeIconSize}" />
+            <icons:PackIconFontAwesome Kind="PencilSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 
 

@@ -1,5 +1,4 @@
-﻿namespace MusicNewsWatcher.Desktop.Models;
-
+﻿namespace MusicNewsWatcher.Core.Models;
 public enum TrackDownloadResult
 {
     None,
@@ -8,4 +7,3 @@ public enum TrackDownloadResult
     Skipped,
     Cancelled
 }
-

@@ -1,7 +1,6 @@
 ﻿global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Core;
-global using MusicNewsWatcher.Desktop.Models;
 global using MusicNewsWatcher.Desktop.Services;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
@@ -12,8 +11,11 @@ global using ToastNotifications;
 global using ToastNotifications.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.Core.Models;
 using MusicNewWatcher.BL;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace MusicNewsWatcher.Desktop;
@@ -57,8 +59,9 @@ public partial class App : Application
                 services.AddTransient<AddNewArtistDialog>();
 
                 services.AddMusicProviders();
-                services.AddSingleton<IMusicDownloadManager, MultithreadHttpMusicDownloadManager>();
+                services.AddSingleton<IMusicDownloadManager, SimpleHttpMusicDownloadManager>();
                 services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
+                services.AddSingleton<MusicDownloadHelper>();
                 services.AddSingleton<MusicUpdateManager>();
 
                 services.AddSingleton<SettingsWindowViewModel>();
@@ -83,7 +86,41 @@ public partial class App : Application
         mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
         mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
+
+        //await DownloadCustomAlbums();
+
         mainWindow.ShowDialog();
+    }
+
+    private async Task DownloadCustomAlbums()
+    {
+        var albumsToDownload = File.ReadAllLines(@"C:\Users\user\Desktop\music-to-download.txt");
+        var downloadFolder = @"D:\Programming\Projects\Parsing\MusicNewsWatcher\MusicNewsWatcher.Desktop\bin\Debug\net6.0-windows\downloads";
+
+
+        MusicUpdateManager updateManager = HostContainer.Services.GetRequiredService<MusicUpdateManager>();
+        MusicProviderBase musifyProvider = HostContainer.Services.GetRequiredService<IEnumerable<MusicProviderBase>>().Last();
+        IMusicDownloadManager downloadManager = HostContainer.Services.GetRequiredService<IMusicDownloadManager>();
+
+        int i = 0;
+        foreach (var uri in albumsToDownload)
+        {
+            var albumItem = new Core.DataAccess.Entity.AlbumEntity()
+            {
+                Uri = uri,
+                AlbumId = i++,
+            };
+            var albumTracks = await musifyProvider.GetTracksAsync(albumItem);
+
+            var albumModel = new AlbumModel()
+            {
+                Tracks = albumTracks.Select(i => new TrackModel() { DownloadUri = i.DownloadUri }).ToList(),
+                AlbumDisplayName = $"Album_number_{albumItem.AlbumId}",
+                ArtistDisplayName = "CustomArtist"
+            };
+
+            await downloadManager.DownloadFullAlbum(albumModel, downloadFolder);
+        }
     }
 
     protected override async void OnExit(ExitEventArgs e)

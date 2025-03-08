@@ -1,14 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Web;
 
-namespace MusicNewsWatcher.Infrastructure.Helpers;
+namespace MusicNewsWatcher.Core.Extensions;
 
 public static class StringExtensions
 {
-    readonly static char[] invad_characters = Path.GetInvalidFileNameChars().Concat(Path.GetInvalidPathChars()).Distinct().ToArray();
+    private static readonly char[] invad_characters = Path.GetInvalidFileNameChars().Concat(Path.GetInvalidPathChars()).Distinct().ToArray();
 
     public static string ToDisplayName(this string input)
     {

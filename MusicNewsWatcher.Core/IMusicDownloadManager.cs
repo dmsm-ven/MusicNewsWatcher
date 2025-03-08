@@ -1,6 +1,8 @@
-﻿namespace MusicNewsWatcher.Core;
+﻿using MusicNewsWatcher.Core.Models;
+
+namespace MusicNewsWatcher.Core;
 public interface IMusicDownloadManager
 {
     int ThreadLimit { get; set; }
-    Task<string> DownloadFullAlbum(string albumUri, string downloadDirectory, CancellationToken? token = null);
+    Task<string> DownloadFullAlbum(AlbumModel album, string downloadDirectory, CancellationToken? token = null);
 }

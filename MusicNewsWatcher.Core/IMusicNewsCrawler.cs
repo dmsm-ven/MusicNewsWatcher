@@ -6,7 +6,7 @@ namespace MusicNewsWatcher.Core;
 public interface IMusicNewsCrawler
 {
     Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId);
-    Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders);
+    Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders, CancellationToken stoppingToken);
     Task<IReadOnlyList<AlbumEntity>> CheckUpdatesForArtistAndSaveIfHasAsync(MusicProviderBase provider, int artistId);
 }
 

@@ -20,13 +20,13 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         {
             AllowAutoRedirect = true,
             CookieContainer = new CookieContainer(),
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            AutomaticDecompression = DecompressionMethods.All,
             UseCookies = true
         });
 
         searchClient.DefaultRequestHeaders.Add("Accept", "application/json, text/javascript, */*; q=0.01");
         searchClient.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
-        searchClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+        searchClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
         searchClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
         searchClient.DefaultRequestHeaders.Add("Pragma", "no-cache");
         searchClient.DefaultRequestHeaders.Add("User-Agent", "insomnia/2022.6.0");

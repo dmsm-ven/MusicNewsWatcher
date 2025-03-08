@@ -1,15 +1,19 @@
-﻿using MusicNewsWatcher.Core;
+﻿using Microsoft.Extensions.Logging;
+using MusicNewsWatcher.Core;
+using MusicNewsWatcher.Core.Extensions;
+using MusicNewsWatcher.Core.Models;
 using System.Net;
 
 namespace MusicNewWatcher.BL;
 
 //TODO убрать прямое обращение через ViewModel
-public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
+public class SimpleHttpMusicDownloadManager : IMusicDownloadManager
 {
+    private readonly ILogger<SimpleHttpMusicDownloadManager> logger;
     private readonly HttpClient client;
-    private SemaphoreSlim? semaphor;
+    private SemaphoreSlim? semaphor = new(1);
 
-    private int threadLimit;
+    private int threadLimit = 1;
     public int ThreadLimit
     {
         get => threadLimit;
@@ -31,7 +35,7 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
         }
     }
 
-    public MultithreadHttpMusicDownloadManager()
+    public SimpleHttpMusicDownloadManager(ILogger<SimpleHttpMusicDownloadManager> logger)
     {
         client = new HttpClient(new HttpClientHandler()
         {
@@ -42,13 +46,24 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
         });
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Add("Accept", "*/*");
+
+        this.logger = logger;
     }
-    /*
-    public async Task<string> DownloadFullAlbum(AlbumViewModel album, string downloadDirectory, CancellationToken token)
+
+    /// <summary>
+    /// Загружает альбом по указанному URI и возращает путь до созданной папки в которую были загружены все треки альбома 
+    /// </summary>
+    /// <param name="albumUri"></param>
+    /// <param name="downloadDirectory"></param>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    public async Task<string> DownloadFullAlbum(AlbumModel album, string downloadDirectory, CancellationToken? token = null)
     {
+        logger.LogInformation("Начало загрузки альбома {albumName} в {} потока(ов)", album.AlbumDisplayName, ThreadLimit);
+
         string albumDirectory = GetAlbumLocalPath(album, downloadDirectory);
-        IList<TrackViewModel> source = album.Tracks;
-        source.ToList().ForEach(i => i.DownloadResult = TrackDownloadResult.None);
+
+        album.Tracks.ToList().ForEach(i => i.SetDownloadResult(TrackDownloadResult.None));
 
         var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 
@@ -57,11 +72,28 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
         return albumDirectory;
     }
 
-    private async Task CreateDownloadTrackTask(TrackViewModel track, string albumDirectory, CancellationToken token)
+    private string GetAlbumLocalPath(AlbumModel album, string downloadDirectory)
     {
-        await semaphor.WaitAsync(token);
+        var directoryPath = Path.Combine(downloadDirectory,
+            album.ArtistDisplayName.RemoveInvalidCharacters(),
+            album.AlbumDisplayName.RemoveInvalidCharacters());
 
-        track.IsDownloading = true;
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        return directoryPath;
+    }
+
+    private async Task CreateDownloadTrackTask(TrackModel track, string albumDirectory, CancellationToken? token = null)
+    {
+        if (string.IsNullOrWhiteSpace(track.DownloadUri) || !Uri.IsWellFormedUriString(track.DownloadUri, UriKind.Absolute))
+        {
+            return;
+        }
+
+        await semaphor!.WaitAsync(token ?? CancellationToken.None);
 
         string localName = Path.Combine(albumDirectory, Path.GetFileName(track.DownloadUri));
 
@@ -72,22 +104,18 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
-        track.IsDownloading = false;
-        track.DownloadResult = downloadResult;
+        track.SetDownloadResult(downloadResult);
 
         semaphor.Release();
-
     }
 
-    private async Task<TrackDownloadResult> DownloadTrack(TrackViewModel track, string localName, CancellationToken token)
+    private async Task<TrackDownloadResult> DownloadTrack(TrackModel track, string localName, CancellationToken? token = null)
     {
-        if (string.IsNullOrWhiteSpace(track.DownloadUri))
-        {
-            return TrackDownloadResult.Error;
-        }
-
         if (File.Exists(localName))
         {
+            //Файл не был до конца скачан, - тут хорошо бы сделать проверку на целостность файла
+            //Т.к. файл может быть битым не только когда он 0 Байт, а когда скачался не полностью
+            //Возможность стоит в будущем сделать проверку CRC целосности файла
             if (new FileInfo(localName).Length == 0)
             {
                 File.Delete(localName);
@@ -101,8 +129,8 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
 
         try
         {
-            var bytes = await client.GetByteArrayAsync(track.DownloadUri, token);
-            await File.WriteAllBytesAsync(localName, bytes);
+            var bytes = await client.GetByteArrayAsync(track.DownloadUri, token ?? CancellationToken.None);
+            await File.WriteAllBytesAsync(localName, bytes, token ?? CancellationToken.None);
             return TrackDownloadResult.Success;
         }
         catch (TaskCanceledException)
@@ -113,26 +141,10 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
             }
             return TrackDownloadResult.Cancelled;
         }
-        catch (Exception ex)
+        catch
         {
             return TrackDownloadResult.Error;
         }
-
-        return TrackDownloadResult.Error;
-    }
-
-    private string GetAlbumLocalPath(AlbumViewModel album, string downloadDirectory)
-    {
-        var directoryPath = Path.Combine(downloadDirectory,
-            album.ParentArtist.DisplayName.RemoveInvalidCharacters(),
-            album.DisplayName.RemoveInvalidCharacters());
-
-        if (!Directory.Exists(directoryPath))
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        return directoryPath;
     }
 
     public void Dispose()
@@ -140,12 +152,7 @@ public class MultithreadHttpMusicDownloadManager : IMusicDownloadManager
         client?.Dispose();
         semaphor?.Dispose();
     }
-    */
 
-    public Task<string> DownloadFullAlbum(string albumUri, string downloadDirectory, CancellationToken? token = null)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 
