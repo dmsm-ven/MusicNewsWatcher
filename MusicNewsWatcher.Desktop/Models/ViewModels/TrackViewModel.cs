@@ -1,9 +1,8 @@
-﻿using MusicNewsWatcher.Infrastructure.Helpers;
-using MusicNewsWatcher.Desktop.Services;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+﻿using MusicNewsWatcher.Core.Extensions;
+using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Base;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.Models.ViewModels;
 
 public class TrackViewModel : ViewModelBase
 {
@@ -15,20 +14,20 @@ public class TrackViewModel : ViewModelBase
 
     public bool IsDownloaded => DownloadResult != TrackDownloadResult.None;
 
-    TrackDownloadResult downloadResult;
+    private TrackDownloadResult downloadResult;
     public TrackDownloadResult DownloadResult
     {
         get => downloadResult;
         set
         {
-            if(Set(ref downloadResult, value))
+            if (Set(ref downloadResult, value))
             {
                 RaisePropertyChanged(nameof(IsDownloaded));
             }
         }
     }
 
-    bool isDownloading;
+    private bool isDownloading;
     public bool IsDownloading
     {
         get => isDownloading;

@@ -34,30 +34,26 @@ public sealed class MusicNewsWatcherTelegramBot : IDisposable
     {
         if (IsStarted)
         {
-            logger.LogError("Бот был уже запущен");
-            throw new NotSupportedException();
+            logger.LogWarning("Попытка запустить бот когда он уже запущен ... отмена");
+            return;
         }
 
         if (string.IsNullOrWhiteSpace(consumerId))
         {
-            logger.LogError("Telegram consumerId not provided");
-            throw new ArgumentNullException(nameof(consumerId), "Telegram consumerId not provided");
+            logger.LogError("ConsumerId не был предоставлен");
+            throw new ArgumentNullException(nameof(consumerId), "onsumerId не был предоставлен");
         }
-
-        logger.LogInformation("Запуск бота ...");
 
         botClient.StartReceiving(botRoutes);
 
         IsStarted = true;
-
-        logger.LogInformation("Бот запущен");
     }
 
     public async Task SendTextMessageAsync(string text)
     {
-        await botClient.SendTextMessageAsync(consumerId, text, Telegram.Bot.Types.Enums.ParseMode.Html);
+        await botClient.SendTextMessageAsync(consumerId, text, (int?)Telegram.Bot.Types.Enums.ParseMode.Html);
 
-        logger.LogInformation("Отправка сообщения");
+        logger.LogInformation("Отправка сообщения пользователю с ID {consumerId}", consumerId);
     }
 
     public void Stop()
@@ -69,7 +65,6 @@ public sealed class MusicNewsWatcherTelegramBot : IDisposable
 
     public void Dispose()
     {
-        cts?.Cancel();
         cts?.Dispose();
     }
 }

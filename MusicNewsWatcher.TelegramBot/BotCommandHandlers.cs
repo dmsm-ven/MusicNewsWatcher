@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.Core;
-using System.Globalization;
+using MusicNewsWatcher.Core.Extensions;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -40,28 +40,45 @@ public class TelegramBotCommandHandlers
     public async Task<Message> ForceUpdateCommand(Message message)
     {
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                text: "Запуск ...", ParseMode.Html);
+                                text: "Запуск ...", (int?)ParseMode.Html);
     }
 
     public async Task<Message> LastUpdateCommand(Message message)
     {
         using var db = await dbContextFactory.CreateDbContextAsync();
 
-        string lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value ?? "01.01.2000 00:00:00";
-        DateTime lastUpdate = DateTime.Parse(lastUpdateString, new CultureInfo("ru-RU"));
+        string? lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value;
+
+        bool emptyLastUpdate = false;
+        DateTimeOffset lastUpdate, nextUpdate;
+        if (!DateTimeOffset.TryParse(lastUpdateString, out lastUpdate))
+        {
+            lastUpdate = new DateTimeOffset();
+            emptyLastUpdate = true;
+        }
         TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(db.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
         int updateIntervalMinutes = (int)updateInterval.TotalMinutes;
-        DateTime nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
+        nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
+        int nextUpdateLeft = (int)(nextUpdate - DateTimeOffset.UtcNow).TotalMinutes;
 
-        var sb = new StringBuilder()
-            .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToString("dd.MM.yyyy HH:mm")}</b>")
-            .AppendLine($"Интервал обновления: <b>{updateIntervalMinutes} мин.</b>")
-            .Append($"Следующий запуск: <b>{nextUpdate.ToString("dd.MM.yyyy HH:mm")}</b>");
+        if (!emptyLastUpdate)
+        {
+            var sb = new StringBuilder()
+                .AppendLine($"Интервал обновления: <b>{updateIntervalMinutes} мин.</b>")
+                .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToLocalRuDateAndTime()}</b> ({lastUpdateString})")
+                .Append($"Следующий запуск: <b>{nextUpdate.ToLocalRuDateAndTime()}</b> (через {nextUpdateLeft} мин.)");
 
 
-        string replyText = sb.ToString();
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                        text: replyText, ParseMode.Html);
+            string replyText = sb.ToString();
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: replyText, (int?)ParseMode.Html);
+        }
+        else
+        {
+            string replyText = $"Ошибка считывания даты последнего обновления: '{lastUpdateString}'";
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: replyText, (int?)ParseMode.Html);
+        }
 
     }
 

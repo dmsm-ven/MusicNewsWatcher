@@ -1,9 +1,8 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace MusicNewsWatcher.Infrastructure.Converters;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Converters;
 
 public class BoolToForegroundColorConverter : IValueConverter
 {
