@@ -16,6 +16,7 @@ public sealed class MusicUpdateManager
 {
     public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
 
+    public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public static readonly TimeSpan DefaultTimerInterval = TimeSpan.FromMinutes(60);
     public static readonly TimeSpan DefaultMinInterval = TimeSpan.FromMinutes(1);
 
@@ -73,11 +74,15 @@ public sealed class MusicUpdateManager
         this.crawler = crawler;
     }
 
+    /// <summary>
+    /// Обновляет дату последнего переобхода
+    /// </summary>
+    /// <returns></returns>
     public async Task RefreshIntervalAndLastUpdate()
     {
         using var db = await dbFactory.CreateDbContextAsync();
 
-        string? dateTimeStr = (await db.Settings.FindAsync("LastFullUpdateDateTime"))?.Value;
+        string? dateTimeStr = (await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
         if (DateTimeOffset.TryParse(dateTimeStr, out var lastUpdate))
         {
             LastUpdate = lastUpdate;
@@ -110,8 +115,15 @@ public sealed class MusicUpdateManager
         firstUpdate = false;
     }
 
-    public async Task CheckUpdatesAllAsync(CancellationToken stoppingToken)
+    /// <summary>
+    /// Выполяет переобход по всем сохраненным артистам для всех провайдеров и возращает общее количество новых найденных альбомов
+    /// </summary>
+    /// <param name="stoppingToken"></param>
+    /// <returns></returns>
+    public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
+        int newAlbumsFound = 0;
+
         var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
@@ -124,11 +136,21 @@ public sealed class MusicUpdateManager
                 })
                 .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
                 .ToList()
-                .ForEach(i => OnNewAlbumsFound?.Invoke(this, i));
+                .ForEach(i =>
+                {
+                    newAlbumsFound += i.NewAlbums!.Length;
+                    OnNewAlbumsFound?.Invoke(this, i);
+                });
+
+
         }
+
+        LastUpdate = DateTimeOffset.UtcNow;
 
         await SaveLastUpdateTime();
         await RefreshIntervalAndLastUpdate();
+
+        return newAlbumsFound;
     }
 
     public async Task CheckUpdatesForArtistForProvider(MusicProviderBase provider, int artistId, string artistName, string artistUri)
@@ -160,9 +182,8 @@ public sealed class MusicUpdateManager
     private async Task SaveLastUpdateTime()
     {
         using var db = await dbFactory.CreateDbContextAsync();
-        string settingsKey = "LastFullUpdateDateTime";
 
-        var item = await db.Settings.FindAsync(settingsKey);
+        var item = await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey);
 
         if (item != null)
         {
@@ -172,7 +193,7 @@ public sealed class MusicUpdateManager
         {
             var settingRecord = new SettingsEntity()
             {
-                Name = settingsKey,
+                Name = LastFullUpdateDateTimeSettingsKey,
                 Value = LastUpdate.ToString()
             };
 
@@ -200,10 +221,14 @@ public sealed class MusicUpdateManager
             Stopwatch sw = Stopwatch.StartNew();
             DateTimeOffset started = DateTimeOffset.UtcNow;
 
-            await CheckUpdatesAllAsync(stoppingToken);
+            var newAlbumsCount = await CheckUpdatesAllAsync(stoppingToken);
 
-            const string message = "Переобход по таймеру выполнен. [{started}] - [{LastUpdate}] (за {duration} сек.)";
-            logger.LogInformation(message, started.ToLocalRuDateAndTime(), LastUpdate.ToLocalRuDateAndTime(), (int)sw.Elapsed.TotalSeconds);
+            const string message = "[{started}] - [{finished}] Переобход выполнен за {duration} сек. Найдено {newAlbumsCount} новых альбомов";
+            logger.LogInformation(message,
+                started.ToLocalRuDateAndTime(),
+                LastUpdate.ToLocalRuDateAndTime(),
+                (int)sw.Elapsed.TotalSeconds,
+                newAlbumsCount);
         }
         catch (Exception ex)
         {
@@ -212,7 +237,6 @@ public sealed class MusicUpdateManager
         }
         finally
         {
-
             CrawlerInProgress = false;
         }
     }

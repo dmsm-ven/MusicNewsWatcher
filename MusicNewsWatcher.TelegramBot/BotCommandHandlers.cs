@@ -40,14 +40,14 @@ public class TelegramBotCommandHandlers
     public async Task<Message> ForceUpdateCommand(Message message)
     {
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                text: "Запуск ...", ParseMode.Html);
+                                text: "Запуск ...", (int?)ParseMode.Html);
     }
 
     public async Task<Message> LastUpdateCommand(Message message)
     {
         using var db = await dbContextFactory.CreateDbContextAsync();
 
-        string lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value;
+        string? lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value;
 
         bool emptyLastUpdate = false;
         DateTimeOffset lastUpdate, nextUpdate;
@@ -71,13 +71,13 @@ public class TelegramBotCommandHandlers
 
             string replyText = sb.ToString();
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
+                                            text: replyText, (int?)ParseMode.Html);
         }
         else
         {
             string replyText = $"Ошибка считывания даты последнего обновления: '{lastUpdateString}'";
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
+                                            text: replyText, (int?)ParseMode.Html);
         }
 
     }

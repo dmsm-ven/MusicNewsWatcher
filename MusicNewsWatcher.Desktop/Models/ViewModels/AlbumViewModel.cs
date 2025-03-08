@@ -90,7 +90,7 @@ public class AlbumViewModel : ViewModelBase
         {
             if (IsChecked.HasValue)
             {
-                return IsChecked.Value ? PackIconFontAwesomeKind.CheckSquareRegular : PackIconFontAwesomeKind.SquareRegular;
+                return IsChecked.Value ? PackIconFontAwesomeKind.CheckSolid : PackIconFontAwesomeKind.SquareRegular;
             }
             return PackIconFontAwesomeKind.QuestionSolid;
         }

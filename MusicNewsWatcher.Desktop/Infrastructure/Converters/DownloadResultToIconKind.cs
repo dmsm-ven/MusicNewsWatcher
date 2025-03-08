@@ -14,9 +14,9 @@ public class TrackDownloadResultToIconKind : IValueConverter
             PackIconFontAwesomeKind result = d switch
             {
                 TrackDownloadResult.Success => PackIconFontAwesomeKind.CheckSolid,
-                TrackDownloadResult.Error => PackIconFontAwesomeKind.TimesSolid,
+                TrackDownloadResult.Error => PackIconFontAwesomeKind.CrossSolid,
                 TrackDownloadResult.Skipped => PackIconFontAwesomeKind.ArrowRightSolid,
-                TrackDownloadResult.Cancelled => PackIconFontAwesomeKind.StopCircleSolid,
+                TrackDownloadResult.Cancelled => PackIconFontAwesomeKind.StopSolid,
                 _ => PackIconFontAwesomeKind.QuestionSolid
             };
             return result;

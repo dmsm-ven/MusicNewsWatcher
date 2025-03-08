@@ -49,8 +49,9 @@ public sealed class TelegramBotHostedService : BackgroundService
         try
         {
             logger.LogTrace("Начало выполнения команды форсированного выполнения");
-            await updateManager.CheckUpdatesAllAsync(CancellationToken.None);
-            logger.LogTrace("Конец выполнения команды форсированного выполнения");
+            var newAlbumsFound = await updateManager.CheckUpdatesAllAsync(CancellationToken.None);
+            logger.LogTrace("Конец выполнения команды форсированного выполнения. Найдено {newAlbumsFound} новых альбомов",
+                newAlbumsFound);
         }
         catch
         {

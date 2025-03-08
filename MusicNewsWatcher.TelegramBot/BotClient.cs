@@ -51,7 +51,7 @@ public sealed class MusicNewsWatcherTelegramBot : IDisposable
 
     public async Task SendTextMessageAsync(string text)
     {
-        await botClient.SendTextMessageAsync(consumerId, text, Telegram.Bot.Types.Enums.ParseMode.Html);
+        await botClient.SendTextMessageAsync(consumerId, text, (int?)Telegram.Bot.Types.Enums.ParseMode.Html);
 
         logger.LogInformation("Отправка сообщения пользователю с ID {consumerId}", consumerId);
     }
