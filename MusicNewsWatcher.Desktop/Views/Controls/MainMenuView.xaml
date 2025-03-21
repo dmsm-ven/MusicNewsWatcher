@@ -6,7 +6,7 @@
     xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
-    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel,
+    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel_DesignTime,
                                      IsDesignTimeCreatable=True}"
     d:DesignHeight="100"
     d:DesignWidth="600"
@@ -20,12 +20,11 @@
             <icons:PackIconFontAwesome Kind="PlusSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 
-
         <Button
             Command="{Binding CheckUpdatesAllCommand}"
             Style="{StaticResource ToolButtonStyle}"
             ToolTip="Закачать обновленные данные из БД">
-            <icons:PackIconFontAwesome Kind="CircleArrowRightSolid" Style="{StaticResource LargeIconSize}" />
+            <icons:PackIconFontAwesome Kind="CloudArrowUpSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 
         <Button

@@ -1,4 +1,7 @@
-﻿using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+﻿using Microsoft.Extensions.Options;
+using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
+using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.Models.ViewModels;
 using MusicNewsWatcher.Desktop.ViewModels.Base;
 using MusicNewWatcher.BL;
@@ -7,23 +10,13 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace MusicNewsWatcher.Desktop.ViewModels;
-
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly IEnumerable<MusicProviderBase> musicProviders;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbCotextFactory;
     private readonly IToastsNotifier toasts;
     private readonly IDialogWindowService dialogWindowService;
-
-    public string Title
-    {
-        get
-        {
-            string title = "Music News Watcher";
-
-            return title;
-        }
-    }
+    private readonly string musicDownloadFolder;
 
     private bool isLoading = true;
     public bool IsLoading
@@ -52,7 +45,7 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; }
+    public ObservableCollection<MusicProviderViewModel> MusicProviders { get; } = new();
 
     public ICommand LoadedCommand { get; }
     public ICommand CheckUpdatesAllCommand { get; }
@@ -61,28 +54,26 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand OpenDownloadsFolderCommand { get; }
     public ICommand AddArtistCommand { get; }
 
-    public MainWindowViewModel()
-    {
-        AddArtistCommand = new LambdaCommand(ShowNewArtistWindow, e => SelectedMusicProvider != null);
-        CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
-        OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenDownloadsFolder());
-        SettingsCommand = new LambdaCommand(ShowSettingsWindow);
-        SyncLibraryCommand = new LambdaCommand(ShowSyncLibraryWindow);
-        LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());
-        MusicProviders = new ObservableCollection<MusicProviderViewModel>();
-    }
-
     public MainWindowViewModel(MusicUpdateManager updateManager,
         IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbCotextFactory,
         IToastsNotifier toasts,
-        IDialogWindowService dialogWindowService) : this()
+        IDialogWindowService dialogWindowService,
+        IOptions<MusicDownloadFolderOptions> options)
     {
-
+        this.musicDownloadFolder = options.Value.MusicDownloadFolder;
         this.musicProviders = musicProviders;
         this.dbCotextFactory = dbCotextFactory;
         this.toasts = toasts;
         this.dialogWindowService = dialogWindowService;
+
+        AddArtistCommand = new LambdaCommand(ShowNewArtistWindow, e => SelectedMusicProvider != null);
+        CheckUpdatesAllCommand = new LambdaCommand(async e => await LoadItemsSource(), e => !IsLoading);
+        OpenDownloadsFolderCommand = new LambdaCommand(e => FileBrowserHelper.OpenFolderInFileBrowser(musicDownloadFolder));
+        SettingsCommand = new LambdaCommand(ShowSettingsWindow);
+        SyncLibraryCommand = new LambdaCommand(ShowSyncLibraryWindow);
+        LoadedCommand = new LambdaCommand(async e => await LoadItemsSource());
+
         updateManager.OnNewAlbumsFound += UpdateManager_OnNewAlbumsFound;
     }
 

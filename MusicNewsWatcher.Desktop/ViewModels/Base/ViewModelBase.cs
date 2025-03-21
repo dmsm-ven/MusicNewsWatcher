@@ -1,5 +1,6 @@
 ﻿using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Commands.Base;
+using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using System.ComponentModel;
 using System.IO;
 using System.Net;

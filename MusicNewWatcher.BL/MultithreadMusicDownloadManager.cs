@@ -7,9 +7,9 @@ using System.Net;
 namespace MusicNewWatcher.BL;
 
 //TODO убрать прямое обращение через ViewModel
-public class SimpleHttpMusicDownloadManager : IMusicDownloadManager
+public class MultithreadHttpDownloadManager : IMusicDownloadManager
 {
-    private readonly ILogger<SimpleHttpMusicDownloadManager> logger;
+    private readonly ILogger<MultithreadHttpDownloadManager> logger;
     private readonly HttpClient client;
     private SemaphoreSlim? semaphor = new(1);
 
@@ -35,7 +35,7 @@ public class SimpleHttpMusicDownloadManager : IMusicDownloadManager
         }
     }
 
-    public SimpleHttpMusicDownloadManager(ILogger<SimpleHttpMusicDownloadManager> logger)
+    public MultithreadHttpDownloadManager(ILogger<MultithreadHttpDownloadManager> logger)
     {
         client = new HttpClient(new HttpClientHandler()
         {

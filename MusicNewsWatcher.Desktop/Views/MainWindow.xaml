@@ -8,11 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
     xmlns:vp="clr-namespace:MusicNewsWatcher.Desktop.Views"
-    Title="{Binding Title}"
+    Title="Загрузчик музыкальных новинок"
     Width="1200"
     Height="300"
     MinWidth="800"
-    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel,
+    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel_DesignTime,
                                      IsDesignTimeCreatable=True}"
     d:Height="300"
     d:Width="800"

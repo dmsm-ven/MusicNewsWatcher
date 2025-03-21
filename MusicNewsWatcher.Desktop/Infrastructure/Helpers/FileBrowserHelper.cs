@@ -1,8 +1,7 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 
-namespace MusicNewsWatcher;
+namespace MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 
 public static class FileBrowserHelper
 {
@@ -19,33 +18,15 @@ public static class FileBrowserHelper
         }
     }
 
-    public static string DownloadDirectory
-    {
-        get
-        {
-            string downloadDir = Path.Combine(Environment.CurrentDirectory, "downloads");
-            if (!Directory.Exists(downloadDir))
-            {
-                Directory.CreateDirectory(downloadDir);
-            }
-            return downloadDir;
-        }
-    }
-
-    public static void OpenFolderInFileBrowser(string downloadedFilesDirectory)
+    public static void OpenFolderInFileBrowser(string folder)
     {
         var ps = new ProcessStartInfo()
         {
-            FileName = downloadedFilesDirectory,
+            FileName = folder,
             UseShellExecute = true,
             Verb = "open"
         };
         Process.Start(ps);
-    }
-
-    public static void OpenDownloadsFolder()
-    {
-        OpenFolderInFileBrowser(DownloadDirectory);
     }
 }
 

@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Core.Models;
+using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
+using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.Models.ViewModels;
 using System.Diagnostics;
 using System.Threading;
@@ -13,16 +16,19 @@ public class MusicDownloadHelper
     private readonly IToastsNotifier toasts;
     private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly ILogger<MusicDownloadHelper> logger;
+    private readonly string musicDownloadFolder;
 
     public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
         IDbContextFactory<MusicWatcherDbContext> dbFactory,
-        ILogger<MusicDownloadHelper> logger)
+        ILogger<MusicDownloadHelper> logger,
+        IOptions<MusicDownloadFolderOptions> options)
     {
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
         this.dbFactory = dbFactory;
         this.logger = logger;
+        this.musicDownloadFolder = options.Value.MusicDownloadFolder;
     }
 
     public async Task DownloadAlbum(AlbumViewModel album, bool openFolder, CancellationToken token)
@@ -84,7 +90,7 @@ public class MusicDownloadHelper
             }).ToList()
         };
 
-        string albumDir = await musicDownloadManager.DownloadFullAlbum(albumModel, FileBrowserHelper.DownloadDirectory, token);
+        string albumDir = await musicDownloadManager.DownloadFullAlbum(albumModel, musicDownloadFolder, token);
 
         await Task.Delay(TimeSpan.FromSeconds(1));
 
