@@ -15,7 +15,7 @@
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel_DesignTime,
                                      IsDesignTimeCreatable=True}"
     d:Height="300"
-    d:Width="800"
+    d:Width="600"
     Background="{StaticResource MainWindowBackgroundTexture}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">

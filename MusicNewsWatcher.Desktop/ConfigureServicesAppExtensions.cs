@@ -1,13 +1,12 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Configuration;
+using MusicNewsWatcher.Desktop.Models.ViewModels;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using MusicNewWatcher.BL.MusicProviders;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
-using ToastNotifications.Lifetime;
-using ToastNotifications.Position;
 
 namespace MusicNewsWatcher.Desktop;
 
@@ -17,6 +16,18 @@ public static class ConfigureServicesAppExtensions
     {
         services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
+    }
+
+    public static void AddViewModelFactories(this IServiceCollection services)
+    {
+        services.AddTransient<AlbumViewModel>();
+        services.AddTransient<ViewModelFactory<AlbumViewModel>>();
+
+        services.AddTransient<ArtistViewModel>();
+        services.AddTransient<ViewModelFactory<ArtistViewModel>>();
+
+        services.AddTransient<MusicProviderViewModel>();
+        services.AddTransient<ViewModelFactory<MusicProviderViewModel>>();
     }
 
     public static void AddNotifyIcon(this IServiceCollection services)
@@ -53,25 +64,7 @@ public static class ConfigureServicesAppExtensions
 
     public static void AddToasts(this IServiceCollection services)
     {
-        var notifier = new Notifier(cfg =>
-        {
-            cfg.PositionProvider = new WindowPositionProvider(
-                parentWindow: Application.Current.MainWindow,
-                corner: Corner.TopRight,
-                offsetX: 25,
-                offsetY: 25);
-
-            cfg.DisplayOptions.Width = 500;
-            cfg.DisplayOptions.TopMost = false;
-
-            cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
-                notificationLifetime: TimeSpan.FromSeconds(60),
-                maximumNotificationCount: MaximumNotificationCount.FromCount(4));
-
-            cfg.Dispatcher = Application.Current.Dispatcher;
-        });
-
-        services.AddSingleton<IToastsNotifier>(x => new DewCrewToastsNotifier(notifier));
+        services.AddSingleton<IToastsNotifier, MockToastsNotifier>();
     }
 }
 

@@ -6,21 +6,11 @@ using Telegram.Bot.Types.Enums;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class TelegramBotRoutes : IUpdateHandler
+public class TelegramBotRoutes(
+        TelegramBotCommandHandlers commandHandlers,
+        ILogger<TelegramBotRoutes> logger) : IUpdateHandler
 {
     public event Action? OnForceUpdateCommandRecevied;
-
-    private readonly TelegramBotCommandHandlers commandHandlers;
-    //private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
-    private readonly ILogger<TelegramBotRoutes> logger;
-
-    public TelegramBotRoutes(
-        TelegramBotCommandHandlers commandHandlers,
-        ILogger<TelegramBotRoutes> looger)
-    {
-        this.commandHandlers = commandHandlers ?? throw new ArgumentNullException(nameof(commandHandlers));
-        this.logger = looger;
-    }
 
     public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {

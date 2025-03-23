@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MusicNewsWatcher.Desktop.Services;
+﻿namespace MusicNewsWatcher.Desktop.Services;
 
 public interface IToastsNotifier
 {
@@ -13,27 +7,20 @@ public interface IToastsNotifier
     void ShowInformation(string message);
 }
 
-public class DewCrewToastsNotifier : IToastsNotifier
+public class MockToastsNotifier : IToastsNotifier
 {
-    private readonly Notifier notifier;
-
-    public DewCrewToastsNotifier(Notifier notifier)
-    {
-        this.notifier = notifier;
-    }
-
     public void ShowError(string message)
     {
-        notifier.ShowError(message);
+        //Do nothing
     }
 
     public void ShowInformation(string message)
     {
-        notifier.ShowInformation(message);
+        //Do nothing
     }
 
     public void ShowSuccess(string message)
     {
-        notifier.ShowSuccess(message);
+        //Do nothing
     }
 }

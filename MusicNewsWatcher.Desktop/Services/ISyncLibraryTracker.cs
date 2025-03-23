@@ -14,17 +14,15 @@ public interface ISyncLibraryTracker
 
 public class SyncLibraryTracker : ISyncLibraryTracker
 {
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly MusicWatcherDbContext dbContext;
 
-    public SyncLibraryTracker(IDbContextFactory<MusicWatcherDbContext> dbFactory)
+    public SyncLibraryTracker(MusicWatcherDbContext dbContext)
     {
-        this.dbFactory = dbFactory;
+        this.dbContext = dbContext;
     }
 
     public async Task AddTrackedItemsForHost(Guid hostId, string[] tracks)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
         var items = tracks.Select(t => new SyncTrackEntity()
         {
             HostId = hostId,
@@ -32,7 +30,7 @@ public class SyncLibraryTracker : ISyncLibraryTracker
         }).ToArray();
 
 
-        var host = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == hostId);
+        var host = await dbContext.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == hostId);
         if (host != null)
         {
             host.SyncTracks.Clear();
@@ -44,36 +42,30 @@ public class SyncLibraryTracker : ISyncLibraryTracker
 
             host.LastUpdate = DateTimeOffset.Now;
 
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
     }
 
     public async Task CreateHost(SyncHostEntity host)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        if (!string.IsNullOrWhiteSpace(host.Name) && db.SyncHosts.FirstOrDefault(sh => sh.Name == host.Name) == null)
+        if (!string.IsNullOrWhiteSpace(host.Name) && dbContext.SyncHosts.FirstOrDefault(sh => sh.Name == host.Name) == null)
         {
-            db.SyncHosts.Add(host);
+            dbContext.SyncHosts.Add(host);
 
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
     }
 
     public async Task<List<SyncHostEntity>> GetAllSyncHosts()
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var list = await db.SyncHosts.AsNoTracking().ToListAsync();
+        var list = await dbContext.SyncHosts.AsNoTracking().ToListAsync();
 
         return list;
     }
 
     public async Task<List<SyncTrackEntity>> GetAllTracksForHost(Guid hostId)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var list = await db.SyncTracks
+        var list = await dbContext.SyncTracks
             .Where(st => st.HostId == hostId)
             .ToListAsync();
 
@@ -82,10 +74,8 @@ public class SyncLibraryTracker : ISyncLibraryTracker
 
     public async Task<string[]> GetTracksDiff(Guid id_left, Guid id_right)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var leftHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_left);
-        var rightHost = await db.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_right);
+        var leftHost = await dbContext.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_left);
+        var rightHost = await dbContext.SyncHosts.Include(h => h.SyncTracks).FirstOrDefaultAsync(h => h.Id == id_right);
 
         var filesLeft = leftHost!.SyncTracks.AsEnumerable().Select(f => f.Path).ToList()!;
         var filesRight = rightHost!.SyncTracks.AsEnumerable().Select(f => f.Path).ToList();

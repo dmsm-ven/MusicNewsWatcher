@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
@@ -13,18 +14,18 @@ public interface IDialogWindowService
 public class DialogWindowService : IDialogWindowService
 {
     private readonly IHost host;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly MusicWatcherDbContext dbContext;
 
-    public DialogWindowService(IHost host, IDbContextFactory<MusicWatcherDbContext> dbFactory)
+    public DialogWindowService(IHost host, MusicWatcherDbContext dbContext)
     {
         this.host = host;
-        this.dbFactory = dbFactory;
+        this.dbContext = dbContext;
     }
 
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
         var dialogWindow = host.Services.GetRequiredService<AddNewArtistDialog>();
-        dialogWindow.DataContext = new AddNewArtistDialogViewModel(musicProvider, dbFactory);
+        dialogWindow.DataContext = new AddNewArtistDialogViewModel(musicProvider, null);
         dialogWindow.ShowDialog();
     }
 

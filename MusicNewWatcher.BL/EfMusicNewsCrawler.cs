@@ -8,12 +8,12 @@ namespace MusicNewWatcher.BL;
 
 public class EfMusicNewsCrawler : IMusicNewsCrawler
 {
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly MusicWatcherDbContext dbContext;
     private readonly ILogger<EfMusicNewsCrawler> logger;
 
-    public EfMusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbFactory, ILogger<EfMusicNewsCrawler> logger)
+    public EfMusicNewsCrawler(MusicWatcherDbContext dbContext, ILogger<EfMusicNewsCrawler> logger)
     {
-        this.dbFactory = dbFactory;
+        this.dbContext = dbContext;
         this.logger = logger;
     }
 
@@ -32,19 +32,17 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
         var providerToArtists = new Dictionary<MusicProviderBase, List<ArtistEntity>>();
 
-        using (var db = await dbFactory.CreateDbContextAsync())
-        {
-            foreach (var provider in musicProviders)
-            {
-                var providerArtists = db.MusicProviders
-                    .Include(i => i.Artists)
-                    .ThenInclude(a => a.Albums)
-                    .Single(p => p.MusicProviderId == provider.Id)
-                    .Artists
-                    .ToList();
 
-                providerToArtists[provider] = providerArtists;
-            }
+        foreach (var provider in musicProviders)
+        {
+            var providerArtists = dbContext.MusicProviders
+                .Include(i => i.Artists)
+                .ThenInclude(a => a.Albums)
+                .Single(p => p.MusicProviderId == provider.Id)
+                .Artists
+                .ToList();
+
+            providerToArtists[provider] = providerArtists;
         }
 
         int totalAristsInDictionary = providerToArtists.Values.Sum(i => i.Count);
@@ -97,9 +95,8 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
         Stopwatch sw = Stopwatch.StartNew();
 
-        using var db = await dbFactory.CreateDbContextAsync();
 
-        var artist = await db.Artists.Include(a => a.Albums).FirstOrDefaultAsync(a => a.ArtistId == artistId);
+        var artist = await dbContext.Artists.Include(a => a.Albums).FirstOrDefaultAsync(a => a.ArtistId == artistId);
         if (artist == null)
         {
             logger.LogWarning("{providerName} -- Артист с ID {artistId} не найден", provider.Name, artistId);
@@ -116,9 +113,9 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         if (newAlbums != null && newAlbums.Length > 0)
         {
             artist.Albums.AddRange(newAlbums);
-            db.Entry(artist).State = EntityState.Modified;
+            dbContext.Entry(artist).State = EntityState.Modified;
 
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
 
         sw.Stop();
@@ -131,9 +128,7 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
     public async Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId)
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var album = await db.Albums.FindAsync(albumId);
+        var album = await dbContext.Albums.FindAsync(albumId);
         if (album != null)
         {
             var tracks = await provider.GetTracksAsync(album);
@@ -143,9 +138,9 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
             album.Tracks.Clear();
             album.Tracks.AddRange(tracks);
-            db.Entry(album).State = EntityState.Modified;
+            dbContext.Entry(album).State = EntityState.Modified;
 
-            await db.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
             logger.LogTrace("Треки альбома '{albumName}' сохранены. Было [{oldTracksCount}] стало [{newTracksCount}] треков",
                     album.Title, oldTracksCount, newTracksCount);

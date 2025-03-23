@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
 using MusicNewsWatcher.Core.Dto;
@@ -12,7 +11,10 @@ namespace MusicNewWatcher.BL;
 //Запускается отдельно на консольном клиенте и на WPF Desktop приложении
 
 //TODO: разбить класс
-public sealed class MusicUpdateManager
+public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
+        MusicWatcherDbContext dbContext,
+        ILogger<MusicUpdateManager> logger,
+        IMusicNewsCrawler crawler)
 {
     public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
 
@@ -57,22 +59,7 @@ public sealed class MusicUpdateManager
         }
     }
 
-    private readonly List<MusicProviderBase> musicProviders;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
-    private readonly ILogger<MusicUpdateManager> logger;
-    private readonly IMusicNewsCrawler crawler;
     private bool firstUpdate = true;
-
-    public MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
-        ILogger<MusicUpdateManager> logger,
-        IMusicNewsCrawler crawler)
-    {
-        this.musicProviders = musicProviders.ToList();
-        dbFactory = dbContextFactory;
-        this.logger = logger;
-        this.crawler = crawler;
-    }
 
     /// <summary>
     /// Обновляет дату последнего переобхода
@@ -80,9 +67,7 @@ public sealed class MusicUpdateManager
     /// <returns></returns>
     public async Task RefreshIntervalAndLastUpdate()
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        string? dateTimeStr = (await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
+        string? dateTimeStr = (await dbContext.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
         if (DateTimeOffset.TryParse(dateTimeStr, out var lastUpdate))
         {
             LastUpdate = lastUpdate;
@@ -94,7 +79,7 @@ public sealed class MusicUpdateManager
 
         TimeSpan newInterval = TimeSpan.Zero;
 
-        string? intervalStr = (await db.Settings.FindAsync("UpdateManagerIntervalInMinutes"))?.Value;
+        string? intervalStr = (await dbContext.Settings.FindAsync("UpdateManagerIntervalInMinutes"))?.Value;
         if (int.TryParse(intervalStr, out var intervalMin))
         {
             newInterval = TimeSpan.FromMinutes(intervalMin);
@@ -181,9 +166,7 @@ public sealed class MusicUpdateManager
 
     private async Task SaveLastUpdateTime()
     {
-        using var db = await dbFactory.CreateDbContextAsync();
-
-        var item = await db.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey);
+        var item = await dbContext.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey);
 
         if (item != null)
         {
@@ -197,11 +180,11 @@ public sealed class MusicUpdateManager
                 Value = LastUpdate.ToString()
             };
 
-            db.Settings.Add(settingRecord);
+            dbContext.Settings.Add(settingRecord);
 
         }
 
-        await db.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         logger.LogTrace("Дата последнего обновления сохранена. Новое значение: {updated}", LastUpdate.ToLocalRuDateAndTime());
     }

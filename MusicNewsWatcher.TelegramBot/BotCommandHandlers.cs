@@ -9,18 +9,8 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class TelegramBotCommandHandlers
+public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatcherDbContext dbContext)
 {
-    private readonly ITelegramBotClient botClient;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
-
-    public TelegramBotCommandHandlers(ITelegramBotClient botClient,
-        IDbContextFactory<MusicWatcherDbContext> dbContextFactory)
-    {
-        this.botClient = botClient;
-        this.dbContextFactory = dbContextFactory;
-    }
-
     public async Task<Message> UsageCommand(Message message)
     {
         var usageList = new List<string>() {
@@ -45,9 +35,7 @@ public class TelegramBotCommandHandlers
 
     public async Task<Message> LastUpdateCommand(Message message)
     {
-        using var db = await dbContextFactory.CreateDbContextAsync();
-
-        string? lastUpdateString = db.Settings.Find("LastFullUpdateDateTime")?.Value;
+        string? lastUpdateString = dbContext.Settings.Find("LastFullUpdateDateTime")?.Value;
 
         bool emptyLastUpdate = false;
         DateTimeOffset lastUpdate, nextUpdate;
@@ -56,7 +44,7 @@ public class TelegramBotCommandHandlers
             lastUpdate = new DateTimeOffset();
             emptyLastUpdate = true;
         }
-        TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(db.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
+        TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(dbContext.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
         int updateIntervalMinutes = (int)updateInterval.TotalMinutes;
         nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
         int nextUpdateLeft = (int)(nextUpdate - DateTimeOffset.UtcNow).TotalMinutes;
@@ -91,9 +79,7 @@ public class TelegramBotCommandHandlers
 
         var chatId = update.CallbackQuery.From.Id;
 
-        using var db = dbContextFactory.CreateDbContext();
-
-        var dbProvider = db.MusicProviders.Include(p => p.Artists)
+        var dbProvider = dbContext.MusicProviders.Include(p => p.Artists)
             .FirstOrDefault(pr => pr.Name == providerName);
 
         if (dbProvider != null)
@@ -115,9 +101,7 @@ public class TelegramBotCommandHandlers
 
     public async Task<Message> ProviderListCommand(Message message)
     {
-        using var db = await dbContextFactory.CreateDbContextAsync();
-
-        var providersData = db.MusicProviders.Select(mp => new
+        var providersData = dbContext.MusicProviders.Select(mp => new
         {
             mp.Name,
             TrackedArtists = mp.Artists.Count()

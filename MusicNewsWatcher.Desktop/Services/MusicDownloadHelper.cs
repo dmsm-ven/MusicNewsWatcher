@@ -14,19 +14,19 @@ public class MusicDownloadHelper
 {
     private readonly IMusicDownloadManager musicDownloadManager;
     private readonly IToastsNotifier toasts;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
+    private readonly MusicWatcherDbContext dbContext;
     private readonly ILogger<MusicDownloadHelper> logger;
     private readonly string musicDownloadFolder;
 
     public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
-        IDbContextFactory<MusicWatcherDbContext> dbFactory,
+        MusicWatcherDbContext dbContext,
         ILogger<MusicDownloadHelper> logger,
         IOptions<MusicDownloadFolderOptions> options)
     {
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
-        this.dbFactory = dbFactory;
+        this.dbContext = dbContext;
         this.logger = logger;
         this.musicDownloadFolder = options.Value.MusicDownloadFolder;
     }
@@ -35,30 +35,28 @@ public class MusicDownloadHelper
     {
         album.InProgress = true;
 
-        using (var db = dbFactory.CreateDbContext())
-        {
-            int parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
+        int parallelDownloads = int.Parse(dbContext.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
 
-            musicDownloadManager.ThreadLimit = parallelDownloads;
-        }
+        musicDownloadManager.ThreadLimit = parallelDownloads;
+
 
         try
         {
-            logger.LogInformation("Начало загрузки альбома {albumName}", album.DisplayName);
+            logger.LogInformation("Начало загрузки альбома {albumName}", album.Title);
             await DownloadAlbumTracks(album, openFolder, token);
-            logger.LogInformation("Конец загрузки альбома {albumName}", album.DisplayName);
+            logger.LogInformation("Конец загрузки альбома {albumName}", album.Title);
 
-            toasts.ShowSuccess($"Альбом загружен: {album.DisplayName}");
+            toasts.ShowSuccess($"Альбом загружен: {album.Title}");
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("Загрузка альбома отменена {albumName}", album.DisplayName);
+            logger.LogInformation("Загрузка альбома отменена {albumName}", album.Title);
             toasts.ShowError($"Загрузка альбома отменена");
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Ошибка загрузки альбома '{albumName} - {msg}'", album.DisplayName, ex.Message);
-            toasts.ShowError($"Ошибка загрузки альбома '{album.DisplayName}'\r\n{ex.Message}");
+            logger.LogWarning("Ошибка загрузки альбома '{albumName} - {msg}'", album.Title, ex.Message);
+            toasts.ShowError($"Ошибка загрузки альбома '{album.Title}'\r\n{ex.Message}");
         }
         finally
         {
@@ -82,8 +80,8 @@ public class MusicDownloadHelper
 
         var albumModel = new AlbumModel()
         {
-            AlbumDisplayName = album.DisplayName,
-            ArtistDisplayName = album.ParentArtist.DisplayName,
+            AlbumDisplayName = album.Title,
+            ArtistDisplayName = album.ParentArtist.Name,
             Tracks = album.Tracks.Select(t => new TrackModel()
             {
                 DownloadUri = t.DownloadUri

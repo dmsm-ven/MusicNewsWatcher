@@ -7,11 +7,10 @@ global using MusicNewsWatcher.Desktop.Views;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
-global using ToastNotifications;
-global using ToastNotifications.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.Desktop.Models;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using MusicNewWatcher.BL;
 using System.Threading;
 using System.Windows;
@@ -41,6 +40,10 @@ public partial class App : Application
             })
             .ConfigureServices((context, services) =>
             {
+                services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
+                services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
+                services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
+
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>
                 {
                     options.UseNpgsql(context.Configuration.GetConnectionString("default"));
@@ -62,18 +65,17 @@ public partial class App : Application
                 services.AddSingleton<MusicDownloadHelper>();
                 services.AddSingleton<MusicUpdateManager>();
 
-                services.AddSingleton<SettingsWindowViewModel>();
+                services.AddViewModelFactories();
+
+                services.AddTransient<SettingsWindowViewModel>();
                 services.AddTransient<SettingsWindow>();
 
-                services.AddTransient<SyncLibraryWindow>();
                 services.AddTransient<SyncLibraryWindowViewModel>();
-
-                services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
-                services.AddSingleton<MainWindowViewModel>();
+                services.AddTransient<SyncLibraryWindow>();
+                services.AddTransient<MainWindowViewModel>();
             })
             .Build();
     }
-
     protected override async void OnStartup(StartupEventArgs e)
     {
         //Окно занимает 85% экрана
