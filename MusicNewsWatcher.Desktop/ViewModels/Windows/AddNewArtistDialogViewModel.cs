@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicNewsWatcher.Core.DataAccess.Entity;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 public partial class AddNewArtistDialogViewModel : ObservableObject
 {

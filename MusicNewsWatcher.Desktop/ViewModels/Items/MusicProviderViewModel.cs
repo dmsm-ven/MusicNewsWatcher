@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace MusicNewsWatcher.Desktop.Models.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 public partial class MusicProviderViewModel : ObservableObject
 {
@@ -27,6 +27,40 @@ public partial class MusicProviderViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isActiveProvider;
+
+    async partial void OnIsActiveProviderChanged(bool oldValue, bool newValue)
+    {
+        if (!newValue || isLoaded)
+        {
+            return;
+        }
+
+        await RefreshProviderSource();
+    }
+
+    private async Task RefreshProviderSource()
+    {
+        var providerData = await dbContext.MusicProviders
+            .Include("Artists")
+            .FirstOrDefaultAsync(p => p.MusicProviderId == this.MusicProviderId);
+
+        foreach (var artist in providerData.Artists)
+        {
+            var artistVm = artistVmFactory.Create();
+
+            artistVm.PropertyChanged += ArtistVm_PropertyChanged;
+
+            artistVm.Initialize(this,
+                artist.ArtistId,
+                artist.Name.ToDisplayName(),
+                artist.Image,
+                artist.Uri);
+
+            App.Current.Dispatcher.InvokeAsync(() => TrackedArtists.Add(artistVm));
+        }
+
+        isLoaded = true;
+    }
 
     [ObservableProperty]
     private ArtistViewModel? selectedArtist;
@@ -52,6 +86,8 @@ public partial class MusicProviderViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
     private async void EditArtist()
     {
+        throw new NotImplementedException();
+        /*
         var dialogVm = new AddNewArtistDialogViewModel(this, SelectedArtist);
 
         var dialogWindow = new AddNewArtistDialog();
@@ -60,6 +96,7 @@ public partial class MusicProviderViewModel : ObservableObject
         {
             toasts.ShowSuccess($"Данные обновлены");
         }
+        */
     }
 
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
@@ -79,41 +116,6 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     private bool IsArtistSelected => SelectedArtist != null;
-
-    async partial void OnIsActiveProviderChanged(bool oldValue, bool newValue)
-    {
-        if (newValue || !isLoaded)
-        {
-            return;
-        }
-
-        isLoaded = true;
-
-        await OnFirstLoad();
-
-    }
-
-    private async Task OnFirstLoad()
-    {
-        var providerData = await dbContext.MusicProviders
-            .Include("Artists")
-            .FirstOrDefaultAsync(p => p.MusicProviderId == this.MusicProviderId);
-
-        foreach (var artist in providerData.Artists)
-        {
-            var artistVm = artistVmFactory.Create();
-
-            artistVm.PropertyChanged += ArtistVm_PropertyChanged;
-
-            TrackedArtists.Add(artistVm);
-
-            artistVm.Initialize(this,
-                artist.ArtistId,
-                artist.Name.ToDisplayName(),
-                artist.Image,
-                artist.Uri);
-        }
-    }
 
     private void ArtistVm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

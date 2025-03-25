@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using MusicNewsWatcher.Core.Models;
 
-namespace MusicNewsWatcher.Desktop.Models.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 public partial class TrackViewModel : ObservableObject
 {

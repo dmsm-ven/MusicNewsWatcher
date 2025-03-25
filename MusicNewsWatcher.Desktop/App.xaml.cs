@@ -42,6 +42,8 @@ public partial class App : Application
             {
                 services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
+                services.AddHttpClient();
+
                 services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
 
                 services.AddDbContextFactory<MusicWatcherDbContext>(options =>

@@ -1,23 +1,25 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.Core.Extensions;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-
-namespace MusicNewsWatcher.Desktop.Models.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 //TODO разбить/упростить, класс делает слишком много лишнего
 public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     IToastsNotifier toasts,
-    IImageThumbnailCacheService imageThumbnailCacheService,
+    IImageThumbnailCacheService imageCacheService,
     MusicUpdateManager updateManager,
     MusicDownloadHelper downloadHelper,
     ViewModelFactory<AlbumViewModel> albumViewFactory) : ObservableObject
 {
     private bool isInitialized = false;
+    private bool isLoaded = false;
 
     public int ArtistId { get; private set; }
     public MusicProviderViewModel ParentProvider { get; private set; }
@@ -29,8 +31,13 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     private string uri;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedImage))]
     private string image;
+
+    async partial void OnImageChanged(string oldValue, string newValue)
+    {
+        CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Artist);
+        await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+    }
 
     [ObservableProperty]
     private bool multiselectEnabled;
@@ -50,7 +57,7 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
         get => Albums.Count == 0 && !InProgress;
     }
 
-    public string CachedImage => imageThumbnailCacheService.GetCachedImage(Image);
+    public string? CachedImage { get; private set; }
 
     public bool HasCheckedAlbums
     {
@@ -93,36 +100,28 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     {
         InProgress = true;
 
-        int freshParsedAlbumsCount = await dbContext.Albums.Where(a => a.ArtistId == ArtistId).CountAsync();
+        var albumsData = dbContext
+            .Artists
+            .Include("Albums")
+            .FirstOrDefault(a => a.ArtistId == ArtistId)
+            .Albums
+            .ToList();
 
-        if (freshParsedAlbumsCount != Albums.Count || Albums.Count == 0)
+        foreach (var albumEntity in albumsData)
         {
-            Albums.Clear();
-
-            var dbAlbumsData = (await dbContext
-                .Albums
-                .Where(a => a.ArtistId == ArtistId)
-                .OrderByDescending(a => a.Created)
-                .ThenBy(a => a.AlbumId)
-                .ToListAsync())
-                .Select(i => i)
-                .ToList();
-
-            foreach (var albumEntity in dbAlbumsData)
-            {
-                var album = albumViewFactory.Create();
-                album.PropertyChanged += Album_PropertyChanged;
-                Albums.Add(album);
-                album.Initialize(this,
-                    albumEntity.AlbumId,
-                    albumEntity.Title.ToDisplayName(),
-                    albumEntity.Created,
-                    albumEntity.Image,
-                    albumEntity.Uri);
-            }
+            var album = albumViewFactory.Create();
+            album.PropertyChanged += Album_PropertyChanged;
+            album.Initialize(this,
+                albumEntity.AlbumId,
+                albumEntity.Title.ToDisplayName(),
+                albumEntity.Created,
+                albumEntity.Image,
+                albumEntity.Uri);
+            Albums.Add(album);
         }
 
         InProgress = false;
+        isLoaded = true;
     }
 
     private void Album_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -140,7 +139,8 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
         }
     }
 
-    public void Initialize(MusicProviderViewModel musicProviderViewModel, int artistId, string name, string image, string uri)
+    public void Initialize(MusicProviderViewModel musicProviderViewModel,
+        int artistId, string name, string image, string uri)
     {
         if (isInitialized)
         {
@@ -149,10 +149,25 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
 
         isInitialized = true;
 
-        this.ParentProvider = musicProviderViewModel;
-        this.ArtistId = artistId;
-        this.Name = name;
-        this.Image = image;
-        this.Uri = uri;
+        ParentProvider = musicProviderViewModel;
+        ArtistId = artistId;
+        Name = name;
+        Image = image;
+        Uri = uri;
+
+        this.Albums.CollectionChanged += (o, e) => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
+    }
+
+    [RelayCommand]
+    private async Task SelectThisArtist()
+    {
+        IsActiveArtist = true;
+
+        if (!isLoaded)
+        {
+            await RefreshSource();
+        }
+
+        WeakReferenceMessenger.Default.Send(new ArtistChangedMessage(this));
     }
 }

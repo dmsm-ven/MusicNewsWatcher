@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 public partial class SyncHostViewModel(ISyncLibraryTracker tracker) : ObservableObject
 {

@@ -6,14 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Windows"
     xmlns:vp="clr-namespace:MusicNewsWatcher.Desktop.Views"
     Title="Загрузчик музыкальных новинок"
     Width="1200"
     Height="300"
     MinWidth="800"
-    d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel_DesignTime,
-                                     IsDesignTimeCreatable=True}"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel},
+                                     IsDesignTimeCreatable=False}"
     d:Height="300"
     d:Width="600"
     Background="{StaticResource MainWindowBackgroundTexture}"
@@ -59,7 +59,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Grid DataContext="{Binding SelectedMusicProvider}" Visibility="{Binding IsActiveProvider, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
+                    <Grid DataContext="{Binding SelectedMusicProvider}"
+                          Visibility="{Binding IsActiveProvider, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -85,32 +86,31 @@
                             <icons:PackIconFontAwesome Kind="TrashSolid" Style="{StaticResource MediumIconSize}" />
                         </Button>
                     </Grid>
-                    <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider}" />
+                    <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
             </Border>
 
             <!--  Albums Menu  -->
-            <Border Grid.Column="2" Style="{StaticResource MainSectionBorder}">
-                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist}">
+            <Border
+                Grid.Column="2"
+                Style="{StaticResource MainSectionBorder}">
+                <Grid DataContext="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Visibility="{Binding IsActiveArtist, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
-
+                    <!--  Visibility="{Binding IsActiveArtist, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}"  -->
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-
                         <TextBlock
                             Grid.ColumnSpan="3"
                             Style="{StaticResource MainSectionTitle}"
-                            Text="{Binding DisplayName}" />
-
-
+                            Text="{Binding Name}" />
                         <Button
                             Grid.Column="1"
                             Command="{Binding DownloadCheckedAlbumsCommand}"
@@ -127,7 +127,8 @@
 
                     </Grid>
 
-                    <vp:ArtistAlbumsView Grid.Row="1" />
+                    <vp:ArtistAlbumsView Grid.Row="1" 
+                                         DataContext="{Binding SelectedArtist, UpdateSourceTrigger=PropertyChanged}" />
 
                 </Grid>
             </Border>

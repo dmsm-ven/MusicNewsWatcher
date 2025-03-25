@@ -1,12 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Desktop.Models.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 //TODO разбить/упростить класс делает слишком много лишнего
 public partial class AlbumViewModel(MusicUpdateManager updateManager,
@@ -15,11 +17,21 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
     IToastsNotifier toasts,
     IImageThumbnailCacheService imageCacheService) : ObservableObject
 {
+    private bool isLoaded = false;
     private bool isInitialized = false;
 
     public DateTime Created { get; private set; }
     public int AlbumId { get; private set; }
-    public string? Image { get; private set; }
+
+    [ObservableProperty]
+    private string? image;
+
+    async partial void OnImageChanged(string newValue)
+    {
+        CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Album);
+        await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+    }
+
     public string Uri { get; private set; }
     public ArtistViewModel ParentArtist { get; private set; }
 
@@ -51,7 +63,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         }
     }
 
-    public string CachedImage => imageCacheService.GetCachedImage(this.Image);
+    public string? CachedImage { get; private set; } = null;
 
     public bool IsUpdateTracksButtonVisibile => Tracks.Count == 0 && !InProgress;
 
@@ -63,14 +75,6 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
     private readonly CancellationTokenSource cts;
 
-    async partial void OnIsActiveAlbumChanged(bool oldValue, bool newValue)
-    {
-        if (newValue)
-        {
-            await RefreshTracksSource();
-        }
-    }
-
     [RelayCommand(CanExecute = nameof(CanDownloadAlbum))]
     private async Task DownloadAlbum(bool openFolder)
     {
@@ -80,12 +84,12 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
     [RelayCommand(CanExecute = nameof(CanToggleMultiselectState))]
     private void ToggleMultiselectState()
     {
-        IsChecked = (IsChecked.HasValue ? (!IsChecked.Value) : null);
+        IsChecked = IsChecked.HasValue ? !IsChecked.Value : null;
     }
 
     private async Task RefreshTracksSource()
     {
-        var tracksSource = await dbContext.Tracks.Where(t => t.AlbumId == this.AlbumId).CountAsync();
+        var tracksSource = await dbContext.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync();
 
         if (tracksSource == Tracks.Count)
         {
@@ -95,7 +99,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
         Tracks.Clear();
 
-        var tracksEntities = await dbContext.Tracks.Where(a => a.AlbumId == this.AlbumId).ToListAsync();
+        var tracksEntities = await dbContext.Tracks.Where(a => a.AlbumId == AlbumId).ToListAsync();
 
         tracksEntities
             .Select(i => new TrackViewModel(this)
@@ -108,6 +112,8 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
             .OrderBy(a => a.Id)
             .ToList()
             .ForEach(t => Tracks.Add(t));
+
+        isLoaded = true;
     }
 
     [RelayCommand]
@@ -130,6 +136,19 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
     }
 
+    [RelayCommand]
+    private async Task SelectThisAlbum()
+    {
+        IsActiveAlbum = true;
+
+        if (!isLoaded)
+        {
+            await RefreshTracksSource();
+        }
+
+        WeakReferenceMessenger.Default.Send(new AlbumChangedMessage(this));
+    }
+
     [RelayCommand(CanExecute = nameof(InProgress))]
     private void CancelDownloading()
     {
@@ -145,11 +164,11 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         }
         isInitialized = true;
 
-        this.ParentArtist = parentArtist;
-        this.AlbumId = id;
-        this.Title = title;
-        this.Created = created;
-        this.Image = image;
-        this.Uri = uri;
+        ParentArtist = parentArtist;
+        AlbumId = id;
+        Title = title;
+        Created = created;
+        Image = image;
+        Uri = uri;
     }
 }

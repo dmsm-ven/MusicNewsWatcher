@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 namespace MusicNewsWatcher.Desktop.Services;

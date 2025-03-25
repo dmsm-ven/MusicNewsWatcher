@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Models;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;

@@ -1,22 +1,30 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Models;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
-public partial class MainWindowViewModel(MusicUpdateManager updateManager,
-        IEnumerable<MusicProviderBase> musicProviderTemplates,
-        MusicWatcherDbContext dbContext,
-        IToastsNotifier toasts,
-        IDialogWindowService dialogWindowService,
-        IOptions<MusicDownloadFolderOptions> options,
-        ViewModelFactory<MusicProviderViewModel> providerVmFactory) : ObservableObject
+namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
+
+public record ArtistChangedMessage(ArtistViewModel artist);
+public record AlbumChangedMessage(AlbumViewModel album);
+
+public partial class MainWindowViewModel : ObservableObject,
+    IRecipient<ArtistChangedMessage>,
+    IRecipient<AlbumChangedMessage>
 {
+    private readonly MusicUpdateManager updateManager;
+    private readonly IEnumerable<MusicProviderBase> musicProviderTemplates;
+    private readonly MusicWatcherDbContext dbContext;
+    private readonly IToastsNotifier toasts;
+    private readonly IDialogWindowService dialogWindowService;
+    private readonly IOptions<MusicDownloadFolderOptions> options;
+    private readonly ViewModelFactory<MusicProviderViewModel> providerVmFactory;
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -29,6 +37,26 @@ public partial class MainWindowViewModel(MusicUpdateManager updateManager,
     private ObservableCollection<MusicProviderViewModel> musicProviders = new();
 
     public bool HasSelectedProvider => SelectedMusicProvider != null;
+
+    public MainWindowViewModel(MusicUpdateManager updateManager,
+        IEnumerable<MusicProviderBase> musicProviderTemplates,
+        MusicWatcherDbContext dbContext,
+        IToastsNotifier toasts,
+        IDialogWindowService dialogWindowService,
+        IOptions<MusicDownloadFolderOptions> options,
+        ViewModelFactory<MusicProviderViewModel> providerVmFactory)
+    {
+        this.updateManager = updateManager;
+        this.musicProviderTemplates = musicProviderTemplates;
+        this.dbContext = dbContext;
+        this.toasts = toasts;
+        this.dialogWindowService = dialogWindowService;
+        this.options = options;
+        this.providerVmFactory = providerVmFactory;
+
+        WeakReferenceMessenger.Default.Register<ArtistChangedMessage>(this);
+        WeakReferenceMessenger.Default.Register<AlbumChangedMessage>(this);
+    }
 
     [RelayCommand(CanExecute = nameof(HasSelectedProvider))]
     private void AddArtist()
@@ -86,7 +114,12 @@ public partial class MainWindowViewModel(MusicUpdateManager updateManager,
         }
 
         IsLoading = false;
-        SelectedMusicProvider = MusicProviders.LastOrDefault();
+
+        if (MusicProviders.Any())
+        {
+            SelectedMusicProvider = MusicProviders.LastOrDefault();
+            SelectedMusicProvider.IsActiveProvider = true;
+        }
     }
 
     private void ProviderVm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -100,5 +133,15 @@ public partial class MainWindowViewModel(MusicUpdateManager updateManager,
                 .ToList()
                 .ForEach(p => p.IsActiveProvider = false);
         }
+    }
+
+    public void Receive(AlbumChangedMessage message)
+    {
+        SelectedMusicProvider.SelectedArtist.SelectedAlbum = message.album;
+    }
+
+    public void Receive(ArtistChangedMessage message)
+    {
+        SelectedMusicProvider.SelectedArtist = message.artist;
     }
 }

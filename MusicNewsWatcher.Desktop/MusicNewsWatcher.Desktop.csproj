@@ -29,6 +29,7 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+		<PackageReference Include="ImageProcessor" Version="2.9.0" />
 		<PackageReference Include="LoadingSpinner.WPF" Version="1.0.0" />
 		<PackageReference Include="MahApps.Metro.IconPacks.FontAwesome" Version="5.1.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
@@ -48,7 +49,7 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Assets\bandcamp-logo.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Assets\bricks.jpg">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -56,14 +57,14 @@
 		<Resource Include="Assets\cosmos-texture.jpg">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
-		<EmbeddedResource Include="Assets\image-placeholder.jpg">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</EmbeddedResource>
+		<Resource Include="Assets\image-placeholder.jpg">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
 		<Resource Include="Assets\musify-logo.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Assets\settings-window-background-texture.jpg">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="logo.ico" />
 	</ItemGroup>

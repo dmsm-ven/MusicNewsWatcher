@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
-namespace MusicNewsWatcher.Desktop.ViewModels;
+namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 public partial class SettingsWindowViewModel : ObservableValidator
 {
