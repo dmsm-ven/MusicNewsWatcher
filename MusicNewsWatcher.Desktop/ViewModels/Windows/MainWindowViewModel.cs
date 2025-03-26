@@ -11,9 +11,6 @@ using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
-public record ArtistChangedMessage(ArtistViewModel artist);
-public record AlbumChangedMessage(AlbumViewModel album);
-
 public partial class MainWindowViewModel : ObservableObject,
     IRecipient<ArtistChangedMessage>,
     IRecipient<AlbumChangedMessage>
@@ -138,10 +135,20 @@ public partial class MainWindowViewModel : ObservableObject,
     public void Receive(AlbumChangedMessage message)
     {
         SelectedMusicProvider.SelectedArtist.SelectedAlbum = message.album;
+
+        foreach (var album in SelectedMusicProvider.SelectedArtist.Albums)
+        {
+            album.IsActiveAlbum = album == message.album ? message.album.IsActiveAlbum : false;
+        }
     }
 
     public void Receive(ArtistChangedMessage message)
     {
         SelectedMusicProvider.SelectedArtist = message.artist;
+
+        foreach (var artist in SelectedMusicProvider.TrackedArtists)
+        {
+            artist.IsActiveArtist = artist == message.artist ? message.artist.IsActiveArtist : false;
+        }
     }
 }

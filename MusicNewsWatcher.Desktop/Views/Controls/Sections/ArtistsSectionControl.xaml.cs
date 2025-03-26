@@ -1,12 +1,12 @@
 ﻿using System.Windows.Controls;
 
-namespace MusicNewsWatcher.Desktop.Views;
+namespace MusicNewsWatcher.Desktop.Views.Controls.Sections;
 /// <summary>
 /// Interaction logic for TrackedArtistsView.xaml
 /// </summary>
-public partial class TrackedArtistsView : UserControl
+public partial class ArtistsSectionControl : UserControl
 {
-    public TrackedArtistsView()
+    public ArtistsSectionControl()
     {
         InitializeComponent();
     }

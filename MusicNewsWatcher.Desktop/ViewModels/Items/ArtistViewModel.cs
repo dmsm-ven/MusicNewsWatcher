@@ -9,7 +9,6 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
-
 //TODO разбить/упростить, класс делает слишком много лишнего
 public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     IToastsNotifier toasts,
@@ -40,6 +39,7 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentMultiselectIcon))]
     private bool multiselectEnabled;
 
     [ObservableProperty]
@@ -52,17 +52,13 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     [ObservableProperty]
     private AlbumViewModel selectedAlbum;
 
-    public bool IsUpdateAlbumsButtonVisibile
-    {
-        get => Albums.Count == 0 && !InProgress;
-    }
+    public bool IsUpdateAlbumsButtonVisibile => Albums.Count == 0 && !InProgress;
 
     public string? CachedImage { get; private set; }
 
-    public bool HasCheckedAlbums
-    {
-        get => Albums.Count(a => a.IsChecked == true) >= 1;
-    }
+    [NotifyCanExecuteChangedFor(nameof(DownloadCheckedAlbumsCommand))]
+    [ObservableProperty]
+    private bool hasCheckedAlbums = false;
 
     public PackIconFontAwesomeKind CurrentMultiselectIcon
     {
@@ -85,6 +81,7 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     private void ToggleMultiselectMode()
     {
         MultiselectEnabled = !MultiselectEnabled;
+        this.Albums.Where(a => a.IsChecked is null).ToList().ForEach(a => a.IsChecked = false);
     }
 
     [RelayCommand]
@@ -128,14 +125,9 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
     {
         var album = (AlbumViewModel)sender!;
 
-        if (e.PropertyName == nameof(AlbumViewModel.IsActiveAlbum) && album.IsActiveAlbum)
-        {
-            this.Albums.Where(a => a != album).ToList().ForEach(a => a.IsActiveAlbum = false);
-        }
-
         if (e.PropertyName == nameof(AlbumViewModel.IsChecked))
         {
-            OnPropertyChanged(nameof(HasCheckedAlbums));
+            HasCheckedAlbums = this.Albums.Any(a => a.IsChecked == true);
         }
     }
 
@@ -155,8 +147,9 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
         Image = image;
         Uri = uri;
 
-        this.Albums.CollectionChanged += (o, e) => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
+        this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
     }
+
 
     [RelayCommand]
     private async Task SelectThisArtist()

@@ -7,6 +7,7 @@ using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
@@ -67,8 +68,6 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
     public bool IsUpdateTracksButtonVisibile => Tracks.Count == 0 && !InProgress;
 
-    private bool CanToggleMultiselectState => IsChecked.HasValue;
-
     public bool CanDownloadAlbum => Tracks.Count > 0 && !InProgress;
 
     public ObservableCollection<TrackViewModel> Tracks { get; } = new();
@@ -81,10 +80,10 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         await downloadHelper.DownloadAlbum(this, openFolder, cts.Token);
     }
 
-    [RelayCommand(CanExecute = nameof(CanToggleMultiselectState))]
+    [RelayCommand]
     private void ToggleMultiselectState()
     {
-        IsChecked = IsChecked.HasValue ? !IsChecked.Value : null;
+        IsChecked = IsChecked.HasValue ? !((bool)IsChecked.Value) : null;
     }
 
     private async Task RefreshTracksSource()
@@ -106,7 +105,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
             {
                 AlbumId = i.AlbumId,
                 Id = i.Id,
-                Name = i.Name,
+                Name = HttpUtility.HtmlDecode(i.Name),
                 DownloadUri = i.DownloadUri,
             })
             .OrderBy(a => a.Id)

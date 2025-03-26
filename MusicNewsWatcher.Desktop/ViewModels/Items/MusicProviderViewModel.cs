@@ -9,6 +9,12 @@ namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 public partial class MusicProviderViewModel : ObservableObject
 {
+    public MusicProviderBase Template { get; private set; }
+    public string Name => Template.Name;
+    public int MusicProviderId => Template.Id;
+    public string Image { get; private set; }
+    public string Uri { get; private set; }
+
     private readonly MusicWatcherDbContext dbContext;
     private readonly IToastsNotifier toasts;
     private readonly ViewModelFactory<ArtistViewModel> artistVmFactory;
@@ -19,8 +25,6 @@ public partial class MusicProviderViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<ArtistViewModel> trackedArtists = new();
-
-    public int TrackedArtistsCount => TrackedArtists.Count == 0 ? initialTrackedArtistsCount : TrackedArtists.Count;
 
     [ObservableProperty]
     private bool inProgress = false;
@@ -47,9 +51,6 @@ public partial class MusicProviderViewModel : ObservableObject
         foreach (var artist in providerData.Artists)
         {
             var artistVm = artistVmFactory.Create();
-
-            artistVm.PropertyChanged += ArtistVm_PropertyChanged;
-
             artistVm.Initialize(this,
                 artist.ArtistId,
                 artist.Name.ToDisplayName(),
@@ -65,12 +66,7 @@ public partial class MusicProviderViewModel : ObservableObject
     [ObservableProperty]
     private ArtistViewModel? selectedArtist;
 
-    public MusicProviderBase Template { get; private set; }
-
-    public string Name => Template.Name;
-    public int MusicProviderId => Template.Id;
-    public string Image { get; private set; }
-    public string Uri { get; private set; }
+    public int TrackedArtistsCount => TrackedArtists.Count == 0 ? initialTrackedArtistsCount : TrackedArtists.Count;
 
     public MusicProviderViewModel(MusicWatcherDbContext dbContext,
         IToastsNotifier toasts,
@@ -116,19 +112,6 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     private bool IsArtistSelected => SelectedArtist != null;
-
-    private void ArtistVm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        ArtistViewModel artist = (ArtistViewModel)sender;
-
-        if (e.PropertyName == nameof(ArtistViewModel.IsActiveArtist) && artist.IsActiveArtist)
-        {
-            TrackedArtists
-                .Where(a => a != artist)
-                .ToList()
-                .ForEach(a => a.IsActiveArtist = false);
-        }
-    }
 
     public void Initialize(MusicProviderBase template, string image, string uri, int trackedArtistsCount)
     {

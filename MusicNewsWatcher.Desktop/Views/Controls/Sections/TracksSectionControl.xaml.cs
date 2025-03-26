@@ -1,12 +1,12 @@
 ﻿using System.Windows.Controls;
 
-namespace MusicNewsWatcher.Desktop.Views;
+namespace MusicNewsWatcher.Desktop.Views.Controls.Sections;
 /// <summary>
 /// Interaction logic for AlbumTracksView.xaml
 /// </summary>
-public partial class AlbumTracksView : UserControl
+public partial class TracksSectionControl : UserControl
 {
-    public AlbumTracksView()
+    public TracksSectionControl()
     {
         InitializeComponent();
     }

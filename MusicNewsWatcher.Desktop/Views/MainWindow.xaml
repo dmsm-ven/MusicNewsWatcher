@@ -7,15 +7,16 @@
     xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Windows"
-    xmlns:vp="clr-namespace:MusicNewsWatcher.Desktop.Views"
+    xmlns:vp="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls"
+    xmlns:vs="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls.Sections"
     Title="Загрузчик музыкальных новинок"
     Width="1200"
     Height="300"
-    MinWidth="800"
-    d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel},
-                                     IsDesignTimeCreatable=False}"
+    MinWidth="800" 
     d:Height="300"
     d:Width="600"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel},
+                                 IsDesignTimeCreatable=False}"
     Background="{StaticResource MainWindowBackgroundTexture}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -59,8 +60,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Grid DataContext="{Binding SelectedMusicProvider}"
-                          Visibility="{Binding IsActiveProvider, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}">
+                    <Grid DataContext="{Binding SelectedMusicProvider}" Visibility="{Binding IsActiveProvider, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -86,15 +86,13 @@
                             <icons:PackIconFontAwesome Kind="TrashSolid" Style="{StaticResource MediumIconSize}" />
                         </Button>
                     </Grid>
-                    <vp:TrackedArtistsView Grid.Row="1" DataContext="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}" />
+                    <vs:ArtistsSectionControl Grid.Row="1" DataContext="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
             </Border>
 
             <!--  Albums Menu  -->
-            <Border
-                Grid.Column="2"
-                Style="{StaticResource MainSectionBorder}">
-                <Grid DataContext="{Binding SelectedMusicProvider, UpdateSourceTrigger=PropertyChanged}">
+            <Border Grid.Column="2" Style="{StaticResource MainSectionBorder}">
+                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist, UpdateSourceTrigger=PropertyChanged}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -127,15 +125,14 @@
 
                     </Grid>
 
-                    <vp:ArtistAlbumsView Grid.Row="1" 
-                                         DataContext="{Binding SelectedArtist, UpdateSourceTrigger=PropertyChanged}" />
+                    <vs:AlbumsSectionControl Grid.Row="1"  DataContext="{Binding}"/>
 
                 </Grid>
             </Border>
 
             <!--  Tacks Menu  -->
             <Border Grid.Column="3" Style="{StaticResource MainSectionBorder}">
-                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}">
+                <Grid DataContext="{Binding SelectedMusicProvider}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -192,7 +189,7 @@
                         </Button>
                     </Grid>
 
-                    <vp:AlbumTracksView Grid.Row="1" />
+                    <vs:TracksSectionControl DataContext="{Binding SelectedArtist.SelectedAlbum}" Grid.Row="1" />
                 </Grid>
             </Border>
         </Grid>
