@@ -55,7 +55,7 @@ public partial class MainWindowViewModel : ObservableObject,
         WeakReferenceMessenger.Default.Register<AlbumChangedMessage>(this);
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelectedProvider))]
+    [RelayCommand]
     private void AddArtist()
     {
         dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);

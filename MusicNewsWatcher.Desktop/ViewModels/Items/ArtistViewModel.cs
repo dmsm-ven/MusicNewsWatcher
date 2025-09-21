@@ -10,13 +10,47 @@ using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 //TODO разбить/упростить, класс делает слишком много лишнего
-public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
-    IToastsNotifier toasts,
-    IImageThumbnailCacheService imageCacheService,
-    MusicUpdateManager updateManager,
-    MusicDownloadHelper downloadHelper,
-    ViewModelFactory<AlbumViewModel> albumViewFactory) : ObservableObject
+public partial class ArtistViewModel : ObservableObject
 {
+    private readonly MusicWatcherDbContext dbContext;
+    private readonly IToastsNotifier toasts;
+    private readonly IImageThumbnailCacheService imageCacheService;
+    private readonly MusicUpdateManager updateManager;
+    private readonly MusicDownloadHelper downloadHelper;
+    private readonly ViewModelFactory<AlbumViewModel> albumViewFactory;
+
+    public ArtistViewModel(MusicWatcherDbContext dbContext,
+        IToastsNotifier toasts,
+        IImageThumbnailCacheService imageCacheService,
+        MusicUpdateManager updateManager,
+        MusicDownloadHelper downloadHelper,
+        ViewModelFactory<AlbumViewModel> albumViewFactory)
+    {
+        this.dbContext = dbContext;
+        this.toasts = toasts;
+        this.imageCacheService = imageCacheService;
+        this.updateManager = updateManager;
+        this.downloadHelper = downloadHelper;
+        this.albumViewFactory = albumViewFactory;
+    }
+
+    public static ArtistViewModel Create(ArtistViewModel template, string name, string image, string uri)
+    {
+        return new ArtistViewModel(template.dbContext,
+            template.toasts,
+            template.imageCacheService,
+            template.updateManager,
+            template.downloadHelper,
+            template.albumViewFactory)
+        {
+            ArtistId = template.ArtistId,
+            ParentProvider = template.ParentProvider,
+            Name = name,
+            Image = image,
+            Uri = uri
+        };
+    }
+
     private bool isInitialized = false;
     private bool isLoaded = false;
 
@@ -91,6 +125,12 @@ public partial class ArtistViewModel(MusicWatcherDbContext dbContext,
         await updateManager.CheckUpdatesForArtistForProvider(ParentProvider.Template, ArtistId, Name, Uri);
         await RefreshSource();
         InProgress = false;
+    }
+
+    [RelayCommand]
+    private void OpenInBrowser()
+    {
+        //IGNORE
     }
 
     private async Task RefreshSource()

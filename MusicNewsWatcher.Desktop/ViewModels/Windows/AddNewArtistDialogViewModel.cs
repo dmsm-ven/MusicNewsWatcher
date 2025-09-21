@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicNewsWatcher.Core.DataAccess.Entity;
+using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -26,22 +27,19 @@ public partial class AddNewArtistDialogViewModel : ObservableObject
     public ArtistViewModel ContextArtist { get; init; }
 
     [ObservableProperty]
-    private List<ArtistViewModel> findedArtist = new();
+    private ObservableCollection<ArtistViewModel> findedArtist = new();
 
     [ObservableProperty]
     private ArtistViewModel selectedFindedArtist;
 
-    public AddNewArtistDialogViewModel(MusicProviderViewModel provider, ArtistViewModel? artist)
+    public AddNewArtistDialogViewModel(MusicProviderViewModel provider)
     {
-        throw new NotImplementedException();
-        /*IsEdit = artist != null;
-        ContextArtist = artist ?? new ArtistViewModel(provider);
-        artistSearchName = artist.Name;
+        dbContext = App.HostContainer.Services.GetRequiredService<MusicWatcherDbContext>();
+        ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
+        ContextArtist.Initialize(provider, 0, name: "", image: "", uri: "");
 
         MusicProviders.Add(provider);
         SelectedMusicProvider = provider;
-        dbContext = App.HostContainer.Services.GetRequiredService<MusicWatcherDbContext>();
-        */
     }
 
     partial void OnSelectedFindedArtistChanged(ArtistViewModel? oldValue, ArtistViewModel newValue)
@@ -61,10 +59,11 @@ public partial class AddNewArtistDialogViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSearchResults()
     {
-        throw new NotImplementedException();
-        /*if (SelectedMusicProvider == null ||
-            string.IsNullOrWhiteSpace(artistSearchName) ||
-            artistSearchName.Length < 3)
+        FindedArtist.Clear();
+
+        if (SelectedMusicProvider == null ||
+            string.IsNullOrWhiteSpace(ArtistSearchName) ||
+            ArtistSearchName.Length < 3)
         {
             FindedArtist.Clear();
             return;
@@ -77,19 +76,13 @@ public partial class AddNewArtistDialogViewModel : ObservableObject
 
         var searchResult = await SelectedMusicProvider
             .Template
-            .SerchArtist(artistSearchName);
+            .SerchArtist(ArtistSearchName);
 
         var mappedArtists = searchResult
-            .Select(i => new ArtistViewModel(this.SelectedMusicProvider)
-            {
-                Name = i.Name,
-                Image = i.Image,
-                Uri = i.Uri,
-            })
+            .Select(i => ArtistViewModel.Create(ContextArtist, i.Name, i.Image, i.Uri))
             .ToList();
 
-        FindedArtist = mappedArtists;
-        */
+        FindedArtist.AddRange(mappedArtists);
     }
 
     [RelayCommand]

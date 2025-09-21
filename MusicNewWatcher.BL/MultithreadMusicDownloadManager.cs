@@ -3,6 +3,7 @@ using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Core.Models;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace MusicNewWatcher.BL;
 
@@ -95,7 +96,9 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         await semaphor!.WaitAsync(token ?? CancellationToken.None);
 
-        string localName = Path.Combine(albumDirectory, Path.GetFileName(track.DownloadUri));
+        string rawName = Regex.Replace(track.DownloadUri, @"^(.*?)\?.*$", "$1");
+
+        string localName = Path.Combine(albumDirectory, Path.GetFileName(rawName));
 
         TrackDownloadResult downloadResult = await DownloadTrack(track, localName, token);
 

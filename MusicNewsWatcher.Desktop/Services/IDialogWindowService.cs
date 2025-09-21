@@ -25,7 +25,7 @@ public class DialogWindowService : IDialogWindowService
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
         var dialogWindow = host.Services.GetRequiredService<AddNewArtistDialog>();
-        dialogWindow.DataContext = new AddNewArtistDialogViewModel(musicProvider, null);
+        dialogWindow.DataContext = new AddNewArtistDialogViewModel(musicProvider);
         dialogWindow.ShowDialog();
     }
 

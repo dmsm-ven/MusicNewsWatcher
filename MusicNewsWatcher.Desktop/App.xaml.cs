@@ -58,8 +58,8 @@ public partial class App : Application
                 services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
-                services.AddTransient<AddNewArtistDialogViewModel>();
                 services.AddTransient<AddNewArtistDialog>();
+                services.AddTransient<AddNewArtistDialogViewModel>();
 
                 services.AddMusicProviders();
                 services.AddSingleton<IMusicDownloadManager, MultithreadHttpDownloadManager>();

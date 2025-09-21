@@ -86,6 +86,12 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         IsChecked = IsChecked.HasValue ? !((bool)IsChecked.Value) : null;
     }
 
+    [RelayCommand]
+    private void OpenInBrowser()
+    {
+        //IGNORE
+    }
+
     private async Task RefreshTracksSource()
     {
         var tracksSource = await dbContext.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync();
