@@ -144,7 +144,7 @@ public partial class ArtistViewModel : ObservableObject
             .Albums
             .ToList();
 
-        foreach (var albumEntity in albumsData)
+        foreach (var albumEntity in albumsData.OrderByDescending(ae => ae.Created))
         {
             var album = albumViewFactory.Create();
             album.PropertyChanged += Album_PropertyChanged;
