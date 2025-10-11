@@ -192,6 +192,18 @@ public partial class ArtistViewModel : ObservableObject
 
 
     [RelayCommand]
+    private async Task RefreshArtistAlbums()
+    {
+        var albumsToDelete = dbContext.Albums.Where(a => a.ArtistId == this.ArtistId).ToArray();
+        dbContext.Albums.RemoveRange(albumsToDelete);
+        await dbContext.SaveChangesAsync();
+        Albums.Clear();
+
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        await GetAlbumsFromProviderForArtist();
+    }
+
+    [RelayCommand]
     private async Task SelectThisArtist()
     {
         IsActiveArtist = true;

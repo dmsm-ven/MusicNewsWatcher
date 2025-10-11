@@ -95,7 +95,6 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
 
         Stopwatch sw = Stopwatch.StartNew();
 
-
         var artist = await dbContext.Artists.Include(a => a.Albums).FirstOrDefaultAsync(a => a.ArtistId == artistId);
         if (artist == null)
         {

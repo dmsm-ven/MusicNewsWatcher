@@ -104,9 +104,10 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock
-                            Grid.ColumnSpan="3"
+                            Grid.Column="0"
                             Style="{StaticResource MainSectionTitle}"
                             Text="{Binding Name}" />
                         <Button
@@ -121,6 +122,12 @@
                             Command="{Binding ToggleMultiselectModeCommand}"
                             Style="{StaticResource ToolButtonStyle}">
                             <icons:PackIconFontAwesome Kind="{Binding CurrentMultiselectIcon}" Style="{StaticResource MediumIconSize}" />
+                        </Button>
+                        <Button
+                            Grid.Column="3"
+                            Command="{Binding RefreshArtistAlbumsCommand}"
+                            Style="{StaticResource ToolButtonStyle}">
+                            <icons:PackIconFontAwesome Kind="CloudscaleBrands" Style="{StaticResource MediumIconSize}" />
                         </Button>
 
                     </Grid>
