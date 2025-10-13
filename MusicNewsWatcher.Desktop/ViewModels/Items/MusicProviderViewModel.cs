@@ -16,6 +16,7 @@ public partial class MusicProviderViewModel : ObservableObject
     public string Uri { get; private set; }
 
     private readonly MusicWatcherDbContext dbContext;
+    private readonly IDialogWindowService dialogWindowService;
     private readonly IToastsNotifier toasts;
     private readonly ViewModelFactory<ArtistViewModel> artistVmFactory;
 
@@ -64,15 +65,21 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EditArtistCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteArtistCommand))]
     private ArtistViewModel? selectedArtist;
+
+    private bool IsArtistSelected => SelectedArtist != null;
 
     public int TrackedArtistsCount => TrackedArtists.Count == 0 ? initialTrackedArtistsCount : TrackedArtists.Count;
 
     public MusicProviderViewModel(MusicWatcherDbContext dbContext,
+        IDialogWindowService dialogWindowService,
         IToastsNotifier toasts,
         ViewModelFactory<ArtistViewModel> artistVmFactory)
     {
         this.dbContext = dbContext;
+        this.dialogWindowService = dialogWindowService;
         this.toasts = toasts;
         this.artistVmFactory = artistVmFactory;
 
@@ -80,19 +87,9 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
-    private async void EditArtist()
+    private void EditArtist()
     {
-        throw new NotImplementedException();
-        /*
-        var dialogVm = new AddNewArtistDialogViewModel(this, SelectedArtist);
-
-        var dialogWindow = new AddNewArtistDialog();
-        dialogWindow.DataContext = dialogVm;
-        if (dialogWindow.ShowDialog() == true)
-        {
-            toasts.ShowSuccess($"Данные обновлены");
-        }
-        */
+        dialogWindowService.ShowEditArtistWindow(this, SelectedArtist!);
     }
 
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
@@ -110,8 +107,6 @@ public partial class MusicProviderViewModel : ObservableObject
             SelectedArtist = null;
         }
     }
-
-    private bool IsArtistSelected => SelectedArtist != null;
 
     public void Initialize(MusicProviderBase template, string image, string uri, int trackedArtistsCount)
     {

@@ -9,11 +9,11 @@ using System.Windows;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
-public partial class AddNewArtistDialogViewModel : ObservableObject
+public partial class AddOrEditArtistDialogViewModel : ObservableObject
 {
     private readonly MusicWatcherDbContext dbContext;
 
-    public bool IsEdit { get; private set; }
+    public bool IsEdit { get; init; }
 
     [ObservableProperty]
     private ObservableCollection<MusicProviderViewModel> musicProviders = new();
@@ -32,7 +32,7 @@ public partial class AddNewArtistDialogViewModel : ObservableObject
     [ObservableProperty]
     private ArtistViewModel selectedFindedArtist;
 
-    public AddNewArtistDialogViewModel(MusicProviderViewModel provider)
+    public AddOrEditArtistDialogViewModel(MusicProviderViewModel provider)
     {
         dbContext = App.HostContainer.Services.GetRequiredService<MusicWatcherDbContext>();
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();

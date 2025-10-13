@@ -9,6 +9,7 @@ public interface IDialogWindowService
     void ShowSettingsWindow();
     void ShowSyncLibraryWindow();
     void ShowNewArtistWindow(MusicProviderViewModel musicProvider);
+    void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel);
 }
 
 public class DialogWindowService : IDialogWindowService
@@ -24,8 +25,20 @@ public class DialogWindowService : IDialogWindowService
 
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
-        var dialogWindow = host.Services.GetRequiredService<AddNewArtistDialog>();
-        dialogWindow.DataContext = new AddNewArtistDialogViewModel(musicProvider);
+        var dialogWindow = host.Services.GetRequiredService<AddOrEditArtistDialog>();
+        dialogWindow.DataContext = new AddOrEditArtistDialogViewModel(musicProvider);
+        dialogWindow.ShowDialog();
+    }
+
+    public void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel)
+    {
+        var dialogWindow = host.Services.GetRequiredService<AddOrEditArtistDialog>();
+        var vm = new AddOrEditArtistDialogViewModel(musicProvider)
+        {
+            ContextArtist = artistViewModel,
+            IsEdit = true
+        };
+        dialogWindow.DataContext = vm;
         dialogWindow.ShowDialog();
     }
 
