@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 
-namespace MusicNewWatcher.BL.MusicProviders;
+namespace MusicNewsWatcher.BL.MusicProviders;
 
 public sealed class MusifyMusicProvider : MusicProviderBase
 {

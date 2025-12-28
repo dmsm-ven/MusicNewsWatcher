@@ -2,11 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.BL;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
-using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
@@ -72,7 +70,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
     public ObservableCollection<TrackViewModel> Tracks { get; } = new();
 
-    private readonly CancellationTokenSource cts;
+    private readonly CancellationTokenSource cts = new();
 
     [RelayCommand(CanExecute = nameof(CanDownloadAlbum))]
     private async Task DownloadAlbum(bool openFolder)

@@ -2,11 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.BL;
 using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
-using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 //TODO разбить/упростить, класс делает слишком много лишнего

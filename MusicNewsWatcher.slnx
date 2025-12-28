@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+  </Folder>
+  <Project Path="MusicNewsWatcher.BotService/MusicNewsWatcher.BotService.csproj" />
+  <Project Path="MusicNewsWatcher.Core/MusicNewsWatcher.Core.csproj" />
+  <Project Path="MusicNewsWatcher.Desktop/MusicNewsWatcher.Desktop.csproj" />
+  <Project Path="MusicNewsWatcher.TelegramBot/MusicNewsWatcher.TelegramBot.csproj" />
+  <Project Path="MusicNewsWatcher.BL/MusicNewsWatcher.BL.csproj" />
+</Solution>

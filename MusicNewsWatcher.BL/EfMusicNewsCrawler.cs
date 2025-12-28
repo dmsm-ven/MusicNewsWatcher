@@ -4,7 +4,7 @@ using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
 using System.Diagnostics;
 
-namespace MusicNewWatcher.BL;
+namespace MusicNewsWatcher.BL;
 
 public class EfMusicNewsCrawler : IMusicNewsCrawler
 {

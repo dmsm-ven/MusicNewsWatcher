@@ -1,13 +1,10 @@
-﻿using ImageProcessor;
-using ImageProcessor.Imaging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
-using System.Drawing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
@@ -32,8 +29,9 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
         };
     private readonly HttpClient client;
     private readonly SemaphoreSlim semaphore = new(1, 1);
+    private static readonly JpegEncoder JPEG_ENCODER = new JpegEncoder() { Quality = 90 };
 
-    public ImageThumbnailCacheService(IOptions<ImageThumbnailCacheServiceOptions> options, System.Net.Http.HttpClient client)
+    public ImageThumbnailCacheService(IOptions<ImageThumbnailCacheServiceOptions> options, HttpClient client)
     {
         this.placeholderFilePath = options.Value.PlaceholderFilePath;
         this.client = client;
@@ -94,25 +92,21 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
 
     private async Task ResizeImage(string image, ThumbnailSize sizeModel)
     {
-        ResizeLayer resizeLayer = new(thumbnailSizes[sizeModel], ImageProcessor.Imaging.ResizeMode.Stretch);
 
-        var tempFile = Path.GetTempFileName();
+        var img = SixLabors.ImageSharp.Image.Load(image);
 
-        using (var fs = new FileStream(image, FileMode.Open, FileAccess.Read))
+        img.Mutate(x =>
         {
-            using ImageFactory imageFactory = new(false);
-            using var newFile = new FileStream(tempFile, FileMode.Create);
+            x.Resize(new SixLabors.ImageSharp.Size(thumbnailSizes[sizeModel].Width, thumbnailSizes[sizeModel].Height));
+            x.BackgroundColor(SixLabors.ImageSharp.Color.White);
+        });
 
-            imageFactory
-            .Load(fs)
-            .Resize(resizeLayer)
-            .BackgroundColor(Color.White)
-            .Save(newFile);
-        }
-
+        string tmpPath = Path.GetTempFileName();
+        using var newFile = new FileStream(tmpPath, FileMode.Create);
+        await img.SaveAsync(newFile, JPEG_ENCODER);
 
         File.Delete(image);
-        File.Move(tempFile, image);
+        File.Move(tmpPath, image);
     }
 }
 

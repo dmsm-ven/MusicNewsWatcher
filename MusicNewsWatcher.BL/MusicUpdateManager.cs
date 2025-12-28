@@ -5,7 +5,7 @@ using MusicNewsWatcher.Core.Dto;
 using MusicNewsWatcher.Core.Extensions;
 using System.Diagnostics;
 
-namespace MusicNewWatcher.BL;
+namespace MusicNewsWatcher.BL;
 
 //Переодически опрашивает сайты с треками и сохраняет результат, если в базе данных еще нет нового альбома для отслеживаемых исполнителей
 //Запускается отдельно на консольном клиенте и на WPF Desktop приложении

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace MusicNewsWatcher.TelegramBot;
 
@@ -51,7 +52,7 @@ public sealed class MusicNewsWatcherTelegramBot : IDisposable
 
     public async Task SendTextMessageAsync(string text)
     {
-        await botClient.SendTextMessageAsync(consumerId, text, (int?)Telegram.Bot.Types.Enums.ParseMode.Html);
+        await botClient.SendMessage(consumerId, text, ParseMode.Html);
 
         logger.LogInformation("Отправка сообщения пользователю с ID {consumerId}", consumerId);
     }

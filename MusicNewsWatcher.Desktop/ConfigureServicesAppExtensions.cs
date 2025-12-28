@@ -1,9 +1,9 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Extensions.Configuration;
+using MusicNewsWatcher.BL.MusicProviders;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
-using MusicNewWatcher.BL.MusicProviders;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;

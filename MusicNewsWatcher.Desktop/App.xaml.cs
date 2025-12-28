@@ -9,10 +9,9 @@ global using System.Collections.Generic;
 global using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.BL;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
-using MusicNewWatcher.BL;
-using System.Threading;
 using System.Windows;
 
 namespace MusicNewsWatcher.Desktop;
@@ -40,9 +39,9 @@ public partial class App : Application
             })
             .ConfigureServices((context, services) =>
             {
+                services.AddHttpClient();
                 services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
-                services.AddHttpClient();
 
                 services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
 

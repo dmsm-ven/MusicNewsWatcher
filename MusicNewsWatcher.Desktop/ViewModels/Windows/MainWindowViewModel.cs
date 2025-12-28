@@ -2,12 +2,12 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
+using MusicNewsWatcher.BL;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
-using MusicNewWatcher.BL;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
@@ -58,13 +58,19 @@ public partial class MainWindowViewModel : ObservableObject,
     [RelayCommand]
     private void AddArtist()
     {
-        dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);
+        if (SelectedMusicProvider != null)
+        {
+            dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);
+        }
     }
 
     [RelayCommand]
     private void OpenDownloadsFolder()
     {
-        FileBrowserHelper.OpenFolderInFileBrowser(options.Value.MusicDownloadFolder);
+        if (Directory.Exists(options.Value.MusicDownloadFolder))
+        {
+            FileBrowserHelper.OpenFolderInFileBrowser(options.Value.MusicDownloadFolder);
+        }
     }
 
     [RelayCommand]
@@ -115,17 +121,17 @@ public partial class MainWindowViewModel : ObservableObject,
         if (MusicProviders.Any())
         {
             SelectedMusicProvider = MusicProviders.LastOrDefault();
-            SelectedMusicProvider.IsActiveProvider = true;
+            SelectedMusicProvider!.IsActiveProvider = true;
         }
     }
 
     private void ProviderVm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        var provider = (MusicProviderViewModel)sender;
+        var provider = (MusicProviderViewModel)sender!;
 
         if (e.PropertyName == nameof(MusicProviderViewModel.IsActiveProvider) && provider!.IsActiveProvider)
         {
-            this.musicProviders
+            MusicProviders
                 .Where(p => p != provider)
                 .ToList()
                 .ForEach(p => p.IsActiveProvider = false);
@@ -134,7 +140,7 @@ public partial class MainWindowViewModel : ObservableObject,
 
     public void Receive(AlbumChangedMessage message)
     {
-        SelectedMusicProvider.SelectedArtist.SelectedAlbum = message.album;
+        SelectedMusicProvider!.SelectedArtist!.SelectedAlbum = message.album;
 
         foreach (var album in SelectedMusicProvider.SelectedArtist.Albums)
         {
@@ -144,7 +150,7 @@ public partial class MainWindowViewModel : ObservableObject,
 
     public void Receive(ArtistChangedMessage message)
     {
-        SelectedMusicProvider.SelectedArtist = message.artist;
+        SelectedMusicProvider!.SelectedArtist = message.artist;
 
         foreach (var artist in SelectedMusicProvider.TrackedArtists)
         {

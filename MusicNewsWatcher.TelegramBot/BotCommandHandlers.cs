@@ -22,15 +22,15 @@ public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatch
 
         string usageMessage = string.Join(Environment.NewLine, usageList);
 
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+        return await botClient.SendMessage(chatId: message.Chat.Id,
                                                     text: usageMessage,
                                                     replyMarkup: new ReplyKeyboardRemove());
     }
 
     public async Task<Message> ForceUpdateCommand(Message message)
     {
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                text: "Запуск ...", (int?)ParseMode.Html);
+        return await botClient.SendMessage(chatId: message.Chat.Id,
+                                text: "Запуск ...");
     }
 
     public async Task<Message> LastUpdateCommand(Message message)
@@ -58,14 +58,14 @@ public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatch
 
 
             string replyText = sb.ToString();
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: replyText, (int?)ParseMode.Html);
+            return await botClient.SendMessage(chatId: message.Chat.Id,
+                                            text: replyText, ParseMode.Html);
         }
         else
         {
             string replyText = $"Ошибка считывания даты последнего обновления: '{lastUpdateString}'";
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: replyText, (int?)ParseMode.Html);
+            return await botClient.SendMessage(chatId: message.Chat.Id,
+                                            text: replyText, ParseMode.Html);
         }
 
     }
@@ -91,12 +91,12 @@ public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatch
 
             string replyText = string.Join("\r\n", artistLines);
 
-            return await botClient.SendTextMessageAsync(chatId: chatId,
+            return await botClient.SendMessage(chatId: chatId,
                                             text: replyText,
                                             replyMarkup: new ReplyKeyboardRemove());
         }
 
-        return await botClient.SendTextMessageAsync(chatId: chatId, text: $"Провайдер '{providerName}' не найден", replyMarkup: new ReplyKeyboardRemove());
+        return await botClient.SendMessage(chatId: chatId, text: $"Провайдер '{providerName}' не найден", replyMarkup: new ReplyKeyboardRemove());
     }
 
     public async Task<Message> ProviderListCommand(Message message)
@@ -114,7 +114,7 @@ public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatch
 
         InlineKeyboardMarkup inlineKeyboard = new(buttons);
 
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+        return await botClient.SendMessage(chatId: message.Chat.Id,
                                                     text: "У какого провайдера ?",
                                                     replyMarkup: inlineKeyboard);
     }

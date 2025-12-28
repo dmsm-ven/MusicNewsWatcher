@@ -5,7 +5,7 @@ using MusicNewsWatcher.Core.Models;
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace MusicNewWatcher.BL;
+namespace MusicNewsWatcher.BL;
 
 //TODO убрать прямое обращение через ViewModel
 public class MultithreadHttpDownloadManager : IMusicDownloadManager
@@ -13,6 +13,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
     private readonly ILogger<MultithreadHttpDownloadManager> logger;
     private readonly HttpClient client;
     private SemaphoreSlim? semaphor = new(1);
+    private readonly Dictionary<TrackModel, TrackDownloadResult> downloadStatuses = new();
 
     private int threadLimit = 1;
     public int ThreadLimit
@@ -60,11 +61,19 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
     /// <returns></returns>
     public async Task<string> DownloadFullAlbum(AlbumModel album, string downloadDirectory, CancellationToken? token = null)
     {
-        logger.LogInformation("Начало загрузки альбома {albumName} в {} потока(ов)", album.AlbumDisplayName, ThreadLimit);
+        logger.LogInformation("Начало загрузки альбома {albumName} в {threadLimit} потока(ов)", album.AlbumDisplayName, ThreadLimit);
+
+        if (album.Tracks == null || album.Tracks.Count == 0)
+        {
+            throw new ArgumentException("Альбом не содержит треков для загрузки", nameof(album));
+        }
 
         string albumDirectory = GetAlbumLocalPath(album, downloadDirectory);
 
-        album.Tracks.ToList().ForEach(i => i.SetDownloadResult(TrackDownloadResult.None));
+        downloadStatuses.Clear();
+
+
+        album.Tracks.ToList().ForEach(i => downloadStatuses[i] = TrackDownloadResult.None);
 
         var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 
@@ -107,7 +116,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
-        track.SetDownloadResult(downloadResult);
+        downloadStatuses[track] = downloadResult;
 
         semaphor.Release();
     }
