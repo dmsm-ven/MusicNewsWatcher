@@ -97,7 +97,7 @@ public sealed class MusifyMusicProvider : MusicProviderBase
                     {
                         Name = div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]").InnerText?.Trim() ?? "<Ошибка>",
                         AlbumId = album.AlbumId,
-                        DownloadUri = HOST + div.SelectSingleNode(".//a[@itemprop='audio' and @href]")?.GetAttributeValue("href", string.Empty)
+                        DownloadUri = HOST + div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty)
                     }).ToArray();
 
                 return tracks;

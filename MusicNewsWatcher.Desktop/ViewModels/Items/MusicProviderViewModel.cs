@@ -49,7 +49,7 @@ public partial class MusicProviderViewModel : ObservableObject
             .Include("Artists")
             .FirstOrDefaultAsync(p => p.MusicProviderId == this.MusicProviderId);
 
-        foreach (var artist in providerData.Artists)
+        foreach (var artist in providerData.Artists.OrderBy(a => a.Name))
         {
             var artistVm = artistVmFactory.Create();
             artistVm.Initialize(this,
