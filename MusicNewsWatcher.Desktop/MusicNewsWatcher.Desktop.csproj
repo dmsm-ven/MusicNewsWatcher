@@ -17,7 +17,6 @@
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
 		<PackageReference Include="LoadingSpinner.WPF" Version="1.0.0" />
 		<PackageReference Include="MahApps.Metro.IconPacks.FontAwesome" Version="6.2.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
@@ -32,6 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\MusicNewsWatcher.ApiClient\MusicNewsWatcher.ApiClient.csproj" />
 		<ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
 	</ItemGroup>
 

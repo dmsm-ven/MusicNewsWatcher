@@ -2,8 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.BL;
-using MusicNewsWatcher.Core.Extensions;
+using MusicNewsWatcher.ApiClient;
+using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Collections.ObjectModel;
 
@@ -11,43 +11,23 @@ namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 //TODO разбить/упростить, класс делает слишком много лишнего
 public partial class ArtistViewModel : ObservableObject
 {
-    private readonly MusicWatcherDbContext dbContext;
     private readonly IToastsNotifier toasts;
     private readonly IImageThumbnailCacheService imageCacheService;
-    private readonly MusicUpdateManager updateManager;
     private readonly MusicDownloadHelper downloadHelper;
+    private readonly MusicNWatcherApiClient apiClient;
     private readonly ViewModelFactory<AlbumViewModel> albumViewFactory;
 
-    public ArtistViewModel(MusicWatcherDbContext dbContext,
-        IToastsNotifier toasts,
+    public ArtistViewModel(IToastsNotifier toasts,
         IImageThumbnailCacheService imageCacheService,
-        MusicUpdateManager updateManager,
         MusicDownloadHelper downloadHelper,
+        MusicNWatcherApiClient apiClient,
         ViewModelFactory<AlbumViewModel> albumViewFactory)
     {
-        this.dbContext = dbContext;
         this.toasts = toasts;
         this.imageCacheService = imageCacheService;
-        this.updateManager = updateManager;
         this.downloadHelper = downloadHelper;
+        this.apiClient = apiClient;
         this.albumViewFactory = albumViewFactory;
-    }
-
-    public static ArtistViewModel Create(ArtistViewModel template, string name, string image, string uri)
-    {
-        return new ArtistViewModel(template.dbContext,
-            template.toasts,
-            template.imageCacheService,
-            template.updateManager,
-            template.downloadHelper,
-            template.albumViewFactory)
-        {
-            ArtistId = template.ArtistId,
-            ParentProvider = template.ParentProvider,
-            Name = name,
-            Image = image,
-            Uri = uri
-        };
     }
 
     private bool isInitialized = false;
@@ -120,8 +100,9 @@ public partial class ArtistViewModel : ObservableObject
     [RelayCommand]
     private async Task GetAlbumsFromProviderForArtist()
     {
+        throw new NotImplementedException();
         InProgress = true;
-        await updateManager.CheckUpdatesForArtistForProvider(ParentProvider.Template, ArtistId, Name, Uri);
+        //await updateManager.CheckUpdatesForArtistForProvider(ParentProvider.Template, ArtistId, Name, Uri);
         await RefreshSource();
         InProgress = false;
     }
@@ -136,23 +117,13 @@ public partial class ArtistViewModel : ObservableObject
     {
         InProgress = true;
 
-        var albumsData = dbContext
-            .Artists
-            .Include("Albums")
-            .FirstOrDefault(a => a.ArtistId == ArtistId)
-            .Albums
-            .ToList();
+        var albumsData = await apiClient.GetArtistAlbumsAsync(ParentProvider.MusicProviderId, this.ArtistId);
 
-        foreach (var albumEntity in albumsData.OrderByDescending(ae => ae.Created))
+        foreach (var albumDto in albumsData.OrderByDescending(ae => ae.Created))
         {
             var album = albumViewFactory.Create();
             album.PropertyChanged += Album_PropertyChanged;
-            album.Initialize(this,
-                albumEntity.AlbumId,
-                albumEntity.Title.ToDisplayName(),
-                albumEntity.Created,
-                albumEntity.Image,
-                albumEntity.Uri);
+            album.Initialize(this, albumDto);
             Albums.Add(album);
         }
 
@@ -170,8 +141,7 @@ public partial class ArtistViewModel : ObservableObject
         }
     }
 
-    public void Initialize(MusicProviderViewModel musicProviderViewModel,
-        int artistId, string name, string image, string uri)
+    public void Initialize(MusicProviderViewModel parentProvider, ArtistDto aritst)
     {
         if (isInitialized)
         {
@@ -180,26 +150,26 @@ public partial class ArtistViewModel : ObservableObject
 
         isInitialized = true;
 
-        ParentProvider = musicProviderViewModel;
-        ArtistId = artistId;
-        Name = name;
-        Image = image;
-        Uri = uri;
+        ParentProvider = parentProvider;
+        ArtistId = aritst.ArtistId;
+        Name = aritst.Name;
+        Image = aritst.Image;
+        Uri = aritst.Uri;
 
         this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
     }
 
-
     [RelayCommand]
     private async Task RefreshArtistAlbums()
     {
-        var albumsToDelete = dbContext.Albums.Where(a => a.ArtistId == this.ArtistId).ToArray();
-        dbContext.Albums.RemoveRange(albumsToDelete);
-        await dbContext.SaveChangesAsync();
-        Albums.Clear();
+        throw new NotImplementedException();
+        //var albumsToDelete = dbContext.Albums.Where(a => a.ArtistId == this.ArtistId).ToArray();
+        //dbContext.Albums.RemoveRange(albumsToDelete);
+        //await dbContext.SaveChangesAsync();
+        //Albums.Clear();
 
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await GetAlbumsFromProviderForArtist();
+        //await Task.Delay(TimeSpan.FromSeconds(1));
+        //await GetAlbumsFromProviderForArtist();
     }
 
     [RelayCommand]

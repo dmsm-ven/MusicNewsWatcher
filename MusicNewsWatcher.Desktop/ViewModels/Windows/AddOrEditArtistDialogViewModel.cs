@@ -1,10 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MusicNewsWatcher.Core.DataAccess.Entity;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
@@ -34,7 +32,6 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
 
     public AddOrEditArtistDialogViewModel(MusicProviderViewModel provider)
     {
-        dbContext = App.HostContainer.Services.GetRequiredService<MusicWatcherDbContext>();
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
         ContextArtist.Initialize(provider, 0, name: "", image: "", uri: "");
 

@@ -1,11 +1,12 @@
-﻿using MusicNewsWatcher.Core.DataAccess.Entity;
-using MusicNewsWatcher.Core.Models;
+﻿using MusicNewsWatcher.Core.Models;
+using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.Core.Interfaces;
 
 public interface IMusicNewsCrawler
 {
-    Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId);
-    Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders, CancellationToken stoppingToken);
-    Task<IReadOnlyList<AlbumEntity>> CheckUpdatesForArtistAndSaveIfHasAsync(MusicProviderBase provider, int artistId);
+    Task<IReadOnlyList<AlbumDto>> CheckUpdatesForArtistAndSaveIfHasAsync(int providerId, int artistId);
+    Task CheckUpdatesForAlbumAsync(int albumId);
+    Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(CancellationToken stoppingToken);
+
 }

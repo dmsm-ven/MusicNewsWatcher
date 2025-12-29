@@ -1,6 +1,4 @@
-﻿using MusicNewsWatcher.Core.DataAccess.Entity;
-
-namespace MusicNewsWatcher.Core.Models;
+﻿namespace MusicNewsWatcher.Core.Models;
 
 public class NewAlbumFoundResult
 {

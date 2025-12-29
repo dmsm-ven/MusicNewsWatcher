@@ -6,8 +6,6 @@ using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
@@ -15,19 +13,16 @@ public class MusicDownloadHelper
 {
     private readonly IMusicDownloadManager musicDownloadManager;
     private readonly IToastsNotifier toasts;
-    private readonly MusicWatcherDbContext dbContext;
     private readonly ILogger<MusicDownloadHelper> logger;
     private readonly string musicDownloadFolder;
 
     public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
-        MusicWatcherDbContext dbContext,
         ILogger<MusicDownloadHelper> logger,
         IOptions<MusicDownloadFolderOptions> options)
     {
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
-        this.dbContext = dbContext;
         this.logger = logger;
         this.musicDownloadFolder = options.Value.MusicDownloadFolder;
     }

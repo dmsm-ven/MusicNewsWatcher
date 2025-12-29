@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MusicNewsWatcher.Core.DataAccess.Entity
+﻿namespace MusicNewsWatcher.Core.DataAccess.Entity
 {
     public class SyncTrackEntity
     {

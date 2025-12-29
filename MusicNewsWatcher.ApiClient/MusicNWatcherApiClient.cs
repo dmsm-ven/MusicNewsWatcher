@@ -1,0 +1,41 @@
+﻿using MusicNewsWatcher.Core.Models.Dtos;
+using System.Net.Http.Json;
+
+namespace MusicNewsWatcher.ApiClient;
+
+public class MusicNWatcherApiClient
+{
+    private readonly HttpClient client;
+    public MusicNWatcherApiClient(HttpClient client)
+    {
+        this.client = client;
+    }
+    public async Task<MusicProviderDto[]> GetProvidersAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync("api/providers", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var providers = await response.Content.ReadFromJsonAsync<MusicProviderDto[]>(cancellationToken: cancellationToken);
+        return providers ?? Array.Empty<MusicProviderDto>();
+    }
+    public async Task<ArtistDto[]> GetProviderArtistsAsync(int providerId, CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync($"api/providers/{providerId}/artists", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var artists = await response.Content.ReadFromJsonAsync<ArtistDto[]>(cancellationToken: cancellationToken);
+        return artists ?? Array.Empty<ArtistDto>();
+    }
+    public async Task<AlbumDto[]> GetArtistAlbumsAsync(int providerId, int artistId, CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync($"api/providers/{providerId}/artists/{artistId}/albums", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var albums = await response.Content.ReadFromJsonAsync<AlbumDto[]>(cancellationToken: cancellationToken);
+        return albums ?? Array.Empty<AlbumDto>();
+    }
+    public async Task<TrackDto[]> GetAlbumTracksAsync(int providerId, int artistId, int albumId, CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync($"api/providers/{providerId}/artists/{artistId}/albums/{albumId}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var tracks = await response.Content.ReadFromJsonAsync<TrackDto[]>(cancellationToken: cancellationToken);
+        return tracks ?? Array.Empty<TrackDto>();
+    }
+}

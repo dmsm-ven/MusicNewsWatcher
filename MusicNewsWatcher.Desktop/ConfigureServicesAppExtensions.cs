@@ -1,5 +1,6 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,8 +9,15 @@ namespace MusicNewsWatcher.Desktop;
 
 public static class ConfigureServicesAppExtensions
 {
-    public static void AddViewModelFactories(this IServiceCollection services)
+    public static void AddViewModels(this IServiceCollection services)
     {
+        services.AddTransient<SettingsWindowViewModel>();
+        services.AddTransient<SettingsWindow>();
+
+        services.AddTransient<SyncLibraryWindowViewModel>();
+        services.AddTransient<SyncLibraryWindow>();
+        services.AddTransient<MainWindowViewModel>();
+
         services.AddTransient<AlbumViewModel>();
         services.AddTransient<ViewModelFactory<AlbumViewModel>>();
 

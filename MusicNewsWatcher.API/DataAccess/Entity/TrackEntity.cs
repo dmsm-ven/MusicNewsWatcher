@@ -12,3 +12,4 @@ public class TrackEntity
 
     public AlbumEntity? Album { get; set; }
 }
+

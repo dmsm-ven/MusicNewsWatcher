@@ -2,7 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
-using MusicNewsWatcher.BL;
+using MusicNewsWatcher.Core.Models.Dtos;
+using MusicNewsWatcher.Desktop.Extensions;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Collections.ObjectModel;
 using System.Web;
@@ -159,7 +160,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         cts.Cancel();
     }
 
-    public void Initialize(ArtistViewModel parentArtist, int id, string title, DateTime created, string? image, string uri)
+    public void Initialize(ArtistViewModel parentArtist, AlbumDto dto)
     {
         if (isInitialized)
         {
@@ -168,10 +169,10 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         isInitialized = true;
 
         ParentArtist = parentArtist;
-        AlbumId = id;
-        Title = title;
-        Created = created;
-        Image = image;
-        Uri = uri;
+        AlbumId = dto.AlbumId;
+        Title = dto.Title.ToDisplayName();
+        Created = dto.Created;
+        Image = dto.Image;
+        Uri = dto.Uri;
     }
 }

@@ -1,6 +1,4 @@
-﻿global using Microsoft.EntityFrameworkCore;
-global using Microsoft.Extensions.DependencyInjection;
-global using MusicNewsWatcher.Core;
+﻿global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Desktop.Services;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
@@ -9,8 +7,7 @@ global using System.Collections.Generic;
 global using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.BL;
-using MusicNewsWatcher.Core.Interfaces;
+using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Windows;
@@ -23,7 +20,6 @@ public partial class App : Application
 {
     public static IHost HostContainer { get; private set; }
     public static Mutex mutex;
-
     public App()
     {
         mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
@@ -40,41 +36,29 @@ public partial class App : Application
             })
             .ConfigureServices((context, services) =>
             {
-                services.AddHttpClient();
+                services.AddToasts();
                 services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
-
-                services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
-
-                services.AddDbContextFactory<MusicWatcherDbContext>(options =>
+                services.AddOptions<MusicWatcherApiConfiguration>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
+                services.AddHttpClient();
+                services.AddHttpClient<MusicNWatcherApiClient>(client =>
                 {
-                    options.UseNpgsql(context.Configuration.GetConnectionString("default"));
+                    var options = context.Configuration.GetSection(nameof(MusicWatcherApiConfiguration)).Get<MusicWatcherApiConfiguration>()
+                     ?? throw new InvalidOperationException("MusicWatcherApiConfiguration is not configured properly.");
+                    client.BaseAddress = new Uri(options.HostUri);
+                    client.DefaultRequestHeaders.Authorization = new("Bearer", options.AccessToken);
                 });
 
-                services.AddToasts();
-                //services.AddNotifyIcon();
-                services.AddTelegramBot(context.Configuration);
-
+                services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
                 services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
                 services.AddTransient<AddOrEditArtistDialog>();
                 services.AddTransient<AddOrEditArtistDialogViewModel>();
 
-                services.AddMusicProviders();
-                services.AddSingleton<IMusicDownloadManager, MultithreadHttpDownloadManager>();
-                services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
                 services.AddSingleton<MusicDownloadHelper>();
-                services.AddSingleton<MusicUpdateManager>();
 
-                services.AddViewModelFactories();
-
-                services.AddTransient<SettingsWindowViewModel>();
-                services.AddTransient<SettingsWindow>();
-
-                services.AddTransient<SyncLibraryWindowViewModel>();
-                services.AddTransient<SyncLibraryWindow>();
-                services.AddTransient<MainWindowViewModel>();
+                services.AddViewModels();
             })
             .Build();
     }

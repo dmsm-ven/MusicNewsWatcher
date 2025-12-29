@@ -1,12 +1,6 @@
-﻿using MusicNewsWatcher.API.DataAccess;
-using MusicNewsWatcher.Core;
-using MusicNewsWatcher.Core.DataAccess.Entity;
-using MusicNewsWatcher.Core.Interfaces;
-using MusicNewsWatcher.Core.Models;
-using System.Diagnostics;
+﻿namespace MusicNewsWatcher.API.Services;
 
-namespace MusicNewsWatcher.BL;
-
+/*
 public class EfMusicNewsCrawler : IMusicNewsCrawler
 {
     private readonly MusicWatcherDbContext dbContext;
@@ -150,3 +144,5 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         }
     }
 }
+
+*/

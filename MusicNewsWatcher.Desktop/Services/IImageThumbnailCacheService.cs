@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Options;
-using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
@@ -11,11 +10,6 @@ namespace MusicNewsWatcher.Desktop.Services;
 public interface IImageThumbnailCacheService
 {
     Task<string> GetCachedImage(string originalSourceUri, ThumbnailSize size);
-}
-
-public class ImageThumbnailCacheServiceOptions
-{
-    public string PlaceholderFilePath { get; set; }
 }
 
 public class ImageThumbnailCacheService : IImageThumbnailCacheService

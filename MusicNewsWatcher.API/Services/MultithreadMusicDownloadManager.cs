@@ -1,7 +1,5 @@
-﻿using MusicNewsWatcher.Core.Extensions;
-using MusicNewsWatcher.Core.Interfaces;
+﻿using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
-using System.Net;
 using System.Text.RegularExpressions;
 
 namespace MusicNewsWatcher.BL;
@@ -36,19 +34,22 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
         }
     }
 
-    public MultithreadHttpDownloadManager(ILogger<MultithreadHttpDownloadManager> logger)
+    public MultithreadHttpDownloadManager(HttpClient client, ILogger<MultithreadHttpDownloadManager> logger)
     {
-        client = new HttpClient(new HttpClientHandler()
-        {
-            AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            CookieContainer = new CookieContainer(),
-            UseCookies = true,
-        });
-        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-
+        throw new NotImplementedException();
+        this.client = client;
         this.logger = logger;
+        //client = new HttpClient(new HttpClientHandler()
+        //{
+        //    AllowAutoRedirect = true,
+        //    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+        //    CookieContainer = new CookieContainer(),
+        //    UseCookies = true,
+        //});
+        //client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
+        //client.DefaultRequestHeaders.Add("Accept", "*/*");
+
+
     }
 
     /// <summary>
