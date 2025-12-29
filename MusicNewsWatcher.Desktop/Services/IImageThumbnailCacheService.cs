@@ -102,8 +102,10 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
         });
 
         string tmpPath = Path.GetTempFileName();
-        using var newFile = new FileStream(tmpPath, FileMode.Create);
-        await img.SaveAsync(newFile, JPEG_ENCODER);
+        using (var newFile = new FileStream(tmpPath, FileMode.Create))
+        {
+            await img.SaveAsync(newFile, JPEG_ENCODER);
+        }
 
         File.Delete(image);
         File.Move(tmpPath, image);

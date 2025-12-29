@@ -1,23 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
 
-namespace MusicNewsWatcher.Core.DataAccess.Entity;
-
-[Table(name: "musicproviders")]
-public class MusicProviderEntity
+namespace MusicNewsWatcher.Core.DataAccess.Entity
 {
-    [Key]
-    [Column(name: "musicproviderid")]
-    public int MusicProviderId { get; set; }
+    public class MusicProviderEntity
+    {
+        public int MusicProviderId { get; set; }
 
-    [Column(name: "name")]
-    public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
-    [Column(name: "image")]
-    public string Image { get; set; } = string.Empty;
+        public string Image { get; set; } = string.Empty;
 
-    [Column(name: "uri")]
-    public string Uri { get; set; } = string.Empty;
+        public string Uri { get; set; } = string.Empty;
 
-    public List<ArtistEntity> Artists { get; } = new List<ArtistEntity>();
+        public List<ArtistEntity> Artists { get; } = new List<ArtistEntity>();
+    }
 }

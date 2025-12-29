@@ -1,6 +1,4 @@
-﻿namespace MusicNewsWatcher.Core.Dto;
-
-public record ArtistDto(string Name, string Uri);
+﻿namespace MusicNewsWatcher.Core.Models.Musify;
 
 public record MusifySearchResultDto
 {

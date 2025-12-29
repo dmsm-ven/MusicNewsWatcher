@@ -1,21 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
 
-namespace MusicNewsWatcher.Core.DataAccess.Entity;
-
-[PrimaryKey(nameof(HostId), nameof(Path))]
-[Table(name: "sync_track")]
-public class SyncTrackEntity
+namespace MusicNewsWatcher.Core.DataAccess.Entity
 {
-    [Column(name: "host_id")]
-    public Guid HostId { get; set; }
+    public class SyncTrackEntity
+    {
+        public Guid HostId { get; set; }
 
-    [Column(name: "path")]
-    public string Path { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
 
-    [Column(name: "hash")]
-    public string Hash { get; set; } = string.Empty;
+        public string Hash { get; set; } = string.Empty;
 
-    [ForeignKey(nameof(HostId))]
-    public SyncHostEntity? Host { get; set; }
+        public SyncHostEntity? Host { get; set; }
+    }
 }

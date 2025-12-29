@@ -1,6 +1,7 @@
 ﻿using MusicNewsWatcher.Core.Models;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.Core.Interfaces;
+
 public interface IMusicDownloadManager
 {
     int ThreadLimit { get; set; }

@@ -1,4 +1,4 @@
-﻿namespace MusicNewsWatcher.Core.Extensions;
+﻿namespace MusicNewsWatcher.Desktop.Extensions;
 
 public static class FileSystemHelperExtensions
 {

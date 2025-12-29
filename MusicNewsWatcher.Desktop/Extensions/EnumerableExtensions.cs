@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.Desktop.Extensions;
 
 public static class EnumerableExtensions
 {

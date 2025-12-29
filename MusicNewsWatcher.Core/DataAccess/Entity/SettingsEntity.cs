@@ -1,15 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace MusicNewsWatcher.Core.DataAccess.Entity;
-
-[Table(name: "settings")]
-public class SettingsEntity
+﻿namespace MusicNewsWatcher.Core.DataAccess.Entity
 {
-    [Key]
-    [Column(name: "name")]
-    public string Name { get; set; } = string.Empty;
+    public class SettingsEntity
+    {
+        public string Name { get; set; } = string.Empty;
 
-    [Column(name: "value")]
-    public string Value { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
 }

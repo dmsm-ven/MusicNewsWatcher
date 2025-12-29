@@ -1,9 +1,5 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
-using Microsoft.Extensions.Configuration;
-using MusicNewsWatcher.BL.MusicProviders;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
-using MusicNewsWatcher.TelegramBot;
-using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,12 +8,6 @@ namespace MusicNewsWatcher.Desktop;
 
 public static class ConfigureServicesAppExtensions
 {
-    public static void AddMusicProviders(this IServiceCollection services)
-    {
-        services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
-        services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
-    }
-
     public static void AddViewModelFactories(this IServiceCollection services)
     {
         services.AddTransient<AlbumViewModel>();
@@ -52,14 +42,6 @@ public static class ConfigureServicesAppExtensions
         tbi.ContextMenu = tbiMenu;
 
         services.AddSingleton<TaskbarIcon>(tbi);
-    }
-
-    public static void AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
-        services.Configure<TelegramBotConfiguration>(configuration.GetSection("TelegramBot"));
-        services.AddTransient<MusicNewsWatcherTelegramBot>();
-        services.AddSingleton<Func<MusicNewsWatcherTelegramBot>>(x => () => x.GetRequiredService<MusicNewsWatcherTelegramBot>());
     }
 
     public static void AddToasts(this IServiceCollection services)

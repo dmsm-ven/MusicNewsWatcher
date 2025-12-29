@@ -1,5 +1,5 @@
-﻿using MusicNewsWatcher.Core;
-using MusicNewsWatcher.Core.Extensions;
+﻿using MusicNewsWatcher.Core.Extensions;
+using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -80,7 +80,6 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         return albumDirectory;
     }
-
     private string GetAlbumLocalPath(AlbumModel album, string downloadDirectory)
     {
         var directoryPath = Path.Combine(downloadDirectory,
@@ -94,7 +93,6 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         return directoryPath;
     }
-
     private async Task CreateDownloadTrackTask(TrackModel track, string albumDirectory, CancellationToken? token = null)
     {
         if (string.IsNullOrWhiteSpace(track.DownloadUri) || !Uri.IsWellFormedUriString(track.DownloadUri, UriKind.Absolute))
@@ -119,7 +117,6 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         semaphor.Release();
     }
-
     private async Task<TrackDownloadResult> DownloadTrack(TrackModel track, string localName, CancellationToken? token = null)
     {
         if (File.Exists(localName))

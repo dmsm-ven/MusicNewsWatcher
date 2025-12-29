@@ -1,5 +1,4 @@
-﻿using MusicNewsWatcher.Core;
-using MusicNewsWatcher.Core.Dto;
+﻿using MusicNewsWatcher.Core.Models;
 using System.Text;
 
 namespace MusicNewsWatcher.TelegramBot.MessageFormatters;

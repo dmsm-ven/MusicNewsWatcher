@@ -1,7 +1,8 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IO;
+using System.Text.RegularExpressions;
 using System.Web;
 
-namespace MusicNewsWatcher.Core.Extensions;
+namespace MusicNewsWatcher.Desktop.Extensions;
 
 public static class StringExtensions
 {
@@ -41,21 +42,12 @@ public static class StringExtensions
 
     public static string CreateMD5(string input)
     {
-        // Use input string to calculate MD5 hash
-        using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-        {
-            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
-            byte[] hashBytes = md5.ComputeHash(inputBytes);
+        using var md5 = System.Security.Cryptography.MD5.Create();
 
-            return Convert.ToHexString(hashBytes); // .NET 5 +
+        byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+        byte[] hashBytes = md5.ComputeHash(inputBytes);
 
-            // Convert the byte array to hexadecimal string prior to .NET 5
-            // StringBuilder sb = new System.Text.StringBuilder();
-            // for (int i = 0; i < hashBytes.Length; i++)
-            // {
-            //     sb.Append(hashBytes[i].ToString("X2"));
-            // }
-            // return sb.ToString();
-        }
+        return Convert.ToHexString(hashBytes);
+
     }
 }

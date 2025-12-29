@@ -16,7 +16,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
 		<ProjectReference Include="..\MusicNewsWatcher.TelegramBot\MusicNewsWatcher.TelegramBot.csproj" />
-		<ProjectReference Include="..\MusicNewsWatcher.BL\MusicNewsWatcher.BL.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,5 +1,8 @@
-﻿using MusicNewsWatcher.Core;
+﻿using MusicNewsWatcher.API.DataAccess;
+using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.DataAccess.Entity;
+using MusicNewsWatcher.Core.Interfaces;
+using MusicNewsWatcher.Core.Models;
 using System.Diagnostics;
 
 namespace MusicNewsWatcher.BL;

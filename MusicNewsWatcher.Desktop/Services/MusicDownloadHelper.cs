@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Models;

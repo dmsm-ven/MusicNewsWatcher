@@ -10,6 +10,7 @@ global using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using MusicNewsWatcher.BL;
+using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Windows;

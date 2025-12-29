@@ -2,9 +2,9 @@
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />
   </Folder>
-  <Project Path="MusicNewsWatcher.BotService/MusicNewsWatcher.BotService.csproj" />
+  <Project Path="MusicNewsWatcher.API/MusicNewsWatcher.API.csproj" Id="43347774-6c52-4ed0-84f4-7074404ed1d7" />
+  <Project Path="MusicNewsWatcher.ApiClient/MusicNewsWatcher.ApiClient.csproj" Id="c79bba5b-dc70-4631-a3c6-1d78acc0d1af" />
   <Project Path="MusicNewsWatcher.Core/MusicNewsWatcher.Core.csproj" />
   <Project Path="MusicNewsWatcher.Desktop/MusicNewsWatcher.Desktop.csproj" />
   <Project Path="MusicNewsWatcher.TelegramBot/MusicNewsWatcher.TelegramBot.csproj" />
-  <Project Path="MusicNewsWatcher.BL/MusicNewsWatcher.BL.csproj" />
 </Solution>

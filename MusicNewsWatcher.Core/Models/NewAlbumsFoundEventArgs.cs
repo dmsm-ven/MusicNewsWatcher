@@ -1,6 +1,4 @@
-﻿using MusicNewsWatcher.Core.Dto;
-
-namespace MusicNewsWatcher.Core;
+﻿namespace MusicNewsWatcher.Core.Models;
 
 public class NewAlbumsFoundEventArgs
 {
