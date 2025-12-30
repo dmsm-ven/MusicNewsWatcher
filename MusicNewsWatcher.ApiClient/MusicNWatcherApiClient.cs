@@ -3,10 +3,10 @@ using System.Net.Http.Json;
 
 namespace MusicNewsWatcher.ApiClient;
 
-public class MusicNWatcherApiClient
+public class MusicNewsWatcherApiClient
 {
     private readonly HttpClient client;
-    public MusicNWatcherApiClient(HttpClient client)
+    public MusicNewsWatcherApiClient(HttpClient client)
     {
         this.client = client;
     }

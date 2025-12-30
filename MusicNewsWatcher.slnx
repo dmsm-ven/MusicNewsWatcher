@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
   </Folder>
   <Project Path="MusicNewsWatcher.API/MusicNewsWatcher.API.csproj" Id="43347774-6c52-4ed0-84f4-7074404ed1d7" />

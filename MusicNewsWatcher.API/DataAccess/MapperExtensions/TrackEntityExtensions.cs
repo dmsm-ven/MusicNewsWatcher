@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.Core.Models.Dtos;
+﻿using MusicNewsWatcher.API.DataAccess.Entity;
+using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.Core.DataAccess.Entity;
 

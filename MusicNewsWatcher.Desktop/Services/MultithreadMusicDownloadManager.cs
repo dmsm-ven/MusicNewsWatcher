@@ -1,8 +1,11 @@
-﻿using MusicNewsWatcher.Core.Interfaces;
+﻿using Microsoft.Extensions.Logging;
+using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
+using System.Collections.Concurrent;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 
-namespace MusicNewsWatcher.BL;
+namespace MusicNewsWatcher.Desktop.Services;
 
 //TODO убрать прямое обращение через ViewModel
 public class MultithreadHttpDownloadManager : IMusicDownloadManager
@@ -10,7 +13,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
     private readonly ILogger<MultithreadHttpDownloadManager> logger;
     private readonly HttpClient client;
     private SemaphoreSlim? semaphor = new(1);
-    private readonly Dictionary<TrackModel, TrackDownloadResult> downloadStatuses = new();
+    private readonly ConcurrentDictionary<TrackDownloadModel, TrackDownloadResult> downloadStatuses = new();
 
     private int threadLimit = 1;
     public int ThreadLimit
@@ -59,7 +62,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
     /// <param name="downloadDirectory"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<string> DownloadFullAlbum(AlbumModel album, string downloadDirectory, CancellationToken? token = null)
+    public async Task DownloadAlbumTracks(AlbumDownloadModel album, string downloadDirectory, CancellationToken? token = null)
     {
         logger.LogInformation("Начало загрузки альбома {albumName} в {threadLimit} потока(ов)", album.AlbumDisplayName, ThreadLimit);
 
@@ -78,10 +81,8 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
         var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 
         await Task.WhenAll(tasks);
-
-        return albumDirectory;
     }
-    private string GetAlbumLocalPath(AlbumModel album, string downloadDirectory)
+    private string GetAlbumLocalPath(AlbumDownloadModel album, string downloadDirectory)
     {
         var directoryPath = Path.Combine(downloadDirectory,
             album.ArtistDisplayName.RemoveInvalidCharacters(),
@@ -94,7 +95,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         return directoryPath;
     }
-    private async Task CreateDownloadTrackTask(TrackModel track, string albumDirectory, CancellationToken? token = null)
+    private async Task CreateDownloadTrackTask(TrackDownloadModel track, string albumDirectory, CancellationToken? token = null)
     {
         if (string.IsNullOrWhiteSpace(track.DownloadUri) || !Uri.IsWellFormedUriString(track.DownloadUri, UriKind.Absolute))
         {
@@ -118,13 +119,10 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
         semaphor.Release();
     }
-    private async Task<TrackDownloadResult> DownloadTrack(TrackModel track, string localName, CancellationToken? token = null)
+    private async Task<TrackDownloadResult> DownloadTrack(TrackDownloadModel track, string localName, CancellationToken? token = null)
     {
         if (File.Exists(localName))
         {
-            //Файл не был до конца скачан, - тут хорошо бы сделать проверку на целостность файла
-            //Т.к. файл может быть битым не только когда он 0 Байт, а когда скачался не полностью
-            //Возможность стоит в будущем сделать проверку CRC целосности файла
             if (new FileInfo(localName).Length == 0)
             {
                 File.Delete(localName);

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
@@ -8,7 +7,6 @@ using MusicNewsWatcher.Core.Models.Dtos;
 namespace MusicNewsWatcher.API.Controllers;
 
 [ApiController]
-[Authorize]
 public class MusicNewsWatcherController : ControllerBase
 {
     private readonly MusicWatcherDbContext db;

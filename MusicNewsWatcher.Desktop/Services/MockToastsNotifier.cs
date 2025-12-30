@@ -1,11 +1,6 @@
-﻿namespace MusicNewsWatcher.Desktop.Services;
+﻿using MusicNewsWatcher.Desktop.Interfaces;
 
-public interface IToastsNotifier
-{
-    void ShowSuccess(string message);
-    void ShowError(string message);
-    void ShowInformation(string message);
-}
+namespace MusicNewsWatcher.Desktop.Services;
 
 public class MockToastsNotifier : IToastsNotifier
 {

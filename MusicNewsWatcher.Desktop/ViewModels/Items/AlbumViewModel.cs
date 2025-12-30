@@ -2,8 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
+using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Extensions;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Collections.ObjectModel;
 using System.Web;
@@ -11,9 +13,8 @@ using System.Web;
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 //TODO разбить/упростить класс делает слишком много лишнего
-public partial class AlbumViewModel(MusicUpdateManager updateManager,
+public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
     MusicDownloadHelper downloadHelper,
-    MusicWatcherDbContext dbContext,
     IToastsNotifier toasts,
     IImageThumbnailCacheService imageCacheService) : ObservableObject
 {
@@ -76,7 +77,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
     [RelayCommand(CanExecute = nameof(CanDownloadAlbum))]
     private async Task DownloadAlbum(bool openFolder)
     {
-        await downloadHelper.DownloadAlbum(this, openFolder, cts.Token);
+        await downloadHelper.DownloadAlbum(this, cts.Token);
     }
 
     [RelayCommand]
@@ -93,17 +94,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
 
     private async Task RefreshTracksSource()
     {
-        var tracksSource = await dbContext.Tracks.Where(t => t.AlbumId == AlbumId).CountAsync();
-
-        if (tracksSource == Tracks.Count)
-        {
-            return;
-        }
-
-
-        Tracks.Clear();
-
-        var tracksEntities = await dbContext.Tracks.Where(a => a.AlbumId == AlbumId).ToListAsync();
+        var tracksEntities = await apiClient.GetAlbumTracksAsync(ParentArtist.ParentProvider.MusicProviderId, this.ParentArtist.ArtistId, AlbumId);
 
         tracksEntities
             .Select(i => new TrackViewModel(this)
@@ -111,7 +102,7 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
                 AlbumId = i.AlbumId,
                 Id = i.Id,
                 Name = HttpUtility.HtmlDecode(i.Name),
-                DownloadUri = i.DownloadUri,
+                DownloadUri = i.DownloadUri
             })
             .OrderBy(a => a.Id)
             .ToList()
@@ -126,8 +117,9 @@ public partial class AlbumViewModel(MusicUpdateManager updateManager,
         InProgress = true;
         try
         {
-            await updateManager.CheckUpdatesForAlbumAsync(ParentArtist.ParentProvider.Template, AlbumId);
-            await RefreshTracksSource();
+            throw new NotImplementedException();
+            //await updateManager.CheckUpdatesForAlbumAsync(ParentArtist.ParentProvider.Template, AlbumId);
+            //await RefreshTracksSource();
         }
         catch (Exception ex)
         {

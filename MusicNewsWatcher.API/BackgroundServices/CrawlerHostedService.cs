@@ -1,5 +1,4 @@
-﻿using MusicNewsWatcher.BL;
-using MusicNewsWatcher.Core.Extensions;
+﻿using MusicNewsWatcher.API.Services;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
 
@@ -22,7 +21,7 @@ public sealed class CrawlerHostedService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             logger.LogInformation("Следующий переобход парсера будет запущен [{nextExecuteDt}] (через {interval} мин.)",
-                DateTimeOffset.UtcNow.Add(updateManager.UpdateInterval).ToLocalRuDateAndTime(),
+                DateTimeOffset.UtcNow.Add(updateManager.UpdateInterval),
                 (int)updateManager.UpdateInterval.TotalMinutes);
 
             await Task.Delay(updateManager.UpdateInterval, stoppingToken);

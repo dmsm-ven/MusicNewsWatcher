@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
+using MusicNewsWatcher.Desktop.Interfaces;
 using System.Collections.ObjectModel;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;

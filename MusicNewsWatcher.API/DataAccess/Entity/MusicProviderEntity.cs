@@ -1,5 +1,4 @@
-﻿namespace MusicNewsWatcher.Core.DataAccess.Entity;
-
+﻿namespace MusicNewsWatcher.API.DataAccess.Entity;
 
 public class MusicProviderEntity
 {

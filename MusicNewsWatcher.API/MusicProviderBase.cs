@@ -1,6 +1,6 @@
-﻿using MusicNewsWatcher.Core.DataAccess.Entity;
+﻿using MusicNewsWatcher.API.DataAccess.Entity;
 
-namespace MusicNewsWatcher.Core;
+namespace MusicNewsWatcher.API;
 
 public abstract class MusicProviderBase
 {

@@ -1,12 +1,17 @@
-﻿namespace MusicNewsWatcher.API.Services;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicNewsWatcher.API.DataAccess;
+using MusicNewsWatcher.API.DataAccess.Entity;
+using MusicNewsWatcher.Core.Models;
 
-/*
-public class EfMusicNewsCrawler : IMusicNewsCrawler
+namespace MusicNewsWatcher.API.Services;
+
+
+public class MusicNewsCrawler
 {
     private readonly MusicWatcherDbContext dbContext;
-    private readonly ILogger<EfMusicNewsCrawler> logger;
+    private readonly ILogger<MusicNewsCrawler> logger;
 
-    public EfMusicNewsCrawler(MusicWatcherDbContext dbContext, ILogger<EfMusicNewsCrawler> logger)
+    public MusicNewsCrawler(MusicWatcherDbContext dbContext, ILogger<MusicNewsCrawler> logger)
     {
         this.dbContext = dbContext;
         this.logger = logger;
@@ -144,5 +149,3 @@ public class EfMusicNewsCrawler : IMusicNewsCrawler
         }
     }
 }
-
-*/

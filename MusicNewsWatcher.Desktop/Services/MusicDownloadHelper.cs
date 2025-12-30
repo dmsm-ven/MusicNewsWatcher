@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
-using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Diagnostics;
@@ -18,28 +18,26 @@ public class MusicDownloadHelper
 
     public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
-        ILogger<MusicDownloadHelper> logger,
-        IOptions<MusicDownloadFolderOptions> options)
+        IOptions<MusicDownloadFolderOptions> options,
+        ILogger<MusicDownloadHelper> logger)
     {
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
         this.logger = logger;
         this.musicDownloadFolder = options.Value.MusicDownloadFolder;
+        this.musicDownloadManager.ThreadLimit = 1;
     }
 
-    public async Task DownloadAlbum(AlbumViewModel album, bool openFolder, CancellationToken token)
+    public async Task DownloadAlbum(AlbumViewModel album, CancellationToken token)
     {
         album.InProgress = true;
 
-        int parallelDownloads = int.Parse(dbContext.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
-
-        musicDownloadManager.ThreadLimit = parallelDownloads;
 
 
         try
         {
             logger.LogInformation("Начало загрузки альбома {albumName}", album.Title);
-            await DownloadAlbumTracks(album, openFolder, token);
+            await DownloadAlbumTracks(album, token);
             logger.LogInformation("Конец загрузки альбома {albumName}", album.Title);
 
             toasts.ShowSuccess($"Альбом загружен: {album.Title}");
@@ -70,27 +68,21 @@ public class MusicDownloadHelper
         }
     }
 
-    private async Task DownloadAlbumTracks(AlbumViewModel album, bool openFolderAfterDownload, CancellationToken token)
+    private async Task DownloadAlbumTracks(AlbumViewModel album, CancellationToken token)
     {
         Stopwatch sw = Stopwatch.StartNew();
 
-        var albumModel = new AlbumModel()
+        var albumModel = new AlbumDownloadModel()
         {
             AlbumDisplayName = album.Title,
             ArtistDisplayName = album.ParentArtist.Name,
-            Tracks = album.Tracks.Select(t => new TrackModel()
+            Tracks = album.Tracks.Select(t => new TrackDownloadModel()
             {
                 DownloadUri = t.DownloadUri
             }).ToList()
         };
 
-        string albumDir = await musicDownloadManager.DownloadFullAlbum(albumModel, musicDownloadFolder, token);
+        await musicDownloadManager.DownloadFullAlbum(albumModel, musicDownloadFolder, token);
 
-        await Task.Delay(TimeSpan.FromSeconds(1));
-
-        if (openFolderAfterDownload)
-        {
-            FileBrowserHelper.OpenFolderInFileBrowser(albumDir);
-        }
     }
 }

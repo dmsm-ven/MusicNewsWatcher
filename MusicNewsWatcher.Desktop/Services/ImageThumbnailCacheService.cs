@@ -7,11 +7,6 @@ using System.Net.Http;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
-public interface IImageThumbnailCacheService
-{
-    Task<string> GetCachedImage(string originalSourceUri, ThumbnailSize size);
-}
-
 public class ImageThumbnailCacheService : IImageThumbnailCacheService
 {
     private readonly string placeholderFilePath;
@@ -104,10 +99,4 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
         File.Delete(image);
         File.Move(tmpPath, image);
     }
-}
-
-public enum ThumbnailSize
-{
-    Artist,
-    Album
 }

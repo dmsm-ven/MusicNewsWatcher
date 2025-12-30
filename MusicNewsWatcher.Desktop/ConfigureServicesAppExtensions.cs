@@ -1,4 +1,5 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Drawing;

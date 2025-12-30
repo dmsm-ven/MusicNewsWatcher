@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.Core.DataAccess.Entity;
+using MusicNewsWatcher.API.DataAccess.Entity;
 
 namespace MusicNewsWatcher.API.DataAccess
 {

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
 using MusicNewsWatcher.BL;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;

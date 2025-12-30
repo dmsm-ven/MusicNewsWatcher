@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 using System.Collections.ObjectModel;
 

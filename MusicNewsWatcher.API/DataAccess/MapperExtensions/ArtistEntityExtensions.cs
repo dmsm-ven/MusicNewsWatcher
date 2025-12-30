@@ -1,4 +1,4 @@
-﻿using MusicNewsWatcher.Core.DataAccess.Entity;
+﻿using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.API.DataAccess.MapperExtensions;

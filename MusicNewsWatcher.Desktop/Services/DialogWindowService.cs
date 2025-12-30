@@ -1,26 +1,17 @@
 ﻿using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
-public interface IDialogWindowService
-{
-    void ShowSettingsWindow();
-    void ShowSyncLibraryWindow();
-    void ShowNewArtistWindow(MusicProviderViewModel musicProvider);
-    void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel);
-}
-
 public class DialogWindowService : IDialogWindowService
 {
     private readonly IHost host;
-    private readonly MusicWatcherDbContext dbContext;
 
-    public DialogWindowService(IHost host, MusicWatcherDbContext dbContext)
+    public DialogWindowService(IHost host)
     {
         this.host = host;
-        this.dbContext = dbContext;
     }
 
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
@@ -40,19 +31,5 @@ public class DialogWindowService : IDialogWindowService
         };
         dialogWindow.DataContext = vm;
         dialogWindow.ShowDialog();
-    }
-
-    public void ShowSettingsWindow()
-    {
-        var window = host.Services.GetRequiredService<SettingsWindow>();
-        window.DataContext = host.Services.GetRequiredService<SettingsWindowViewModel>();
-        window.ShowDialog();
-    }
-
-    public void ShowSyncLibraryWindow()
-    {
-        var window = host.Services.GetRequiredService<SyncLibraryWindow>();
-        window.DataContext = host.Services.GetRequiredService<SyncLibraryWindowViewModel>();
-        window.ShowDialog();
     }
 }
