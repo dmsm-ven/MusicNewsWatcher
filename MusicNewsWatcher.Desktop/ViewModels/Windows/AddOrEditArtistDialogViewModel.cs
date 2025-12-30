@@ -1,16 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 public partial class AddOrEditArtistDialogViewModel : ObservableObject
 {
-    private readonly MusicWatcherDbContext dbContext;
-
     public bool IsEdit { get; init; }
 
     [ObservableProperty]
@@ -33,7 +29,7 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
     public AddOrEditArtistDialogViewModel(MusicProviderViewModel provider)
     {
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
-        ContextArtist.Initialize(provider, 0, name: "", image: "", uri: "");
+        ContextArtist.Initialize(provider, new(provider.MusicProviderId, 0, "Новый исполнитель", provider.Uri, string.Empty));
 
         MusicProviders.Add(provider);
         SelectedMusicProvider = provider;
@@ -56,6 +52,8 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSearchResults()
     {
+        throw new NotImplementedException();
+        /*
         FindedArtist.Clear();
 
         if (SelectedMusicProvider == null ||
@@ -80,11 +78,14 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
             .ToList();
 
         FindedArtist.AddRange(mappedArtists);
+        */
     }
 
     [RelayCommand]
     private void Submit(object obj)
     {
+        throw new NotImplementedException();
+        /*
         if (SelectedMusicProvider == null) { return; }
 
         var entity = new ArtistEntity()
@@ -111,5 +112,6 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
             dbContext.SaveChanges();
         }
         (obj as Window).DialogResult = true;
+        */
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.API.Controllers;
 using MusicNewsWatcher.API.DataAccess;
+using MusicNewsWatcher.API.MusicProviders;
+using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.API.Services;
 
 namespace MusicNewsWatcher.API;
@@ -9,7 +10,6 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddMusicNewsWatcherApi(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<AuthorizeMiddlewareOptions>(configuration.GetSection(nameof(AuthorizeMiddlewareOptions)));
 
         //MusicNewsWatcher.BotService code moved here
         services.AddDbContextFactory<MusicWatcherDbContext>(options =>
@@ -17,10 +17,13 @@ public static class DependencyInjectionExtensions
             string? connectionString = configuration["ConnectionStrings:default"];
             options.UseNpgsql(connectionString);
         });
+
+        services.AddHttpClient();
+        services.AddScoped<MusicNewsCrawler>();
+        services.AddScoped<MusicUpdateManager>();
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
         services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
-        services.AddSingleton<MusicNewsCrawler>();
-        services.AddSingleton<MusicUpdateManager>();
+
 
         //services.AddTransient<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
         //services.Configure<TelegramBotConfiguration>(context.Configuration.GetSection("TelegramBot"));

@@ -1,14 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
+using MusicNewsWatcher.API.DataAccess.MapperExtensions;
+using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
+using System.Diagnostics;
 
 namespace MusicNewsWatcher.API.Services;
 
-
 public class MusicNewsCrawler
 {
-    private readonly MusicWatcherDbContext dbContext;
+    private MusicWatcherDbContext dbContext;
+    private readonly IServiceScope services;
     private readonly ILogger<MusicNewsCrawler> logger;
 
     public MusicNewsCrawler(MusicWatcherDbContext dbContext, ILogger<MusicNewsCrawler> logger)
@@ -71,7 +74,7 @@ public class MusicNewsCrawler
                         ProviderName = kvp.Key.Name,
                         ArtistName = artist.Name,
                         ArtistUri = artist.Uri,
-                        Albums = result
+                        Albums = result.Select(i => i.ToDto()).ToList()
                     });
                 }
             }
@@ -98,14 +101,14 @@ public class MusicNewsCrawler
         if (artist == null)
         {
             logger.LogWarning("{providerName} -- Артист с ID {artistId} не найден", provider.Name, artistId);
-            return Enumerable.Empty<AlbumEntity>().ToArray();
+            return Array.Empty<AlbumEntity>();
         }
 
         var albums = await provider.GetAlbumsAsync(artist);
 
         var newAlbums = albums
-            .Where(album => album != null && !string.IsNullOrWhiteSpace(album.Uri))
-            .ExceptByProperty(artist.Albums, album => album.Uri)
+            .Where(album => !string.IsNullOrWhiteSpace(album?.Uri))
+            .Where(album => !artist.Albums.Any(existingAlbum => existingAlbum.Uri == album.Uri))
             .ToArray();
 
         if (newAlbums != null && newAlbums.Length > 0)

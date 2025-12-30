@@ -1,6 +1,9 @@
 ﻿using MusicNewsWatcher.API.DataAccess;
-using MusicNewsWatcher.Core.Interfaces;
+using MusicNewsWatcher.API.DataAccess.Entity;
+using MusicNewsWatcher.API.DataAccess.MapperExtensions;
+using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
+using MusicNewsWatcher.Core.Models.Dtos;
 using System.Diagnostics;
 
 namespace MusicNewsWatcher.API.Services;
@@ -9,7 +12,7 @@ namespace MusicNewsWatcher.API.Services;
 public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
         MusicWatcherDbContext dbContext,
         ILogger<MusicUpdateManager> logger,
-        IMusicNewsCrawler crawler)
+        MusicNewsCrawler crawler)
 {
     public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
 
@@ -101,11 +104,10 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// <returns></returns>
     public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-        throw new NotImplementedException();
 
         int newAlbumsFound = 0;
 
-        var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(stoppingToken);
+        var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
 
@@ -113,7 +115,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 .Select(i => new NewAlbumsFoundEventArgs()
                 {
                     Provider = i.ProviderName,
-                    //Artist = new ArtistDto(i.id),
+                    Artist = new ArtistDto(0, 0, i.ArtistName, i.ArtistUri, ""),
                     //NewAlbums = i.Albums.Select(al => new AlbumDto(al.Title, al.Uri)).ToArray()
                 })
                 .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
@@ -123,8 +125,6 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                     newAlbumsFound += i.NewAlbums!.Length;
                     OnNewAlbumsFound?.Invoke(this, i);
                 });
-
-
         }
 
         LastUpdate = DateTimeOffset.UtcNow;
@@ -134,22 +134,24 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
 
         return newAlbumsFound;
     }
-    public async Task CheckUpdatesForArtistForProvider(int providerId, int artistId, string artistName, string artistUri)
+    public async Task CheckUpdatesForArtistForProvider(MusicProviderBase provider, int artistId, string artistName, string artistUri)
     {
         throw new NotImplementedException();
-        /*
-        var newAlbums = await crawler.CheckUpdatesForArtistAndSaveIfHasAsync(providerId, artistId);
+
+        var newAlbums = await crawler.CheckUpdatesForArtistAndSaveIfHasAsync(provider, artistId);
         if (newAlbums != null && newAlbums.Any())
         {
             var e = new NewAlbumsFoundEventArgs()
             {
                 Provider = provider.Name,
-                Artist = new ArtistDto(artistName, artistUri),
-                NewAlbums = newAlbums.Select(album => new AlbumDto(album.Title, album.Uri)).ToArray()
+                Artist = new ArtistDto(0, 0, artistName, artistUri, ""),
+                NewAlbums = newAlbums.Select(album => album.ToDto()).ToArray()
             };
             OnNewAlbumsFound?.Invoke(this, e);
-        }*/
+        }
+
     }
+
     /// <summary>
     /// Заполняет информация по музыкальным трекам для альбома
     /// </summary>
@@ -158,7 +160,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// <returns></returns>
     public async Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId)
     {
-        await crawler.CheckUpdatesForAlbumAsync(albumId);
+        await crawler.CheckUpdatesForAlbumAsync(provider, albumId);
     }
     private async Task SaveLastUpdateTime()
     {

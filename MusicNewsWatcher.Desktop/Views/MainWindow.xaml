@@ -12,11 +12,11 @@
     Title="Загрузчик музыкальных новинок"
     Width="1200"
     Height="300"
-    MinWidth="800" 
+    MinWidth="800"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel},
+                                     IsDesignTimeCreatable=False}"
     d:Height="300"
     d:Width="600"
-    d:DataContext="{d:DesignInstance Type={x:Type vm:MainWindowViewModel},
-                                 IsDesignTimeCreatable=False}"
     Background="{StaticResource MainWindowBackgroundTexture}"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -132,7 +132,7 @@
 
                     </Grid>
 
-                    <vs:AlbumsSectionControl Grid.Row="1"  DataContext="{Binding}"/>
+                    <vs:AlbumsSectionControl Grid.Row="1" DataContext="{Binding}" />
 
                 </Grid>
             </Border>
@@ -196,7 +196,7 @@
                         </Button>
                     </Grid>
 
-                    <vs:TracksSectionControl DataContext="{Binding SelectedArtist.SelectedAlbum}" Grid.Row="1" />
+                    <vs:TracksSectionControl Grid.Row="1" DataContext="{Binding SelectedArtist.SelectedAlbum}" />
                 </Grid>
             </Border>
         </Grid>

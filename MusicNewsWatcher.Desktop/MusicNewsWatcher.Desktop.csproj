@@ -6,6 +6,16 @@
 		<UseWPF>true</UseWPF>
 		<UserSecretsId>006bff16-bff8-4116-b34e-33c789dbedd4</UserSecretsId>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="Assets\background-texture.jpg" />
+	  <None Remove="Assets\bandcamp-logo.png" />
+	  <None Remove="Assets\bricks.jpg" />
+	  <None Remove="Assets\cosmos-texture.jpg" />
+	  <None Remove="Assets\image-placeholder.jpg" />
+	  <None Remove="Assets\musify-logo.png" />
+	  <None Remove="Assets\settings-window-background-texture.jpg" />
+	</ItemGroup>
 	<ItemGroup>
 	  <Content Include="appsettings.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -22,41 +32,37 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="Assets\background-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\bandcamp-logo.png">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\bricks.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\cosmos-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\image-placeholder.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\musify-logo.png">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\settings-window-background-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 		<Resource Include="logo.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\MusicNewsWatcher.ApiClient\MusicNewsWatcher.ApiClient.csproj" />
 		<ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="Assets\background-texture.jpg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\bandcamp-logo.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\bricks.jpg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\cosmos-texture.jpg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\image-placeholder.jpg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\musify-logo.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\settings-window-background-texture.jpg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 </Project>

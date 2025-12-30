@@ -14,7 +14,7 @@ public partial class MusicProviderViewModel : ObservableObject
     public string Image { get; private set; }
     public string Uri { get; private set; }
 
-    private readonly MusicNWatcherApiClient apiClient;
+    private readonly MusicNewsWatcherApiClient apiClient;
     private readonly ViewModelFactory<ArtistViewModel> artistVmFactory;
     private readonly IDialogWindowService dialogWindowService;
     private readonly IToastsNotifier toasts;
@@ -42,7 +42,7 @@ public partial class MusicProviderViewModel : ObservableObject
         await RefreshProviderSource();
     }
 
-    public MusicProviderViewModel(MusicNWatcherApiClient apiClient,
+    public MusicProviderViewModel(MusicNewsWatcherApiClient apiClient,
     IDialogWindowService dialogWindowService,
     IToastsNotifier toasts,
     ViewModelFactory<ArtistViewModel> artistVmFactory)

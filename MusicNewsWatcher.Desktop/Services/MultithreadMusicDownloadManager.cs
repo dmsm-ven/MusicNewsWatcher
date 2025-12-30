@@ -1,14 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
+using MusicNewsWatcher.Desktop.Extensions;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
 //TODO убрать прямое обращение через ViewModel
-public class MultithreadHttpDownloadManager : IMusicDownloadManager
+public class MultithreadHttpDownloadManager
 {
     private readonly ILogger<MultithreadHttpDownloadManager> logger;
     private readonly HttpClient client;
@@ -39,20 +40,8 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
 
     public MultithreadHttpDownloadManager(HttpClient client, ILogger<MultithreadHttpDownloadManager> logger)
     {
-        throw new NotImplementedException();
         this.client = client;
         this.logger = logger;
-        //client = new HttpClient(new HttpClientHandler()
-        //{
-        //    AllowAutoRedirect = true,
-        //    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-        //    CookieContainer = new CookieContainer(),
-        //    UseCookies = true,
-        //});
-        //client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36");
-        //client.DefaultRequestHeaders.Add("Accept", "*/*");
-
-
     }
 
     /// <summary>
@@ -62,7 +51,7 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
     /// <param name="downloadDirectory"></param>
     /// <param name="token"></param>
     /// <returns></returns>
-    public async Task DownloadAlbumTracks(AlbumDownloadModel album, string downloadDirectory, CancellationToken? token = null)
+    public async Task DownloadFullAlbum(AlbumDownloadModel album, string downloadDirectory, CancellationToken? token = null)
     {
         logger.LogInformation("Начало загрузки альбома {albumName} в {threadLimit} потока(ов)", album.AlbumDisplayName, ThreadLimit);
 
@@ -158,6 +147,8 @@ public class MultithreadHttpDownloadManager : IMusicDownloadManager
         client?.Dispose();
         semaphor?.Dispose();
     }
+
+
 }
 
 

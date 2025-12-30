@@ -12,9 +12,7 @@ public class MusicNewsWatcherApiClient
     }
     public async Task<MusicProviderDto[]> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
-        var response = await client.GetAsync("api/providers", cancellationToken);
-        response.EnsureSuccessStatusCode();
-        var providers = await response.Content.ReadFromJsonAsync<MusicProviderDto[]>(cancellationToken: cancellationToken);
+        var providers = await client.GetFromJsonAsync<MusicProviderDto[]>("api/providers", cancellationToken);
         return providers ?? Array.Empty<MusicProviderDto>();
     }
     public async Task<ArtistDto[]> GetProviderArtistsAsync(int providerId, CancellationToken cancellationToken = default)

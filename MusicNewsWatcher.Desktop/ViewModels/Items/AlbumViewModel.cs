@@ -6,7 +6,7 @@ using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Extensions;
 using MusicNewsWatcher.Desktop.Interfaces;
-using MusicNewsWatcher.Desktop.ViewModels.Windows;
+using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
 using System.Web;
 

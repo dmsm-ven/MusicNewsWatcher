@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MusicNewsWatcher.Core.Interfaces;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
@@ -11,12 +10,12 @@ namespace MusicNewsWatcher.Desktop.Services;
 
 public class MusicDownloadHelper
 {
-    private readonly IMusicDownloadManager musicDownloadManager;
+    private readonly MultithreadHttpDownloadManager musicDownloadManager;
     private readonly IToastsNotifier toasts;
     private readonly ILogger<MusicDownloadHelper> logger;
     private readonly string musicDownloadFolder;
 
-    public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
+    public MusicDownloadHelper(MultithreadHttpDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
         IOptions<MusicDownloadFolderOptions> options,
         ILogger<MusicDownloadHelper> logger)
@@ -64,7 +63,7 @@ public class MusicDownloadHelper
 
         foreach (var album in albums)
         {
-            await DownloadAlbum(album, false, cts.Token);
+            await DownloadAlbum(album, cts.Token);
         }
     }
 

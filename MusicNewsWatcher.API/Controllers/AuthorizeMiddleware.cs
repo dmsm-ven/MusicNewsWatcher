@@ -3,13 +3,16 @@ using Microsoft.Extensions.Options;
 
 namespace MusicNewsWatcher.API.Controllers;
 
-public record AuthorizeMiddlewareOptions(string ApiKey);
+public class AuthorizeMiddlewareOptions
+{
+    public string AccessToken { get; set; } = string.Empty;
+}
 public class AuthorizeMiddleware : IMiddleware
 {
     private readonly string apiKey;
     public AuthorizeMiddleware(IOptions<AuthorizeMiddlewareOptions> options)
     {
-        apiKey = options.Value.ApiKey;
+        apiKey = options.Value.AccessToken;
     }
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {

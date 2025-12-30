@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
+using MusicNewsWatcher.Desktop.Extensions;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
+using System.Drawing;
 using System.IO;
 using System.Net.Http;
 
@@ -10,12 +12,7 @@ namespace MusicNewsWatcher.Desktop.Services;
 public class ImageThumbnailCacheService : IImageThumbnailCacheService
 {
     private readonly string placeholderFilePath;
-    private readonly IReadOnlyDictionary<ThumbnailSize, System.Drawing.Size> thumbnailSizes
-        = new Dictionary<ThumbnailSize, System.Drawing.Size>()
-        {
-            [ThumbnailSize.Album] = new System.Drawing.Size(250, 250),
-            [ThumbnailSize.Artist] = new System.Drawing.Size(500, 500),
-        };
+    private readonly IReadOnlyDictionary<ThumbnailSize, Size> thumbnailSizes;
     private readonly HttpClient client;
     private readonly SemaphoreSlim semaphore = new(1, 1);
     private static readonly JpegEncoder JPEG_ENCODER = new JpegEncoder() { Quality = 90 };
@@ -24,6 +21,12 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
     {
         this.placeholderFilePath = options.Value.PlaceholderFilePath;
         this.client = client;
+
+        thumbnailSizes = new Dictionary<ThumbnailSize, Size>()
+        {
+            [ThumbnailSize.Album] = new(options.Value.AlbumThumbinailSize, options.Value.AlbumThumbinailSize),
+            [ThumbnailSize.Artist] = new(options.Value.ArtistThumbnailSize, options.Value.ArtistThumbnailSize),
+        };
     }
 
     public async Task<string> GetCachedImage(string originalSourceUri, ThumbnailSize size)

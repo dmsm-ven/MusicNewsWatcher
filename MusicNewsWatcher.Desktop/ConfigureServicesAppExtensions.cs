@@ -1,10 +1,6 @@
-﻿using Hardcodet.Wpf.TaskbarNotification;
-using MusicNewsWatcher.Desktop.Interfaces;
+﻿using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
-using System.Drawing;
-using System.Windows;
-using System.Windows.Controls;
 
 namespace MusicNewsWatcher.Desktop;
 
@@ -12,11 +8,6 @@ public static class ConfigureServicesAppExtensions
 {
     public static void AddViewModels(this IServiceCollection services)
     {
-        services.AddTransient<SettingsWindowViewModel>();
-        services.AddTransient<SettingsWindow>();
-
-        services.AddTransient<SyncLibraryWindowViewModel>();
-        services.AddTransient<SyncLibraryWindow>();
         services.AddTransient<MainWindowViewModel>();
 
         services.AddTransient<AlbumViewModel>();
@@ -31,7 +22,7 @@ public static class ConfigureServicesAppExtensions
 
     public static void AddNotifyIcon(this IServiceCollection services)
     {
-        var tbi = new TaskbarIcon();
+        /*var tbi = new TaskbarIcon();
 
         var tbiMenu = new ContextMenu();
         var showMenuItem = new MenuItem() { Header = "Отобразить" };
@@ -50,7 +41,8 @@ public static class ConfigureServicesAppExtensions
         tbi.ToolTipText = "Парсер музыки";
         tbi.ContextMenu = tbiMenu;
 
-        services.AddSingleton<TaskbarIcon>(tbi);
+        services.AddSingleton<TaskbarIcon>(tbi); 
+        */
     }
 
     public static void AddToasts(this IServiceCollection services)

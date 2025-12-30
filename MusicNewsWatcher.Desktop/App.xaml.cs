@@ -11,6 +11,7 @@ using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
+using System.Net.Http;
 using System.Windows;
 
 namespace MusicNewsWatcher.Desktop;
@@ -41,17 +42,23 @@ public partial class App : Application
                 services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
                 services.AddOptions<MusicWatcherApiConfiguration>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
-                services.AddHttpClient();
-                services.AddHttpClient<MusicNWatcherApiClient>(client =>
+                services.AddOptions<ApiConnectionConfiguration>().Bind(context.Configuration.GetSection(nameof(ApiConnectionConfiguration)));
+
+                services.AddHttpClient<MultithreadHttpDownloadManager>();
+                services.AddHttpClient(nameof(MusicNewsWatcherApiClient), client =>
                 {
-                    var options = context.Configuration.GetSection(nameof(MusicWatcherApiConfiguration)).Get<MusicWatcherApiConfiguration>()
-                     ?? throw new InvalidOperationException("MusicWatcherApiConfiguration is not configured properly.");
-                    client.BaseAddress = new Uri(options.HostUri);
+                    var options = context.Configuration.GetSection(nameof(ApiConnectionConfiguration)).Get<ApiConnectionConfiguration>()
+ ?? throw new InvalidOperationException("MusicWatcherApiConfiguration is not configured properly.");
+                    client.BaseAddress = new Uri(options.Host);
                     client.DefaultRequestHeaders.Authorization = new("Bearer", options.AccessToken);
                 });
-
+                services.AddSingleton<MusicNewsWatcherApiClient>(sp =>
+                {
+                    var factory = sp.GetRequiredService<IHttpClientFactory>();
+                    var httpClient = factory.CreateClient(nameof(MusicNewsWatcherApiClient));
+                    return new MusicNewsWatcherApiClient(httpClient);
+                });
                 services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
-                services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
                 services.AddTransient<AddOrEditArtistDialog>();

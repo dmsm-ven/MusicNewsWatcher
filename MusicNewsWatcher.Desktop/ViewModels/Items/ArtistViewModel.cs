@@ -5,7 +5,7 @@ using MahApps.Metro.IconPacks;
 using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Interfaces;
-using MusicNewsWatcher.Desktop.ViewModels.Windows;
+using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
@@ -15,13 +15,13 @@ public partial class ArtistViewModel : ObservableObject
     private readonly IToastsNotifier toasts;
     private readonly IImageThumbnailCacheService imageCacheService;
     private readonly MusicDownloadHelper downloadHelper;
-    private readonly MusicNWatcherApiClient apiClient;
+    private readonly MusicNewsWatcherApiClient apiClient;
     private readonly ViewModelFactory<AlbumViewModel> albumViewFactory;
 
     public ArtistViewModel(IToastsNotifier toasts,
         IImageThumbnailCacheService imageCacheService,
         MusicDownloadHelper downloadHelper,
-        MusicNWatcherApiClient apiClient,
+        MusicNewsWatcherApiClient apiClient,
         ViewModelFactory<AlbumViewModel> albumViewFactory)
     {
         this.toasts = toasts;

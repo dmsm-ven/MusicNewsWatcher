@@ -2,10 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
-using MusicNewsWatcher.BL;
+using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
+using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -13,12 +14,12 @@ using System.IO;
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 public partial class MainWindowViewModel : ObservableObject,
+    IRecipient<ProviderChangedMessage>,
     IRecipient<ArtistChangedMessage>,
     IRecipient<AlbumChangedMessage>
+
 {
-    private readonly MusicUpdateManager updateManager;
-    private readonly IEnumerable<MusicProviderBase> musicProviderTemplates;
-    private readonly MusicWatcherDbContext dbContext;
+    private readonly MusicNewsWatcherApiClient apiClient;
     private readonly IToastsNotifier toasts;
     private readonly IDialogWindowService dialogWindowService;
     private readonly IOptions<MusicDownloadFolderOptions> options;
@@ -36,22 +37,19 @@ public partial class MainWindowViewModel : ObservableObject,
 
     public bool HasSelectedProvider => SelectedMusicProvider != null;
 
-    public MainWindowViewModel(MusicUpdateManager updateManager,
-        IEnumerable<MusicProviderBase> musicProviderTemplates,
-        MusicWatcherDbContext dbContext,
+    public MainWindowViewModel(MusicNewsWatcherApiClient apiClient,
         IToastsNotifier toasts,
         IDialogWindowService dialogWindowService,
         IOptions<MusicDownloadFolderOptions> options,
         ViewModelFactory<MusicProviderViewModel> providerVmFactory)
     {
-        this.updateManager = updateManager;
-        this.musicProviderTemplates = musicProviderTemplates;
-        this.dbContext = dbContext;
+        this.apiClient = apiClient;
         this.toasts = toasts;
         this.dialogWindowService = dialogWindowService;
         this.options = options;
         this.providerVmFactory = providerVmFactory;
 
+        WeakReferenceMessenger.Default.Register<ProviderChangedMessage>(this);
         WeakReferenceMessenger.Default.Register<ArtistChangedMessage>(this);
         WeakReferenceMessenger.Default.Register<AlbumChangedMessage>(this);
     }
@@ -59,10 +57,7 @@ public partial class MainWindowViewModel : ObservableObject,
     [RelayCommand]
     private void AddArtist()
     {
-        if (SelectedMusicProvider != null)
-        {
-            dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);
-        }
+        dialogWindowService?.ShowNewArtistWindow(SelectedMusicProvider!);
     }
 
     [RelayCommand]
@@ -72,19 +67,6 @@ public partial class MainWindowViewModel : ObservableObject,
         {
             FileBrowserHelper.OpenFolderInFileBrowser(options.Value.MusicDownloadFolder);
         }
-    }
-
-    [RelayCommand]
-    private void Settings()
-    {
-        dialogWindowService.ShowSettingsWindow();
-
-    }
-
-    [RelayCommand]
-    private void SyncLibrary()
-    {
-        dialogWindowService.ShowSyncLibraryWindow();
     }
 
     [RelayCommand]
@@ -99,21 +81,12 @@ public partial class MainWindowViewModel : ObservableObject,
         SelectedMusicProvider = null;
         MusicProviders.Clear();
 
-        var templatesInfo = musicProviderTemplates.ToDictionary(i => i.Id, i => i);
-
         IsLoading = true;
-
-        var source = await dbContext.MusicProviders
-            .Include(p => p.Artists)
-            .ToListAsync();
-
-        foreach (var pinfo in source)
+        var providers = await apiClient.GetProvidersAsync();
+        foreach (var provider in providers)
         {
             var providerVm = providerVmFactory.Create();
-
-            providerVm.Initialize(templatesInfo[pinfo.MusicProviderId], pinfo.Image, pinfo.Uri, pinfo.Artists.Count);
-
-            providerVm.PropertyChanged += ProviderVm_PropertyChanged;
+            providerVm.Initialize(provider);
             MusicProviders.Add(providerVm);
         }
 
@@ -121,21 +94,8 @@ public partial class MainWindowViewModel : ObservableObject,
 
         if (MusicProviders.Any())
         {
-            SelectedMusicProvider = MusicProviders.LastOrDefault();
-            SelectedMusicProvider!.IsActiveProvider = true;
-        }
-    }
-
-    private void ProviderVm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        var provider = (MusicProviderViewModel)sender!;
-
-        if (e.PropertyName == nameof(MusicProviderViewModel.IsActiveProvider) && provider!.IsActiveProvider)
-        {
-            MusicProviders
-                .Where(p => p != provider)
-                .ToList()
-                .ForEach(p => p.IsActiveProvider = false);
+            SelectedMusicProvider = MusicProviders.Last();
+            SelectedMusicProvider.IsActiveProvider = true;
         }
     }
 
@@ -156,6 +116,15 @@ public partial class MainWindowViewModel : ObservableObject,
         foreach (var artist in SelectedMusicProvider.TrackedArtists)
         {
             artist.IsActiveArtist = artist == message.artist ? message.artist.IsActiveArtist : false;
+        }
+    }
+
+    public void Receive(ProviderChangedMessage message)
+    {
+        SelectedMusicProvider = message.provider;
+        foreach (var provider in MusicProviders)
+        {
+            provider.IsActiveProvider = provider == SelectedMusicProvider;
         }
     }
 }
