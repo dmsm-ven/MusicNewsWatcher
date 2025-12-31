@@ -4,6 +4,8 @@ namespace MusicNewsWatcher.API.BackgroundServices;
 
 public sealed class CrawlerHostedService : BackgroundService
 {
+    public TimeSpan DefaultTimerInterval { get; } = TimeSpan.FromMinutes(60);
+
     private readonly ILogger<CrawlerHostedService> logger;
     private readonly MusicUpdateManager updateManager;
 
@@ -16,15 +18,9 @@ public sealed class CrawlerHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await updateManager.RefreshIntervalAndLastUpdate();
-
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Следующий переобход парсера будет запущен [{nextExecuteDt}] (через {interval} мин.)",
-                DateTimeOffset.UtcNow.Add(updateManager.UpdateInterval),
-                (int)updateManager.UpdateInterval.TotalMinutes);
-
-            await Task.Delay(updateManager.UpdateInterval, stoppingToken);
+            await Task.Delay(DefaultTimerInterval, stoppingToken);
 
             await RunCrawlerTask(stoppingToken);
         }

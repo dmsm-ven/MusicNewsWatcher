@@ -1,0 +1,35 @@
+name: mnwatcher
+
+services:
+  api:
+    image: painven/mnwatcher_api:latest
+    container_name: mnwatcher_api
+    restart: unless-stopped
+    env_file: ".env.api"
+    ports:
+      - "8050:80"
+    environment:
+      ASPNETCORE_URLS: http://+:80
+    networks:
+    - mnwatcher_network
+    depends_on:
+      - db
+
+  db:
+    image: postgres@sha256:10d6e725f9b2f5531617d93164f4fc85b1739e04cab62cbfbfb81ccd866513b8
+    container_name: mnwatcher_database
+    restart: always
+    env_file: ".env.db"
+    volumes:
+      - pgdata_mnwatcher:/var/lib/postgresql/data # Persists data in a named volume
+    networks:
+      - mnwatcher_network
+
+networks:  
+  mnwatcher_network:
+    name: mnwatcher_network
+    external: true
+
+volumes:
+  pgdata_mnwatcher:
+    external: true

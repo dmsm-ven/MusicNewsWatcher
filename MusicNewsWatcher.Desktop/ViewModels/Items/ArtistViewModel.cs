@@ -101,9 +101,8 @@ public partial class ArtistViewModel : ObservableObject
     [RelayCommand]
     private async Task GetAlbumsFromProviderForArtist()
     {
-        throw new NotImplementedException();
         InProgress = true;
-        //await updateManager.CheckUpdatesForArtistForProvider(ParentProvider.Template, ArtistId, Name, Uri);
+        await apiClient.CheckUpdatesForArtist(ParentProvider.MusicProviderId, this.ArtistId);
         await RefreshSource();
         InProgress = false;
     }

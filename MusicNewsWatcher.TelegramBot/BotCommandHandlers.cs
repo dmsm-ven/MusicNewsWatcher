@@ -1,15 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.Core;
-using MusicNewsWatcher.Core.Extensions;
-using System.Text;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatcherDbContext dbContext)
+public class TelegramBotCommandHandlers(ITelegramBotClient botClient)
 {
     public async Task<Message> UsageCommand(Message message)
     {
@@ -35,87 +31,23 @@ public class TelegramBotCommandHandlers(ITelegramBotClient botClient, MusicWatch
 
     public async Task<Message> LastUpdateCommand(Message message)
     {
-        string? lastUpdateString = dbContext.Settings.Find("LastFullUpdateDateTime")?.Value;
-
-        bool emptyLastUpdate = false;
-        DateTimeOffset lastUpdate, nextUpdate;
-        if (!DateTimeOffset.TryParse(lastUpdateString, out lastUpdate))
-        {
-            lastUpdate = new DateTimeOffset();
-            emptyLastUpdate = true;
-        }
-        TimeSpan updateInterval = TimeSpan.FromMinutes(int.Parse(dbContext.Settings.Find("UpdateManagerIntervalInMinutes")?.Value ?? "0"));
-        int updateIntervalMinutes = (int)updateInterval.TotalMinutes;
-        nextUpdate = lastUpdate.AddMinutes(updateIntervalMinutes);
-        int nextUpdateLeft = (int)(nextUpdate - DateTimeOffset.UtcNow).TotalMinutes;
-
-        if (!emptyLastUpdate)
-        {
-            var sb = new StringBuilder()
-                .AppendLine($"Интервал обновления: <b>{updateIntervalMinutes} мин.</b>")
-                .AppendLine($"Дата/время последнего обновления: <b>{lastUpdate.ToLocalRuDateAndTime()}</b> ({lastUpdateString})")
-                .Append($"Следующий запуск: <b>{nextUpdate.ToLocalRuDateAndTime()}</b> (через {nextUpdateLeft} мин.)");
-
-
-            string replyText = sb.ToString();
-            return await botClient.SendMessage(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
-        }
-        else
-        {
-            string replyText = $"Ошибка считывания даты последнего обновления: '{lastUpdateString}'";
-            return await botClient.SendMessage(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
-        }
+        string replyText = $"Функционал отключен";
+        return await botClient.SendMessage(chatId: message.Chat.Id,
+                                        text: replyText, ParseMode.Html);
 
     }
 
     public async Task<Message> TrackedArtistsForProviderCommand(Update update, string providerName)
     {
-        if (update == null || update.CallbackQuery == null)
-        {
-            throw new ArgumentNullException(nameof(update));
-        }
-
-        var chatId = update.CallbackQuery.From.Id;
-
-        var dbProvider = dbContext.MusicProviders.Include(p => p.Artists)
-            .FirstOrDefault(pr => pr.Name == providerName);
-
-        if (dbProvider != null)
-        {
-            string[] artistLines = dbProvider.Artists
-                .OrderBy(a => a.Name)
-                .Select((artist, i) => $"[{i + 1}] {artist.Name}")
-                .ToArray();
-
-            string replyText = string.Join("\r\n", artistLines);
-
-            return await botClient.SendMessage(chatId: chatId,
-                                            text: replyText,
-                                            replyMarkup: new ReplyKeyboardRemove());
-        }
-
-        return await botClient.SendMessage(chatId: chatId, text: $"Провайдер '{providerName}' не найден", replyMarkup: new ReplyKeyboardRemove());
+        string replyText = $"Функционал отключен";
+        return await botClient.SendMessage(chatId: update.Message.Chat.Id,
+                                        text: replyText, ParseMode.Html);
     }
 
     public async Task<Message> ProviderListCommand(Message message)
     {
-        var providersData = dbContext.MusicProviders.Select(mp => new
-        {
-            mp.Name,
-            TrackedArtists = mp.Artists.Count()
-        }).ToArray();
-
-        var buttons = providersData.Select(provider => new InlineKeyboardButton($"{provider.Name} ({provider.TrackedArtists} исп.)")
-        {
-            CallbackData = $"/tracked_artists_for_provider {provider.Name}"
-        }).ToArray();
-
-        InlineKeyboardMarkup inlineKeyboard = new(buttons);
-
+        string replyText = $"Функционал отключен";
         return await botClient.SendMessage(chatId: message.Chat.Id,
-                                                    text: "У какого провайдера ?",
-                                                    replyMarkup: inlineKeyboard);
+                                        text: replyText, ParseMode.Html);
     }
 }

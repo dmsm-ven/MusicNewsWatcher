@@ -10,13 +10,13 @@ namespace MusicNewsWatcher.API.Services;
 
 public class MusicNewsCrawler
 {
-    private MusicWatcherDbContext dbContext;
     private readonly IServiceScope services;
+    private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
     private readonly ILogger<MusicNewsCrawler> logger;
 
-    public MusicNewsCrawler(MusicWatcherDbContext dbContext, ILogger<MusicNewsCrawler> logger)
+    public MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContextFactory, ILogger<MusicNewsCrawler> logger)
     {
-        this.dbContext = dbContext;
+        this.dbContextFactory = dbContextFactory;
         this.logger = logger;
     }
 
@@ -35,10 +35,12 @@ public class MusicNewsCrawler
 
         var providerToArtists = new Dictionary<MusicProviderBase, List<ArtistEntity>>();
 
+        using var dbContext = dbContextFactory.CreateDbContext();
 
         foreach (var provider in musicProviders)
         {
             var providerArtists = dbContext.MusicProviders
+                .AsNoTrackingWithIdentityResolution()
                 .Include(i => i.Artists)
                 .ThenInclude(a => a.Albums)
                 .Single(p => p.MusicProviderId == provider.Id)
@@ -97,6 +99,8 @@ public class MusicNewsCrawler
 
         Stopwatch sw = Stopwatch.StartNew();
 
+        var dbContext = dbContextFactory.CreateDbContext();
+
         var artist = await dbContext.Artists.Include(a => a.Albums).FirstOrDefaultAsync(a => a.ArtistId == artistId);
         if (artist == null)
         {
@@ -128,6 +132,8 @@ public class MusicNewsCrawler
     }
     public async Task CheckUpdatesForAlbumAsync(MusicProviderBase provider, int albumId)
     {
+        var dbContext = dbContextFactory.CreateDbContext();
+
         var album = await dbContext.Albums.FindAsync(albumId);
         if (album != null)
         {

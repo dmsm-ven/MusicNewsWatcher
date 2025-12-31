@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.MapperExtensions;
+using MusicNewsWatcher.API.Services;
 using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.API.Controllers;
@@ -10,10 +11,12 @@ namespace MusicNewsWatcher.API.Controllers;
 public class MusicNewsWatcherController : ControllerBase
 {
     private readonly MusicWatcherDbContext db;
+    private readonly MusicUpdateManager updateManager;
 
-    public MusicNewsWatcherController(MusicWatcherDbContext db)
+    public MusicNewsWatcherController(MusicWatcherDbContext db, MusicUpdateManager updateManager)
     {
         this.db = db;
+        this.updateManager = updateManager;
     }
     [HttpGet]
     [Route("api/providers")]
@@ -63,6 +66,22 @@ public class MusicNewsWatcherController : ControllerBase
             .ToListAsync();
 
         return albums.Any() ? Ok(albums) : NoContent();
+    }
+
+    [HttpPost]
+    [Route("api/providers/{provider_id}/artists/{artist_id}/albums/refresh")]
+    public async Task<IActionResult> CheckArtistAlbums([FromRoute] int provider_id, [FromRoute] int artist_id)
+    {
+        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
+        bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
+        if (!providerExists || !artistExists)
+        {
+            return NotFound();
+        }
+
+        await updateManager.CheckUpdatesForArtistAsync(provider_id, artist_id);
+
+        return Accepted();
     }
 
     [HttpGet]

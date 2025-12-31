@@ -1,5 +1,8 @@
-﻿namespace MusicNewsWatcher.API.BackgroundServices;
-/*
+﻿using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.TelegramBot;
+
+namespace MusicNewsWatcher.API.BackgroundServices;
+
 public sealed class TelegramBotHostedService : BackgroundService
 {
     private readonly MusicNewsWatcherTelegramBot botClient;
@@ -61,4 +64,4 @@ public sealed class TelegramBotHostedService : BackgroundService
         base.Dispose();
     }
 }
-*/
+
