@@ -61,8 +61,8 @@ public partial class App : Application
                 services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
-                services.AddTransient<AddOrEditArtistDialog>();
-                services.AddTransient<AddOrEditArtistDialogViewModel>();
+                services.AddTransient<ArtistAddWindow>();
+                services.AddTransient<ArtistAddWindowViewModel>();
 
                 services.AddSingleton<MusicDownloadHelper>();
 

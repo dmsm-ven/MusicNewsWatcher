@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Interfaces;
+using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
@@ -100,6 +102,19 @@ public partial class MusicProviderViewModel : ObservableObject
         //    TrackedArtists.Remove(SelectedArtist);
         //    SelectedArtist = null;
         //}
+    }
+
+    [RelayCommand]
+    private async Task ChangeSelectedProvider()
+    {
+        IsActiveProvider = true;
+
+        if (!isLoaded)
+        {
+            await RefreshProviderSource();
+        }
+
+        WeakReferenceMessenger.Default.Send(new ProviderChangedMessage(this));
     }
 
     public void Initialize(MusicProviderDto provider)

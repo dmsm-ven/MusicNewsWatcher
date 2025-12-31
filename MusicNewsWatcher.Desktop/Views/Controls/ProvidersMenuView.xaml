@@ -6,10 +6,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ss="clr-namespace:LoadingSpinnerControl;assembly=LoadingSpinnerControl"
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Windows"
+    d:Background="White"
     d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     d:DesignHeight="200"
-    d:DesignWidth="200"
     mc:Ignorable="d">
     <Grid>
         <ItemsControl
@@ -39,7 +39,7 @@
                         <Button
                             Height="24"
                             Background="Transparent"
-                            Command="{Binding ChangeSelectedArtistCommand}"
+                            Command="{Binding ChangeSelectedProviderCommand}"
                             CommandParameter="{Binding}"
                             Content="{Binding Name}"
                             DockPanel.Dock="Left"

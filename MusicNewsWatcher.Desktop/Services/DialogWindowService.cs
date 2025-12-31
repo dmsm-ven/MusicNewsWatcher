@@ -16,15 +16,15 @@ public class DialogWindowService : IDialogWindowService
 
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
-        var dialogWindow = host.Services.GetRequiredService<AddOrEditArtistDialog>();
-        dialogWindow.DataContext = new AddOrEditArtistDialogViewModel(musicProvider);
+        var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
+        dialogWindow.DataContext = new ArtistAddWindowViewModel(musicProvider);
         dialogWindow.ShowDialog();
     }
 
     public void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel)
     {
-        var dialogWindow = host.Services.GetRequiredService<AddOrEditArtistDialog>();
-        var vm = new AddOrEditArtistDialogViewModel(musicProvider)
+        var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
+        var vm = new ArtistAddWindowViewModel(musicProvider)
         {
             ContextArtist = artistViewModel,
             IsEdit = true

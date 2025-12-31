@@ -16,20 +16,21 @@ services:
       - db
 
   db:
-    image: postgres@sha256:10d6e725f9b2f5531617d93164f4fc85b1739e04cab62cbfbfb81ccd866513b8
+    image: postgres:latest
     container_name: mnwatcher_database
     restart: always
     env_file: ".env.db"
     volumes:
-      - pgdata_mnwatcher:/var/lib/postgresql/data # Persists data in a named volume
+      - mnwatcher_pgdata:/var/lib/postgresql/data # Persists data in a named volume
     networks:
       - mnwatcher_network
 
 networks:  
   mnwatcher_network:
     name: mnwatcher_network
-    external: true
+    external: false
 
 volumes:
-  pgdata_mnwatcher:
-    external: true
+  mnwatcher_pgdata:
+    name: mnwatcher_pgdata
+    external: false

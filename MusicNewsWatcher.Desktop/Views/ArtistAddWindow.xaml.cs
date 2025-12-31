@@ -5,9 +5,9 @@ namespace MusicNewsWatcher.Desktop.Views;
 /// <summary>
 /// Interaction logic for AddNewArtistDialog.xaml
 /// </summary>
-public partial class AddOrEditArtistDialog : Window
+public partial class ArtistAddWindow : Window
 {
-    public AddOrEditArtistDialog()
+    public ArtistAddWindow()
     {
         InitializeComponent();
     }

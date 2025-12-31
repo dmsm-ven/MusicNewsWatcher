@@ -1,5 +1,5 @@
 ﻿<Window
-    x:Class="MusicNewsWatcher.Desktop.Views.AddOrEditArtistDialog"
+    x:Class="MusicNewsWatcher.Desktop.Views.ArtistAddWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
@@ -10,7 +10,7 @@
     Title="Добавление/редактирование исполнителя"
     Width="864"
     Height="370"
-    d:DataContext="{d:DesignInstance Type=vm:AddNewArtistDialogViewModel,
+    d:DataContext="{d:DesignInstance Type=vm:ArtistAddWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     AllowsTransparency="True"
     Background="Transparent"
@@ -73,8 +73,8 @@
                         Background="#E11B242B"
                         BorderThickness="0"
                         Foreground="White"
-                        SelectedValue="{Binding SelectedFindedArtist, UpdateSourceTrigger=PropertyChanged}"
-                        ItemsSource="{Binding FindedArtist}">
+                        ItemsSource="{Binding FindedArtist}"
+                        SelectedValue="{Binding SelectedFindedArtist, UpdateSourceTrigger=PropertyChanged}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">

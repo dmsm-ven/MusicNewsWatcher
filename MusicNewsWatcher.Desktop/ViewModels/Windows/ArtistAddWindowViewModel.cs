@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
-public partial class AddOrEditArtistDialogViewModel : ObservableObject
+public partial class ArtistAddWindowViewModel : ObservableObject
 {
     public bool IsEdit { get; init; }
 
@@ -26,7 +26,7 @@ public partial class AddOrEditArtistDialogViewModel : ObservableObject
     [ObservableProperty]
     private ArtistViewModel selectedFindedArtist;
 
-    public AddOrEditArtistDialogViewModel(MusicProviderViewModel provider)
+    public ArtistAddWindowViewModel(MusicProviderViewModel provider)
     {
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
         ContextArtist.Initialize(provider, new(provider.MusicProviderId, 0, "Новый исполнитель", provider.Uri, string.Empty));
