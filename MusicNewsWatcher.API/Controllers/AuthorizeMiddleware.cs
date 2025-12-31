@@ -1,12 +1,9 @@
 ﻿
 using Microsoft.Extensions.Options;
+using MusicNewsWatcher.API.Models;
 
 namespace MusicNewsWatcher.API.Controllers;
 
-public class AuthorizeMiddlewareOptions
-{
-    public string AccessToken { get; set; } = string.Empty;
-}
 public class AuthorizeMiddleware : IMiddleware
 {
     private readonly string apiKey;

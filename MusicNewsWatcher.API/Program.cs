@@ -10,10 +10,13 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
                      .AddEnvironmentVariables();
 
 builder.Services.AddMusicNewsWatcherApi(builder.Configuration);
-builder.Services.AddScoped<AuthorizeMiddleware>();
-builder.Services.AddControllers();
+builder.Services.AddTelegramBot(builder.Configuration);
+
 builder.Services.AddHostedService<CrawlerHostedService>();
 builder.Services.AddHostedService<TelegramBotHostedService>();
+
+builder.Services.AddScoped<AuthorizeMiddleware>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.API.Controllers;
 using MusicNewsWatcher.API.DataAccess;
+using MusicNewsWatcher.API.Models;
 using MusicNewsWatcher.API.MusicProviders;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.API.Services;
@@ -12,10 +12,25 @@ namespace MusicNewsWatcher.API;
 
 public static class DependencyInjectionExtensions
 {
+    public static IServiceCollection AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MusicWatcherTelegramBotConfiguration>(configuration.GetSection(nameof(MusicWatcherTelegramBotConfiguration)));
+        services.AddSingleton<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
+        services.AddSingleton<ITelegramBotClient>(provider =>
+        {
+            var options = configuration
+                .GetSection(nameof(MusicWatcherTelegramBotConfiguration))
+                .Get<MusicWatcherTelegramBotConfiguration>();
+            return new TelegramBotClient(options.ApiKey);
+        });
+        services.AddSingleton<MusicWatcherTelegramBotClient>();
+
+        return services;
+    }
     public static IServiceCollection AddMusicNewsWatcherApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AuthorizeMiddlewareOptions>(configuration.GetSection(nameof(AuthorizeMiddlewareOptions)));
-        services.Configure<TelegramBotConfiguration>(configuration.GetSection(nameof(TelegramBotConfiguration)));
+
 
         //MusicNewsWatcher.BotService code moved here
         services.AddDbContextFactory<MusicWatcherDbContext>(options =>
@@ -30,15 +45,6 @@ public static class DependencyInjectionExtensions
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
         services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
 
-
-        services.AddSingleton<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
-        services.AddSingleton<ITelegramBotClient>(options =>
-        {
-            return new TelegramBotClient(configuration.GetSection("TelegramBotConfiguration:ApiKey").Value ?? throw new ArgumentNullException());
-        });
-        services.AddSingleton<TelegramBotRoutes>();
-        services.AddSingleton<TelegramBotCommandHandlers>();
-        services.AddSingleton<MusicNewsWatcherTelegramBot>();
 
         return services;
     }

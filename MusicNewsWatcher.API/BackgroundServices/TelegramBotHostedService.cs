@@ -5,15 +5,15 @@ namespace MusicNewsWatcher.API.BackgroundServices;
 
 public sealed class TelegramBotHostedService : BackgroundService
 {
-    private readonly MusicNewsWatcherTelegramBot botClient;
+    private readonly MusicWatcherTelegramBotClient bot;
     private readonly MusicUpdateManager updateManager;
     private readonly ILogger<TelegramBotHostedService> logger;
 
-    public TelegramBotHostedService(MusicNewsWatcherTelegramBot botClient,
+    public TelegramBotHostedService(MusicWatcherTelegramBotClient bot,
         MusicUpdateManager updateManager,
         ILogger<TelegramBotHostedService> logger)
     {
-        this.botClient = botClient;
+        this.bot = bot;
         this.updateManager = updateManager;
         this.logger = logger;
     }
@@ -22,10 +22,9 @@ public sealed class TelegramBotHostedService : BackgroundService
     {
         logger.LogInformation($"Запуск службы Telegram бота ...");
 
-        botClient.OnForceUpdateCommandRecevied += BotRoutes_OnForceUpdateCommandRecevied;
         try
         {
-            botClient.Start();
+            bot.Start(stoppingToken);
             logger.LogInformation("Telegram бот запущен");
         }
         catch (Exception ex)
@@ -40,28 +39,6 @@ public sealed class TelegramBotHostedService : BackgroundService
         }
 
         logger.LogInformation("Выход из службы телеграм бота. Токен отмены: {stoppingToken}", stoppingToken);
-    }
-
-    private async void BotRoutes_OnForceUpdateCommandRecevied()
-    {
-        try
-        {
-            logger.LogTrace("Начало выполнения команды форсированного выполнения");
-            var newAlbumsFound = await updateManager.CheckUpdatesAllAsync(CancellationToken.None);
-            logger.LogTrace("Конец выполнения команды форсированного выполнения. Найдено {newAlbumsFound} новых альбомов",
-                newAlbumsFound);
-        }
-        catch
-        {
-            logger.LogError("Ошибка выполнения команды форсированного обновления");
-            throw;
-        }
-    }
-
-    public override void Dispose()
-    {
-        botClient?.Dispose();
-        base.Dispose();
     }
 }
 
