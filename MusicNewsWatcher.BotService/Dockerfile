@@ -9,7 +9,7 @@ WORKDIR /src
 COPY ["MusicNewsWatcher.BotService/MusicNewsWatcher.BotService.csproj", "MusicNewsWatcher.BotService/"]
 COPY ["MusicNewsWatcher.Core/MusicNewsWatcher.Core.csproj", "MusicNewsWatcher.Core/"]
 COPY ["MusicNewsWatcher.TelegramBot/MusicNewsWatcher.TelegramBot.csproj", "MusicNewsWatcher.TelegramBot/"]
-COPY ["MusicNewWatcher.BL/MusicNewWatcher.BL.csproj", "MusicNewWatcher.BL/"]
+COPY ["MusicNewsWatcher.BL/MusicNewsWatcher.BL.csproj", "MusicNewsWatcher.BL/"]
 RUN dotnet restore "./MusicNewsWatcher.BotService/./MusicNewsWatcher.BotService.csproj"
 COPY . .
 WORKDIR "/src/MusicNewsWatcher.BotService"

@@ -1,0 +1,35 @@
+﻿<UserControl
+    x:Class="MusicNewsWatcher.Desktop.Views.Controls.Sections.ArtistsSectionControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:v="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls.Items"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Items"
+    d:Background="White"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:MusicProviderViewModel},
+                                     IsDesignTimeCreatable=False}"
+    d:DesignHeight="300"
+    d:DesignWidth="300"
+    mc:Ignorable="d">
+    <ScrollViewer
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Center"
+        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+        ScrollViewer.VerticalScrollBarVisibility="Auto">
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding TrackedArtists, UpdateSourceTrigger=PropertyChanged}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <v:ArtistItemControl DataContext="{Binding}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel HorizontalAlignment="Center" IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

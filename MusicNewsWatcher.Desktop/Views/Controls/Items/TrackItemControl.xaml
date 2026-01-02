@@ -1,0 +1,63 @@
+﻿<UserControl
+    x:Class="MusicNewsWatcher.Desktop.Views.Controls.Items.TrackItemControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:local="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Items"
+    d:Background="White"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:TrackViewModel},
+                                     IsDesignTimeCreatable=True}"
+    mc:Ignorable="d">
+    <Grid Margin="8,0,2,0">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button
+            Grid.Column="0"
+            VerticalAlignment="Center"
+            Panel.ZIndex="99"
+            Command="{Binding OpenInBrowserCommand}"
+            CommandParameter="{Binding DownloadUri}"
+            DockPanel.Dock="Left"
+            Style="{StaticResource ToolButtonStyle}"
+            Visibility="{Binding Path=DataContext.InProgress, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter='inverse'}">
+            <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource LinkIconSize}" />
+        </Button>
+
+        <icons:PackIconFontAwesome
+            Grid.Column="1"
+            VerticalAlignment="Center"
+            Foreground="#FF6262"
+            Kind="{Binding DownloadResult, Converter={StaticResource TrackDownloadResultToIconKind}}"
+            Style="{StaticResource LinkIconSize}"
+            Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" />
+
+        <Label
+            Grid.Column="2"
+            Margin="6,0,4,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Right"
+            VerticalContentAlignment="Center"
+            Content="{Binding Name}"
+            FontSize="13"
+            Foreground="Navy" />
+
+        <ProgressBar
+            Grid.ColumnSpan="3"
+            Panel.ZIndex="99"
+            BorderBrush="Transparent"
+            BorderThickness="0"
+            Foreground="#4226AB"
+            IsIndeterminate="True"
+            Opacity="0.4"
+            Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibilityConverter}}" />
+    </Grid>
+</UserControl>

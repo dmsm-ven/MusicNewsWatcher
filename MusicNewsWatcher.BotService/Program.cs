@@ -6,8 +6,8 @@ using MusicNewsWatcher.BotService.HostedServices;
 using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
-using MusicNewWatcher.BL;
-using MusicNewWatcher.BL.MusicProviders;
+using MusicNewsWatcher.BL;
+using MusicNewsWatcher.BL.MusicProviders;
 using Telegram.Bot;
 
 public static class Program

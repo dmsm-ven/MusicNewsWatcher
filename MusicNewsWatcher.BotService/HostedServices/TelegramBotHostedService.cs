@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MusicNewsWatcher.TelegramBot;
-using MusicNewWatcher.BL;
+using MusicNewsWatcher.BL;
 
 namespace MusicNewsWatcher.BotService.HostedServices;
 

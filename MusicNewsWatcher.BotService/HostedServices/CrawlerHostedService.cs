@@ -4,7 +4,7 @@ using MusicNewsWatcher.Core;
 using MusicNewsWatcher.Core.Extensions;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
-using MusicNewWatcher.BL;
+using MusicNewsWatcher.BL;
 
 namespace MusicNewsWatcher.BotService.HostedServices;
 
