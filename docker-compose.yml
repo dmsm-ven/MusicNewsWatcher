@@ -21,7 +21,7 @@ services:
     restart: always
     env_file: ".env.db"
     volumes:
-      - mnwatcher_pgdata:/var/lib/postgresql/data # Persists data in a named volume
+      - pgdata:/var/lib/postgresql
     networks:
       - mnwatcher_network
 
@@ -31,6 +31,5 @@ networks:
     external: false
 
 volumes:
-  mnwatcher_pgdata:
-    name: mnwatcher_pgdata
-    external: false
+  pgdata:
+    name: pgdata_mnwatcher
