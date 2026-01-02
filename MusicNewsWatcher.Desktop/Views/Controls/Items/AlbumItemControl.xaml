@@ -1,0 +1,86 @@
+﻿<UserControl
+    x:Class="MusicNewsWatcher.Desktop.Views.Controls.Items.AlbumItemControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:local="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Items"
+    d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False,
+                                     Type={x:Type vm:AlbumViewModel}}"
+    mc:Ignorable="d">
+    <Border
+        Margin="2,2,4,12"
+        BorderBrush="{Binding IsActiveAlbum, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Yellow;Gray'}"
+        BorderThickness="2"
+        CornerRadius="0">
+        <Border.Effect>
+            <DropShadowEffect Color="LightGray" />
+        </Border.Effect>
+        <Grid>
+            <beh:Interaction.Triggers>
+                <beh:EventTrigger EventName="PreviewMouseDown">
+                    <beh:InvokeCommandAction Command="{Binding SelectThisAlbumCommand}" />
+                </beh:EventTrigger>
+            </beh:Interaction.Triggers>
+
+            <Button
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Panel.ZIndex="99"
+                Background="#bf000000"
+                Command="{Binding ToggleMultiselectStateCommand}"
+                Style="{StaticResource ToolButtonStyle}"
+                Visibility="{Binding IsChecked, Converter={StaticResource NotNullToVisibilityConverter}, FallbackValue=Hidden}">
+                <icons:PackIconFontAwesome
+                    Foreground="White"
+                    Kind="{Binding CurrentMultiselectStateIcon}"
+                    Style="{StaticResource SmallIconSize}" />
+            </Button>
+
+
+            <Image
+                Width="120"
+                Height="120"
+                d:Source="/Assets/bricks.jpg"
+                Source="{Binding CachedImage, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToImageSourceConverter}}"
+                Stretch="UniformToFill" />
+            <ProgressBar
+                Panel.ZIndex="99"
+                d:IsIndeterminate="False"
+                IsIndeterminate="True"
+                Opacity="0.5"
+                Visibility="{Binding InProgress, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <Button
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Panel.ZIndex="99"
+                Command="{Binding OpenInBrowserCommand}"
+                CommandParameter="{Binding Uri}"
+                Style="{StaticResource ToolButtonStyle}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
+                    <TextBlock Text="{Binding Created, StringFormat=yyyy}" d:Text="2000"
+                               Background="#0000007F"
+                               Margin="0,-2,4,0" Foreground="Beige" FontFamily="Impact" FontSize="13"/>
+                    <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource SmallIconSize}" />
+                </StackPanel>
+            </Button>
+
+            <Label
+                MaxWidth="120"
+                Margin="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Bottom"
+                HorizontalContentAlignment="Left"
+                Background="#7f000000"
+                Content="{Binding Title}"
+                d:Content="Название альбома"
+                FontSize="11"
+                FontWeight="Bold"
+                Foreground="White" />
+        </Grid>
+    </Border>
+</UserControl>

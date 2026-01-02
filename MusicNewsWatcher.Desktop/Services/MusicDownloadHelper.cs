@@ -1,58 +1,55 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MusicNewsWatcher.Core.Models;
-using MusicNewsWatcher.Desktop.Models.ViewModels;
+using MusicNewsWatcher.Desktop.Interfaces;
+using MusicNewsWatcher.Desktop.Models;
+using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
 public class MusicDownloadHelper
 {
-    private readonly IMusicDownloadManager musicDownloadManager;
+    private readonly MultithreadHttpDownloadManager musicDownloadManager;
     private readonly IToastsNotifier toasts;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbFactory;
     private readonly ILogger<MusicDownloadHelper> logger;
+    private readonly string musicDownloadFolder;
 
-    public MusicDownloadHelper(IMusicDownloadManager musicDownloadManager,
+    public MusicDownloadHelper(MultithreadHttpDownloadManager musicDownloadManager,
         IToastsNotifier toasts,
-        IDbContextFactory<MusicWatcherDbContext> dbFactory,
+        IOptions<MusicDownloadFolderOptions> options,
         ILogger<MusicDownloadHelper> logger)
     {
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
-        this.dbFactory = dbFactory;
         this.logger = logger;
+        this.musicDownloadFolder = options.Value.MusicDownloadFolder;
+        this.musicDownloadManager.ThreadLimit = 1;
     }
 
-    public async Task DownloadAlbum(AlbumViewModel album, bool openFolder, CancellationToken token)
+    public async Task DownloadAlbum(AlbumViewModel album, CancellationToken token)
     {
         album.InProgress = true;
 
-        using (var db = dbFactory.CreateDbContext())
-        {
-            int parallelDownloads = int.Parse(db.Settings?.Find("DownloadThreadsNumber")?.Value ?? "1");
 
-            musicDownloadManager.ThreadLimit = parallelDownloads;
-        }
 
         try
         {
-            logger.LogInformation("Начало загрузки альбома {albumName}", album.DisplayName);
-            await DownloadAlbumTracks(album, openFolder, token);
-            logger.LogInformation("Конец загрузки альбома {albumName}", album.DisplayName);
+            logger.LogInformation("Начало загрузки альбома {albumName}", album.Title);
+            await DownloadAlbumTracks(album, token);
+            logger.LogInformation("Конец загрузки альбома {albumName}", album.Title);
 
-            toasts.ShowSuccess($"Альбом загружен: {album.DisplayName}");
+            toasts.ShowSuccess($"Альбом загружен: {album.Title}");
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("Загрузка альбома отменена {albumName}", album.DisplayName);
+            logger.LogInformation("Загрузка альбома отменена {albumName}", album.Title);
             toasts.ShowError($"Загрузка альбома отменена");
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Ошибка загрузки альбома '{albumName} - {msg}'", album.DisplayName, ex.Message);
-            toasts.ShowError($"Ошибка загрузки альбома '{album.DisplayName}'\r\n{ex.Message}");
+            logger.LogWarning("Ошибка загрузки альбома '{albumName} - {msg}'", album.Title, ex.Message);
+            toasts.ShowError($"Ошибка загрузки альбома '{album.Title}'\r\n{ex.Message}");
         }
         finally
         {
@@ -66,31 +63,25 @@ public class MusicDownloadHelper
 
         foreach (var album in albums)
         {
-            await DownloadAlbum(album, false, cts.Token);
+            await DownloadAlbum(album, cts.Token);
         }
     }
 
-    private async Task DownloadAlbumTracks(AlbumViewModel album, bool openFolderAfterDownload, CancellationToken token)
+    private async Task DownloadAlbumTracks(AlbumViewModel album, CancellationToken token)
     {
         Stopwatch sw = Stopwatch.StartNew();
 
-        var albumModel = new AlbumModel()
+        var albumModel = new AlbumDownloadModel()
         {
-            AlbumDisplayName = album.DisplayName,
-            ArtistDisplayName = album.ParentArtist.DisplayName,
-            Tracks = album.Tracks.Select(t => new TrackModel()
+            AlbumDisplayName = album.Title,
+            ArtistDisplayName = album.ParentArtist.Name,
+            Tracks = album.Tracks.Select(t => new TrackDownloadModel()
             {
                 DownloadUri = t.DownloadUri
             }).ToList()
         };
 
-        string albumDir = await musicDownloadManager.DownloadFullAlbum(albumModel, FileBrowserHelper.DownloadDirectory, token);
+        await musicDownloadManager.DownloadFullAlbum(albumModel, musicDownloadFolder, token);
 
-        await Task.Delay(TimeSpan.FromSeconds(1));
-
-        if (openFolderAfterDownload)
-        {
-            FileBrowserHelper.OpenFolderInFileBrowser(albumDir);
-        }
     }
 }

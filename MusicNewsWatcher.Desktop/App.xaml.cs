@@ -1,21 +1,17 @@
-﻿global using Microsoft.EntityFrameworkCore;
-global using Microsoft.Extensions.DependencyInjection;
-global using MusicNewsWatcher.Core;
+﻿global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Desktop.Services;
 global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
-global using ToastNotifications;
-global using ToastNotifications.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.Core.Models;
-using MusicNewWatcher.BL;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using MusicNewsWatcher.ApiClient;
+using MusicNewsWatcher.Desktop.Interfaces;
+using MusicNewsWatcher.Desktop.Models;
+using MusicNewsWatcher.Desktop.ViewModels.Windows;
+using System.Net.Http;
 using System.Windows;
 
 namespace MusicNewsWatcher.Desktop;
@@ -26,7 +22,6 @@ public partial class App : Application
 {
     public static IHost HostContainer { get; private set; }
     public static Mutex mutex;
-
     public App()
     {
         mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
@@ -39,43 +34,42 @@ public partial class App : Application
         HostContainer = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(options =>
             {
-                //options.AddUserSecrets(this.GetType().Assembly);
+                options.AddUserSecrets(this.GetType().Assembly);
             })
             .ConfigureServices((context, services) =>
             {
-                services.AddDbContextFactory<MusicWatcherDbContext>(options =>
-                {
-                    options.UseNpgsql(context.Configuration.GetConnectionString("default"));
-                });
-
                 services.AddToasts();
-                //services.AddNotifyIcon();
-                services.AddTelegramBot(context.Configuration);
+                services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
+                services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
+                services.AddOptions<MusicWatcherApiConfiguration>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
+                services.AddOptions<ApiConnectionConfiguration>().Bind(context.Configuration.GetSection(nameof(ApiConnectionConfiguration)));
 
-                services.AddTransient<ISyncLibraryTracker, SyncLibraryTracker>();
+                services.AddHttpClient<MultithreadHttpDownloadManager>();
+                services.AddHttpClient(nameof(MusicNewsWatcherApiClient), client =>
+                {
+                    var options = context.Configuration.GetSection(nameof(ApiConnectionConfiguration)).Get<ApiConnectionConfiguration>()
+ ?? throw new InvalidOperationException("MusicWatcherApiConfiguration is not configured properly.");
+                    client.BaseAddress = new Uri(options.Host);
+                    client.DefaultRequestHeaders.Authorization = new("Bearer", options.AccessToken);
+                });
+                services.AddSingleton<MusicNewsWatcherApiClient>(sp =>
+                {
+                    var factory = sp.GetRequiredService<IHttpClientFactory>();
+                    var httpClient = factory.CreateClient(nameof(MusicNewsWatcherApiClient));
+                    return new MusicNewsWatcherApiClient(httpClient);
+                });
+                services.AddSingleton<IImageThumbnailCacheService, ImageThumbnailCacheService>();
                 services.AddTransient<IDialogWindowService, DialogWindowService>();
 
-                services.AddTransient<AddNewArtistDialogViewModel>();
-                services.AddTransient<AddNewArtistDialog>();
+                services.AddTransient<ArtistAddWindow>();
+                services.AddTransient<ArtistAddWindowViewModel>();
 
-                services.AddMusicProviders();
-                services.AddSingleton<IMusicDownloadManager, SimpleHttpMusicDownloadManager>();
-                services.AddSingleton<IMusicNewsCrawler, EfMusicNewsCrawler>();
                 services.AddSingleton<MusicDownloadHelper>();
-                services.AddSingleton<MusicUpdateManager>();
 
-                services.AddSingleton<SettingsWindowViewModel>();
-                services.AddTransient<SettingsWindow>();
-
-                services.AddTransient<SyncLibraryWindow>();
-                services.AddTransient<SyncLibraryWindowViewModel>();
-
-                services.AddSingleton<MainWindowViewModel>();
+                services.AddViewModels();
             })
             .Build();
-
     }
-
     protected override async void OnStartup(StartupEventArgs e)
     {
         //Окно занимает 85% экрана
@@ -86,41 +80,7 @@ public partial class App : Application
         mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
         mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
         mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
-
-        //await DownloadCustomAlbums();
-
         mainWindow.ShowDialog();
-    }
-
-    private async Task DownloadCustomAlbums()
-    {
-        var albumsToDownload = File.ReadAllLines(@"C:\Users\user\Desktop\music-to-download.txt");
-        var downloadFolder = @"D:\Programming\Projects\Parsing\MusicNewsWatcher\MusicNewsWatcher.Desktop\bin\Debug\net6.0-windows\downloads";
-
-
-        MusicUpdateManager updateManager = HostContainer.Services.GetRequiredService<MusicUpdateManager>();
-        MusicProviderBase musifyProvider = HostContainer.Services.GetRequiredService<IEnumerable<MusicProviderBase>>().Last();
-        IMusicDownloadManager downloadManager = HostContainer.Services.GetRequiredService<IMusicDownloadManager>();
-
-        int i = 0;
-        foreach (var uri in albumsToDownload)
-        {
-            var albumItem = new Core.DataAccess.Entity.AlbumEntity()
-            {
-                Uri = uri,
-                AlbumId = i++,
-            };
-            var albumTracks = await musifyProvider.GetTracksAsync(albumItem);
-
-            var albumModel = new AlbumModel()
-            {
-                Tracks = albumTracks.Select(i => new TrackModel() { DownloadUri = i.DownloadUri }).ToList(),
-                AlbumDisplayName = $"Album_number_{albumItem.AlbumId}",
-                ArtistDisplayName = "CustomArtist"
-            };
-
-            await downloadManager.DownloadFullAlbum(albumModel, downloadFolder);
-        }
     }
 
     protected override async void OnExit(ExitEventArgs e)

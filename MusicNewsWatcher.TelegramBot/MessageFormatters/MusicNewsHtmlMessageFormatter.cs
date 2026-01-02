@@ -1,5 +1,4 @@
-﻿using MusicNewsWatcher.Core;
-using MusicNewsWatcher.Core.Dto;
+﻿using MusicNewsWatcher.Core.Models.Dtos;
 using System.Text;
 
 namespace MusicNewsWatcher.TelegramBot.MessageFormatters;
@@ -14,7 +13,7 @@ public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 
         foreach (var album in newAlbums)
         {
-            sb.AppendLine($"- <a href=\"{album.uri}\" target=\"_blank\">{album.name}</a>");
+            sb.AppendLine($"- <a href=\"{album.Uri}\" target=\"_blank\">{album.Title}</a>");
         }
         string message = sb.ToString();
 

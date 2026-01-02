@@ -2,24 +2,20 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows</TargetFramework>
-		<Nullable>enable</Nullable>
+		<TargetFramework>net10.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<UserSecretsId>006bff16-bff8-4116-b34e-33c789dbedd4</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="appsettings.json" />
-		<None Remove="Assets\background-texture.jpg" />
-		<None Remove="Assets\bandcamp-logo.png" />
-		<None Remove="Assets\bricks.jpg" />
-		<None Remove="Assets\cosmos-texture.jpg" />
-		<None Remove="Assets\image-placeholder.jpg" />
-		<None Remove="Assets\musify-logo.png" />
-		<None Remove="Assets\settings-window-background-texture.jpg" />
-		<None Remove="logo.ico" />
+	  <None Remove="Assets\background-texture.jpg" />
+	  <None Remove="Assets\bandcamp-logo.png" />
+	  <None Remove="Assets\bricks.jpg" />
+	  <None Remove="Assets\cosmos-texture.jpg" />
+	  <None Remove="Assets\image-placeholder.jpg" />
+	  <None Remove="Assets\musify-logo.png" />
+	  <None Remove="Assets\settings-window-background-texture.jpg" />
 	</ItemGroup>
-
 	<ItemGroup>
 	  <Content Include="appsettings.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -27,52 +23,46 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.74" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
 		<PackageReference Include="LoadingSpinner.WPF" Version="1.0.0" />
-		<PackageReference Include="MahApps.Metro.IconPacks.FontAwesome" Version="5.1.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.2" />
+		<PackageReference Include="MahApps.Metro.IconPacks.FontAwesome" Version="6.2.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
-		<PackageReference Include="ToastNotifications" Version="2.5.1" />
-		<PackageReference Include="ToastNotifications.Messages" Version="2.5.1" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="Assets\background-texture.jpg">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\bandcamp-logo.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\bricks.jpg">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\cosmos-texture.jpg">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\image-placeholder.jpg">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\musify-logo.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-		<Resource Include="Assets\settings-window-background-texture.jpg">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
+		<Content Include="Assets\background-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\bandcamp-logo.png">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\bricks.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\cosmos-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\image-placeholder.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\musify-logo.png">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\settings-window-background-texture.jpg">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 		<Resource Include="logo.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\MusicNewsWatcher.ApiClient\MusicNewsWatcher.ApiClient.csproj" />
 		<ProjectReference Include="..\MusicNewsWatcher.Core\MusicNewsWatcher.Core.csproj" />
-		<ProjectReference Include="..\MusicNewsWatcher.TelegramBot\MusicNewsWatcher.TelegramBot.csproj" />
-		<ProjectReference Include="..\MusicNewWatcher.BL\MusicNewWatcher.BL.csproj" />
 	</ItemGroup>
 
 </Project>
