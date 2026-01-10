@@ -94,21 +94,30 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
 
     private async Task RefreshTracksSource()
     {
-        var tracksEntities = await apiClient.GetAlbumTracksAsync(ParentArtist.ParentProvider.MusicProviderId, this.ParentArtist.ArtistId, AlbumId);
+        InProgress = true;
+        try
+        {
+            var tracksEntities = await apiClient.GetAlbumTracksAsync(ParentArtist.ParentProvider.MusicProviderId, this.ParentArtist.ArtistId, AlbumId);
 
-        tracksEntities
-            .Select(i => new TrackViewModel(this)
-            {
-                AlbumId = i.AlbumId,
-                Id = i.Id,
-                Name = HttpUtility.HtmlDecode(i.Name),
-                DownloadUri = i.DownloadUri
-            })
-            .OrderBy(a => a.Id)
-            .ToList()
-            .ForEach(t => Tracks.Add(t));
+            tracksEntities
+                .Select(i => new TrackViewModel(this)
+                {
+                    AlbumId = i.AlbumId,
+                    Id = i.Id,
+                    Name = HttpUtility.HtmlDecode(i.Name),
+                    DownloadUri = i.DownloadUri
+                })
+                .OrderBy(a => a.Id)
+                .ToList()
+                .ForEach(t => Tracks.Add(t));
 
-        isLoaded = true;
+
+        }
+        finally
+        {
+            isLoaded = true;
+            InProgress = false;
+        }
     }
 
     [RelayCommand]
