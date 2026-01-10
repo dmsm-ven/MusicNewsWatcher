@@ -15,4 +15,15 @@ public static class ArtistEntityExtensions
             Image: entity.Image
         );
     }
+
+    public static ArtistEntity ToEntity(this CreateArtistDto dto)
+    {
+        return new ArtistEntity()
+        {
+            MusicProviderId = dto.MusicProviderId,
+            Name = dto.Name,
+            Uri = dto.Uri,
+            Image = dto.Image
+        };
+    }
 }

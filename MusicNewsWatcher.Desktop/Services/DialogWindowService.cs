@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
@@ -17,14 +18,17 @@ public class DialogWindowService : IDialogWindowService
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
         var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
-        dialogWindow.DataContext = new ArtistAddWindowViewModel(musicProvider);
+        var apiClient = host.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+        dialogWindow.DataContext = new ArtistAddWindowViewModel(musicProvider, apiClient);
         dialogWindow.ShowDialog();
     }
 
     public void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel)
     {
         var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
-        var vm = new ArtistAddWindowViewModel(musicProvider)
+        var apiClient = host.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+
+        var vm = new ArtistAddWindowViewModel(musicProvider, apiClient)
         {
             ContextArtist = artistViewModel,
             IsEdit = true

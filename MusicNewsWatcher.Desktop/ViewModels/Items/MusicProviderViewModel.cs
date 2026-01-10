@@ -6,6 +6,7 @@ using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
@@ -90,18 +91,13 @@ public partial class MusicProviderViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
     private async Task DeleteArtist()
     {
-        throw new NotImplementedException();
-        //var dialogResult = MessageBox.Show($"Удалить '{SelectedArtist!.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        //if (dialogResult == MessageBoxResult.Yes)
-        //{
-
-        //    dbContext.Artists.Remove(dbContext.Artists.Find(SelectedArtist.ArtistId)!);
-        //    await dbContext.SaveChangesAsync();
-
-        //    toasts.ShowSuccess($"Исполнитель удален из списка на отслеживание");
-        //    TrackedArtists.Remove(SelectedArtist);
-        //    SelectedArtist = null;
-        //}
+        if (SelectedArtist == null) { return; }
+        var dialogResult = MessageBox.Show($"Удалить '{SelectedArtist!.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (dialogResult == MessageBoxResult.Yes)
+        {
+            await apiClient.DeleteArtist(MusicProviderId, SelectedArtist.ArtistId);
+            this.TrackedArtists.Remove(SelectedArtist);
+        }
     }
 
     [RelayCommand]

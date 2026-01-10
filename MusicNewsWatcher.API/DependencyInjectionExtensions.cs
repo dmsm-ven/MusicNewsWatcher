@@ -40,7 +40,11 @@ public static class DependencyInjectionExtensions
         });
 
         services.AddHttpClient();
+
+        services.AddSingleton<CrawlerHttpClientProviderFactory>();
+
         services.AddSingleton<MusicNewsCrawler>();
+
         services.AddSingleton<MusicUpdateManager>();
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
         services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();

@@ -1,7 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MusicNewsWatcher.ApiClient;
+using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Windows;
 
@@ -25,14 +28,16 @@ public partial class ArtistAddWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private ArtistViewModel selectedFindedArtist;
+    private readonly MusicNewsWatcherApiClient apiClient;
 
-    public ArtistAddWindowViewModel(MusicProviderViewModel provider)
+    public ArtistAddWindowViewModel(MusicProviderViewModel provider, MusicNewsWatcherApiClient apiClient)
     {
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
         ContextArtist.Initialize(provider, new(provider.MusicProviderId, 0, "Новый исполнитель", provider.Uri, string.Empty));
 
         MusicProviders.Add(provider);
         SelectedMusicProvider = provider;
+        this.apiClient = apiClient;
     }
 
     partial void OnSelectedFindedArtistChanged(ArtistViewModel? oldValue, ArtistViewModel newValue)
@@ -52,7 +57,7 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSearchResults()
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
         /*
         FindedArtist.Clear();
 
@@ -82,36 +87,23 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Submit(object obj)
+    private async Task Submit(object obj)
     {
-        throw new NotImplementedException();
-        /*
-        if (SelectedMusicProvider == null) { return; }
-
-        var entity = new ArtistEntity()
+        if (SelectedMusicProvider == null)
         {
-            Name = ContextArtist.Name,
-            Image = ContextArtist.Image,
-            Uri = ContextArtist.Uri,
-            MusicProviderId = SelectedMusicProvider.MusicProviderId,
-            ArtistId = ContextArtist.ArtistId
-        };
+            return;
+        }
 
         if (IsEdit)
         {
-            if (ContextArtist.ArtistId != 0)
-            {
-                dbContext.Artists.Remove(dbContext.Artists.Find(ContextArtist.ArtistId));
-                dbContext.Artists.Add(entity);
-                dbContext.SaveChanges();
-            }
+            throw new NotImplementedException("Редактирование не реализовано");
         }
-        else // add
+        else
         {
-            dbContext.Artists.Add(entity);
-            dbContext.SaveChanges();
+            var artist = new CreateArtistDto(SelectedMusicProvider.MusicProviderId, ContextArtist.Name, ContextArtist.Uri, ContextArtist.Image);
+            await apiClient.CreateArtist(artist);
         }
+
         (obj as Window).DialogResult = true;
-        */
     }
 }

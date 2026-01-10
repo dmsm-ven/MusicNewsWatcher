@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
-using MusicNewsWatcher.API.DataAccess.MapperExtensions;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Core.Models.Dtos;
@@ -15,8 +14,6 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         ILogger<MusicUpdateManager> logger,
         MusicNewsCrawler crawler)
 {
-    public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
-
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
     public DateTimeOffset LastUpdate { get; private set; }
@@ -49,7 +46,6 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// <returns></returns>
     public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-
         int newAlbumsFound = 0;
 
         var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
@@ -68,7 +64,6 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 .ForEach(i =>
                 {
                     newAlbumsFound += i.NewAlbums!.Length;
-                    OnNewAlbumsFound?.Invoke(this, i);
                 });
         }
 
@@ -84,24 +79,16 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
-        var newAlbums = await crawler.CheckUpdatesForArtistAndSaveIfHasAsync(provider, artistId);
         var artist = await dbContext.Artists.FindAsync(artistId);
-        if (artist != null && newAlbums != null && newAlbums.Any())
-        {
-            var newAlbumsData = newAlbums.Select(album => album.ToDto()).ToArray();
-            var e = new NewAlbumsFoundEventArgs()
-            {
-                Provider = provider.Name,
-                Artist = artist.ToDto(),
-                NewAlbums = newAlbumsData
-            };
-            OnNewAlbumsFound?.Invoke(this, e);
-        }
+
+        logger.LogInformation("Начало получения обновлений альбомов для артиста {artist}", artist.Name);
+        var newAlbums = await crawler.RefreshArtist(provider, artistId);
+        logger.LogInformation("Получены альбомы для артиста {artist} ({count} альбомов)", artist.Name, newAlbums.Count);
     }
     public async Task CheckUpdatesForAlbumAsync(int providerId, int albumId)
     {
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
-        await crawler.CheckUpdatesForAlbumAsync(provider, albumId);
+        await crawler.RefreshAlbum(provider, albumId);
     }
     public async Task RunCrawler(CancellationToken stoppingToken)
     {
