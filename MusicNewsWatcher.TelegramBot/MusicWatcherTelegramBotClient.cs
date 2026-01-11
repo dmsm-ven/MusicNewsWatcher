@@ -34,6 +34,12 @@ public class MusicWatcherTelegramBotClient
         bot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: stoppingToken);
     }
 
+    public async Task<Message> NotifyAboutNewAlbumsFound(Message message)
+    {
+        return await bot.SendMessage(chatId: message.Chat.Id,
+                                text: "Функционал отключен");
+    }
+
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
     {
         var sender = update.Message?.From;
@@ -105,13 +111,6 @@ public class MusicWatcherTelegramBotClient
         return await bot.SendMessage(chatId: message.Chat.Id,
                                         text: replyText, ParseMode.Html);
 
-    }
-
-    private async Task<Message> TrackedArtistsForProviderCommand(Update update, string providerName)
-    {
-        string replyText = $"Функционал отключен";
-        return await bot.SendMessage(chatId: update.Message.Chat.Id,
-                                        text: replyText, ParseMode.Html);
     }
 
     private async Task<Message> ProviderListCommand(Message message)

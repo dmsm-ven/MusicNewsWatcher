@@ -59,6 +59,7 @@ public class MusicNewsCrawler
         }
 
         int totalAristsInDictionary = providerToArtists.Values.Sum(i => i.Count);
+
         if (totalAristsInDictionary == 0)
         {
             logger.LogWarning("Нет доступных артистов. Отмена поиска новинок");
