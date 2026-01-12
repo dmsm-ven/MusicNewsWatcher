@@ -66,6 +66,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock
@@ -75,14 +76,23 @@
 
                         <Button
                             Grid.Column="2"
-                            Command="{Binding EditArtistCommand}"
-                            Style="{StaticResource ToolButtonStyle}">
-                            <icons:PackIconFontAwesome Kind="PencilSolid" Style="{StaticResource MediumIconSize}" />
+                            Command="{Binding RefreshArtistPreviewImageToRandomCommand}"
+                            Style="{StaticResource ToolButtonStyle}"
+                            ToolTip="Обновить превью на случайный альбом">
+                            <icons:PackIconFontAwesome Kind="ImagePortraitSolid" Style="{StaticResource MediumIconSize}" />
                         </Button>
                         <Button
                             Grid.Column="3"
+                            Command="{Binding EditArtistCommand}"
+                            Style="{StaticResource ToolButtonStyle}"
+                            ToolTip="Изменить данные артиста">
+                            <icons:PackIconFontAwesome Kind="PencilSolid" Style="{StaticResource MediumIconSize}" />
+                        </Button>
+                        <Button
+                            Grid.Column="4"
                             Command="{Binding DeleteArtistCommand}"
-                            Style="{StaticResource ToolButtonStyle}">
+                            Style="{StaticResource ToolButtonStyle}"
+                            ToolTip="Удалить артиста">
                             <icons:PackIconFontAwesome Kind="TrashSolid" Style="{StaticResource MediumIconSize}" />
                         </Button>
                     </Grid>

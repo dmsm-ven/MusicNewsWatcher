@@ -34,10 +34,9 @@ public class MusicWatcherTelegramBotClient
         bot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: stoppingToken);
     }
 
-    public async Task<Message> NotifyAboutNewAlbumsFound(Message message)
+    public async Task<Message> NotifyAboutNewAlbumsFound(long chatId, string text)
     {
-        return await bot.SendMessage(chatId: message.Chat.Id,
-                                text: "Функционал отключен");
+        return await bot.SendMessage(chatId, text);
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)

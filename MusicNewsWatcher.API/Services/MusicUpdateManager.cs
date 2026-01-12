@@ -1,9 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Core.Models.Dtos;
+using MusicNewsWatcher.TelegramBot;
+using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using System.Diagnostics;
 
 namespace MusicNewsWatcher.API.Services;
@@ -11,9 +14,15 @@ namespace MusicNewsWatcher.API.Services;
 //TODO: разбить класс
 public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
+        MusicWatcherTelegramBotClient tgBot,
+        IMusicNewsMessageFormatter tgBotMessageFormatter,
+        IOptions<MusicWatcherTelegramBotConfiguration> tgBotConfig,
         ILogger<MusicUpdateManager> logger,
         MusicNewsCrawler crawler)
 {
+
+    private readonly IReadOnlyList<NewAlbumsFoundEventArgs> lastFoundAlbums;
+
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
     public DateTimeOffset LastUpdate { get; private set; }
@@ -52,19 +61,17 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
 
-            newAlbumsByProvider
+            lastFoundAlbums
                 .Select(i => new NewAlbumsFoundEventArgs()
                 {
-                    Provider = i.ProviderName,
-                    Artist = new ArtistDto(0, 0, i.ArtistName, i.ArtistUri, ""),
-                    NewAlbums = i.Albums.ToArray()
+                    Provider = i.Provider,
+                    Artist = new ArtistDto(0, 0, i.Artist.Name, i.Artist.Uri, ""),
+                    NewAlbums = i.NewAlbums
                 })
                 .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
-                .ToList()
-                .ForEach(i =>
-                {
-                    newAlbumsFound += i.NewAlbums!.Length;
-                });
+                .ToList();
+
+            newAlbumsFound = newAlbumsByProvider.Sum(i => i.Albums.Count);
         }
 
         LastUpdate = DateTimeOffset.UtcNow;
@@ -114,6 +121,15 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 LastUpdate,
                 (int)sw.Elapsed.TotalSeconds,
                 newAlbumsCount);
+
+            if (newAlbumsCount > 0)
+            {
+                foreach (var data in lastFoundAlbums)
+                {
+                    string messageText = tgBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
+                    await tgBot.NotifyAboutNewAlbumsFound(tgBotConfig.Value.ClientId, messageText);
+                }
+            }
         }
         catch (Exception ex)
         {

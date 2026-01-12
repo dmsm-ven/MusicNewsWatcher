@@ -113,6 +113,22 @@ public partial class MusicProviderViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new ProviderChangedMessage(this));
     }
 
+    [RelayCommand]
+    private void RefreshArtistPreviewImageToRandom()
+    {
+        if (SelectedArtist == null)
+        {
+            return;
+        }
+        var validAlbums = SelectedArtist.Albums.Where(a => a.Image != null && !a.Image.Contains("image-placeholder")).ToArray();
+        if (validAlbums.Length == 0)
+        {
+            return;
+        }
+        var randomAlbumImage = validAlbums[Random.Shared.Next(0, validAlbums.Length)].Image;
+        SelectedArtist.Image = randomAlbumImage;
+    }
+
     public void Initialize(MusicProviderDto provider)
     {
         if (isInitialized)

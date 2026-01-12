@@ -130,7 +130,6 @@ public partial class ArtistViewModel : ObservableObject
         InProgress = false;
         isLoaded = true;
     }
-
     private void Album_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         var album = (AlbumViewModel)sender!;
