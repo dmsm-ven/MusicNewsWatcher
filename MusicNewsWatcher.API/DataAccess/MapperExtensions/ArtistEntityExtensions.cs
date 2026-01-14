@@ -26,4 +26,15 @@ public static class ArtistEntityExtensions
             Image = dto.Image
         };
     }
+    public static ArtistEntity ToEntity(this ArtistDto dto)
+    {
+        return new ArtistEntity()
+        {
+            MusicProviderId = dto.MusicProviderId,
+            ArtistId = dto.ArtistId,
+            Name = dto.Name,
+            Uri = dto.Uri,
+            Image = dto.Image
+        };
+    }
 }

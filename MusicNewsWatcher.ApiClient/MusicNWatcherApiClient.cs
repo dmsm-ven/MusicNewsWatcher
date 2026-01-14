@@ -65,6 +65,17 @@ public class MusicNewsWatcherApiClient
         AlbumDto[]? newAlbums = await response.Content.ReadFromJsonAsync<AlbumDto[]>(cancellationToken: cancellationToken);
         return newAlbums;
     }
+    public async Task<ArtistDto?> UpdateArtist(ArtistDto data, CancellationToken cancellationToken = default)
+    {
+        var response = await client.PutAsJsonAsync($"api/providers/{data.MusicProviderId}/artists", data, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+        var artist = await response.Content.ReadFromJsonAsync<ArtistDto?>(cancellationToken: cancellationToken);
+        return artist;
+    }
     public async Task<ArtistDto?> CreateArtist(CreateArtistDto data, CancellationToken cancellationToken = default)
     {
         var response = await client.PostAsJsonAsync($"api/providers/{data.MusicProviderId}/artists", data, cancellationToken);

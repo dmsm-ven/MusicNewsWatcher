@@ -155,4 +155,25 @@ public class MusicNewsWatcherController : ControllerBase
 
         return item != null ? Ok(item) : BadRequest();
     }
+
+    [HttpPut]
+    [Route("api/providers/{provider_id}/artists")]
+    public async Task<ActionResult<ArtistDto>> UpdateArtist([FromRoute] int provider_id, [FromBody] ArtistDto dto)
+    {
+        bool isProviderExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
+        var artist = await db.Artists.FirstOrDefaultAsync(i => i.ArtistId == dto.ArtistId);
+
+        if (!isProviderExists || artist is null)
+        {
+            return BadRequest();
+        }
+
+        var item = dto.ToEntity();
+        db.Set<ArtistEntity>().Remove(artist);
+        db.Set<ArtistEntity>().Add(item);
+
+        await db.SaveChangesAsync();
+
+        return item != null ? Ok(item) : BadRequest();
+    }
 }

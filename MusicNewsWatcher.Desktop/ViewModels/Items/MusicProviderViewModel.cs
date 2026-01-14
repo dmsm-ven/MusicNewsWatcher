@@ -5,6 +5,7 @@ using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
+using MusicNewsWatcher.Desktop.ViewModels.Mappers;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -114,7 +115,7 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void RefreshArtistPreviewImageToRandom()
+    private async Task RefreshArtistPreviewImageToRandom()
     {
         if (SelectedArtist == null)
         {
@@ -125,8 +126,11 @@ public partial class MusicProviderViewModel : ObservableObject
         {
             return;
         }
+
         var randomAlbumImage = validAlbums[Random.Shared.Next(0, validAlbums.Length)].Image;
         SelectedArtist.Image = randomAlbumImage;
+
+        await apiClient.UpdateArtist(SelectedArtist.ToDto());
     }
 
     public void Initialize(MusicProviderDto provider)
