@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using MusicNewsWatcher.TelegramBot.MessageFormatters;
+using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -10,33 +10,33 @@ namespace MusicNewsWatcher.TelegramBot;
 
 public class MusicWatcherTelegramBotClient
 {
-    private readonly MusicWatcherTelegramBotConfiguration options;
-    private readonly IMusicNewsMessageFormatter messageFormatter;
+    private readonly MusicWatcherTelegramBotConfiguration config;
     private readonly ILogger<MusicWatcherTelegramBotClient> logger;
     private readonly ITelegramBotClient bot;
 
     public MusicWatcherTelegramBotClient(ITelegramBotClient bot,
-        IMusicNewsMessageFormatter messageFormatter,
-        ILogger<MusicWatcherTelegramBotClient> logger)
+        ILogger<MusicWatcherTelegramBotClient> logger,
+        IOptions<MusicWatcherTelegramBotConfiguration> options)
     {
         this.bot = bot;
-        this.messageFormatter = messageFormatter;
         this.logger = logger;
+        this.config = options.Value;
     }
 
-    public void Start(CancellationToken stoppingToken)
+    public async Task Start(CancellationToken stoppingToken)
     {
         var receiverOptions = new ReceiverOptions
         {
             AllowedUpdates = Array.Empty<UpdateType>() // receive all update types };
         };
 
+        await SendMessage($"Бот по парсингу в {DateTime.Now.ToString()}");
         bot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: stoppingToken);
     }
 
-    public async Task<Message> NotifyAboutNewAlbumsFound(long chatId, string text)
+    public async Task<Message> SendMessage(string text)
     {
-        return await bot.SendMessage(chatId, text);
+        return await bot.SendMessage(config.ClientId, text);
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)

@@ -97,7 +97,9 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
         InProgress = true;
         try
         {
-            var tracksEntities = await apiClient.GetAlbumTracksAsync(ParentArtist.ParentProvider.MusicProviderId, this.ParentArtist.ArtistId, AlbumId);
+            var tracksEntities = await apiClient.GetAlbumTracksAsync(
+                albumId: AlbumId,
+                providerId: this.ParentArtist.ParentProvider.MusicProviderId);
 
             tracksEntities
                 .Select(i => new TrackViewModel(this)

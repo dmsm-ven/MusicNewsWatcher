@@ -9,6 +9,7 @@ using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.API.Controllers;
 
+//TODO: заменить длинные url контроллеров
 [ApiController]
 public class MusicNewsWatcherController : ControllerBase
 {
@@ -35,7 +36,7 @@ public class MusicNewsWatcherController : ControllerBase
 
     [HttpGet]
     [Route("api/providers/{provider_id}/artists")]
-    public async Task<ActionResult<IEnumerable<ArtistDto>>> GetProviderArtists([FromRoute] int provider_id)
+    public async Task<ActionResult<IEnumerable<ArtistDto>>> GetProviderArtists(int provider_id)
     {
         bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
         if (!providerExists)
@@ -53,12 +54,11 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpGet]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums")]
-    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetArtistAlbums([FromRoute] int provider_id, [FromRoute] int artist_id)
+    [Route("api/artists/{artist_id}/albums")]
+    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetArtistAlbums(int artist_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
         bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        if (!providerExists || !artistExists)
+        if (!artistExists)
         {
             return NotFound();
         }
@@ -72,12 +72,11 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpDelete]
-    [Route("api/providers/{provider_id}/artists/{artist_id}")]
-    public async Task<IActionResult> DeleteArtist([FromRoute] int provider_id, [FromRoute] int artist_id)
+    [Route("api/artists/{artist_id}")]
+    public async Task<IActionResult> DeleteArtist(int artist_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
         ArtistEntity? artist = await db.Artists.FirstOrDefaultAsync(a => a.ArtistId == artist_id);
-        if (!providerExists || artist == null)
+        if (artist is null)
         {
             return NotFound();
         }
@@ -89,31 +88,26 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpPost]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums/refresh")]
-    public async Task<IActionResult> CheckArtistAlbums([FromRoute] int provider_id, [FromRoute] int artist_id)
+    [Route("api/artists/{artist_id}/refresh-albums")]
+    public async Task<IActionResult> CheckArtistAlbums(int artist_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
-        bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        if (!providerExists || !artistExists)
+        var artist = await db.Artists.FirstOrDefaultAsync(a => a.ArtistId == artist_id);
+        if (artist is null)
         {
             return NotFound();
         }
 
-        await updateManager.CheckUpdatesForArtistAsync(provider_id, artist_id);
+        await updateManager.CheckUpdatesForArtistAsync(artist.MusicProviderId, artist_id);
 
         return Accepted();
     }
 
     [HttpGet]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums/{album_id}")]
-    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetAlbumTracks([FromRoute] int provider_id,
-        [FromRoute] int artist_id,
-        [FromRoute] int album_id)
+    [Route("api/albums/{album_id}/provider/{provider_id}")]
+    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetAlbumTracks([FromRoute] int album_id, [FromRoute] int provider_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
-        bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        bool albumExists = await db.Albums.AnyAsync(a => a.AlbumId == album_id);
-        if (!providerExists || !artistExists || !albumExists)
+        var album = await db.Albums.FirstOrDefaultAsync(a => a.AlbumId == album_id);
+        if (album is null)
         {
             return NotFound();
         }
@@ -136,10 +130,10 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpPost]
-    [Route("api/providers/{provider_id}/artists")]
-    public async Task<ActionResult<ArtistDto>> CreateArtist([FromRoute] int provider_id, [FromBody] CreateArtistDto dto)
+    [Route("api/artists")]
+    public async Task<ActionResult<ArtistDto>> CreateArtist([FromBody] CreateArtistDto dto)
     {
-        bool isProviderExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
+        bool isProviderExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == dto.MusicProviderId);
         bool isArtistAlreadyExists = await db.Artists.AnyAsync(a => a.Name == dto.Name);
 
         if (!isProviderExists || isArtistAlreadyExists || string.IsNullOrWhiteSpace(dto?.Name))
@@ -151,19 +145,18 @@ public class MusicNewsWatcherController : ControllerBase
         db.Set<ArtistEntity>().Add(item);
         await db.SaveChangesAsync();
 
-        updateManager.CheckUpdatesForArtistAsync(provider_id, item.ArtistId);
+        updateManager.CheckUpdatesForArtistAsync(dto.MusicProviderId, item.ArtistId);
 
         return item != null ? Ok(item) : BadRequest();
     }
 
     [HttpPut]
-    [Route("api/providers/{provider_id}/artists")]
-    public async Task<ActionResult<ArtistDto>> UpdateArtist([FromRoute] int provider_id, [FromBody] ArtistDto dto)
+    [Route("api/artists/{artist_id}")]
+    public async Task<ActionResult<ArtistDto>> UpdateArtist(int artist_id, [FromBody] ArtistDto dto)
     {
-        bool isProviderExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
-        var artist = await db.Artists.FirstOrDefaultAsync(i => i.ArtistId == dto.ArtistId);
+        var artist = await db.Artists.FirstOrDefaultAsync(i => i.ArtistId == artist_id);
 
-        if (!isProviderExists || artist is null)
+        if (artist is null)
         {
             return BadRequest();
         }

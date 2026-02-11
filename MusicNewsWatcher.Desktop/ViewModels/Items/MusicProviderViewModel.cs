@@ -96,7 +96,7 @@ public partial class MusicProviderViewModel : ObservableObject
         var dialogResult = MessageBox.Show($"Удалить '{SelectedArtist!.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (dialogResult == MessageBoxResult.Yes)
         {
-            await apiClient.DeleteArtist(MusicProviderId, SelectedArtist.ArtistId);
+            await apiClient.DeleteArtist(SelectedArtist.ArtistId);
             this.TrackedArtists.Remove(SelectedArtist);
         }
     }

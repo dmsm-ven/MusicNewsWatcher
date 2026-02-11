@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
+using MusicNewsWatcher.Desktop.ViewModels.Mappers;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -96,7 +97,8 @@ public partial class ArtistAddWindowViewModel : ObservableObject
 
         if (IsEdit)
         {
-            throw new NotImplementedException("Редактирование не реализовано");
+            var dto = this.ContextArtist.ToDto();
+            await apiClient.UpdateArtist(dto);
         }
         else
         {

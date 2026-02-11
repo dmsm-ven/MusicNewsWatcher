@@ -1,4 +1,8 @@
 ﻿namespace MusicNewsWatcher.TelegramBot;
 
-public record MusicWatcherTelegramBotConfiguration(string ApiKey, long ClientId);
+public class MusicWatcherTelegramBotConfiguration
+{
+    public string ApiKey { get; set; }
+    public long ClientId { get; set; }
+}
 

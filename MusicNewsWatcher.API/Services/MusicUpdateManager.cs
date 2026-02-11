@@ -21,8 +21,6 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         MusicNewsCrawler crawler)
 {
 
-    private readonly IReadOnlyList<NewAlbumsFoundEventArgs> lastFoundAlbums;
-
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
     public DateTimeOffset LastUpdate { get; private set; }
@@ -53,25 +51,24 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// </summary>
     /// <param name="stoppingToken"></param>
     /// <returns></returns>
-    public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
+    public async Task<NewAlbumsFoundEventArgs[]> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-        int newAlbumsFound = 0;
+        var result = new List<NewAlbumsFoundEventArgs>();
 
         var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
+            var data = newAlbumsByProvider
+                    .Select(i => new NewAlbumsFoundEventArgs()
+                    {
+                        Provider = i.ProviderName,
+                        Artist = new ArtistDto() { Name = i.ArtistName, Uri = i.ArtistUri },
+                        NewAlbums = i.Albums.ToArray(),
+                    })
+                    .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
+                    .ToArray();
 
-            lastFoundAlbums
-                .Select(i => new NewAlbumsFoundEventArgs()
-                {
-                    Provider = i.Provider,
-                    Artist = new ArtistDto(0, 0, i.Artist.Name, i.Artist.Uri, ""),
-                    NewAlbums = i.NewAlbums
-                })
-                .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
-                .ToList();
-
-            newAlbumsFound = newAlbumsByProvider.Sum(i => i.Albums.Count);
+            result.AddRange(data);
         }
 
         LastUpdate = DateTimeOffset.UtcNow;
@@ -79,7 +76,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         await SaveLastUpdateTime();
         await RefreshLastUpdateDateTime();
 
-        return newAlbumsFound;
+        return result.ToArray();
     }
     public async Task CheckUpdatesForArtistAsync(int providerId, int artistId)
     {
@@ -112,7 +109,9 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
             Stopwatch sw = Stopwatch.StartNew();
             DateTimeOffset started = DateTimeOffset.UtcNow;
 
-            var newAlbumsCount = await CheckUpdatesAllAsync(stoppingToken);
+            logger.LogInformation("Начало переообхода на поиск новинок музыкальных альбомов");
+
+            var result = await CheckUpdatesAllAsync(stoppingToken);
 
             const string message = "[{started}] - [{finished}] Переобход выполнен за {duration} сек. Найдено {newAlbumsCount} новых альбомов";
 
@@ -120,15 +119,12 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 started,
                 LastUpdate,
                 (int)sw.Elapsed.TotalSeconds,
-                newAlbumsCount);
+                result.Sum(i => i.NewAlbums?.Length));
 
-            if (newAlbumsCount > 0)
+            foreach (var data in result)
             {
-                foreach (var data in lastFoundAlbums)
-                {
-                    string messageText = tgBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
-                    await tgBot.NotifyAboutNewAlbumsFound(tgBotConfig.Value.ClientId, messageText);
-                }
+                string messageText = tgBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
+                await tgBot.SendMessage(messageText);
             }
         }
         catch (Exception ex)

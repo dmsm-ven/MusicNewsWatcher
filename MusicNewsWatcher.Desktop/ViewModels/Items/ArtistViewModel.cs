@@ -9,7 +9,7 @@ using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
-//TODO разбить/упростить, класс делает слишком много лишнего
+
 public partial class ArtistViewModel : ObservableObject
 {
     private readonly IToastsNotifier toasts;
@@ -102,7 +102,7 @@ public partial class ArtistViewModel : ObservableObject
     private async Task GetAlbumsFromProviderForArtist()
     {
         InProgress = true;
-        await apiClient.CheckUpdatesForArtist(ParentProvider.MusicProviderId, this.ArtistId);
+        await apiClient.CheckUpdatesForArtist(ArtistId);
         await RefreshSource();
         InProgress = false;
     }
@@ -117,7 +117,7 @@ public partial class ArtistViewModel : ObservableObject
     {
         InProgress = true;
 
-        var albumsData = await apiClient.GetArtistAlbumsAsync(ParentProvider.MusicProviderId, this.ArtistId);
+        var albumsData = await apiClient.GetArtistAlbumsAsync(this.ArtistId);
 
         foreach (var albumDto in albumsData.OrderByDescending(ae => ae.Created))
         {
@@ -140,7 +140,7 @@ public partial class ArtistViewModel : ObservableObject
         }
     }
 
-    public void Initialize(MusicProviderViewModel parentProvider, ArtistDto aritst)
+    public void Initialize(MusicProviderViewModel parentProvider, ArtistDto artist)
     {
         if (isInitialized)
         {
@@ -150,10 +150,10 @@ public partial class ArtistViewModel : ObservableObject
         isInitialized = true;
 
         ParentProvider = parentProvider;
-        ArtistId = aritst.ArtistId;
-        Name = aritst.Name;
-        Image = aritst.Image;
-        Uri = aritst.Uri;
+        ArtistId = artist.ArtistId;
+        Name = artist.Name;
+        Image = artist.Image;
+        Uri = artist.Uri;
 
         this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
     }
@@ -161,14 +161,7 @@ public partial class ArtistViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshArtistAlbums()
     {
-        throw new NotImplementedException();
-        //var albumsToDelete = dbContext.Albums.Where(a => a.ArtistId == this.ArtistId).ToArray();
-        //dbContext.Albums.RemoveRange(albumsToDelete);
-        //await dbContext.SaveChangesAsync();
-        //Albums.Clear();
-
-        //await Task.Delay(TimeSpan.FromSeconds(1));
-        //await GetAlbumsFromProviderForArtist();
+        await apiClient.CheckUpdatesForArtist(this.ArtistId);
     }
 
     [RelayCommand]
