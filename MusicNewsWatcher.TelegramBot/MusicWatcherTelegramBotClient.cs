@@ -13,6 +13,8 @@ public class MusicWatcherTelegramBotClient
     private readonly MusicWatcherTelegramBotConfiguration config;
     private readonly ILogger<MusicWatcherTelegramBotClient> logger;
     private readonly ITelegramBotClient bot;
+    private readonly Dictionary<TelegramBotCommand, Func<string>> commandHandlers;
+    private bool isStarted = false;
 
     public MusicWatcherTelegramBotClient(ITelegramBotClient bot,
         ILogger<MusicWatcherTelegramBotClient> logger,
@@ -20,18 +22,32 @@ public class MusicWatcherTelegramBotClient
     {
         this.bot = bot;
         this.logger = logger;
-        this.config = options.Value;
+        this.config = options?.Value ?? throw new InvalidOperationException("TG bot options not provided");
+        this.commandHandlers = new Dictionary<TelegramBotCommand, Func<string>>();
     }
 
-    public async Task Start(CancellationToken stoppingToken)
+    public async Task Start(CancellationToken stoppingToken, Dictionary<TelegramBotCommand, Func<string>> commandHandlers)
     {
+        if (isStarted)
+        {
+            throw new InvalidOperationException("Bot already started");
+        }
+
+        isStarted = true;
+
+        this.commandHandlers[TelegramBotCommand.None] = () => "Функционал отключен";
+        foreach (var k in commandHandlers.Where(h => h.Value != null))
+        {
+            this.commandHandlers[k.Key] = k.Value;
+        }
+
         var receiverOptions = new ReceiverOptions
         {
             AllowedUpdates = Array.Empty<UpdateType>() // receive all update types };
         };
 
-        await SendMessage($"Бот по парсингу в {DateTime.Now.ToString()}");
         bot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: stoppingToken);
+
     }
 
     public async Task<Message> SendMessage(string text)
@@ -100,13 +116,17 @@ public class MusicWatcherTelegramBotClient
 
     private async Task<Message> ForceUpdateCommand(Message message)
     {
+        commandHandlers.TryGetValue(TelegramBotCommand.ExecutForceUpdate, out var callback);
+        string replyText = callback?.Invoke() ?? commandHandlers[TelegramBotCommand.None].Invoke();
+
         return await bot.SendMessage(chatId: message.Chat.Id,
-                                text: "Функционал отключен");
+                                text: replyText);
     }
 
     private async Task<Message> LastUpdateCommand(Message message)
     {
-        string replyText = $"Функционал отключен";
+        commandHandlers.TryGetValue(TelegramBotCommand.ShowLastUpdate, out var callback);
+        string replyText = callback?.Invoke() ?? commandHandlers[TelegramBotCommand.None].Invoke();
         return await bot.SendMessage(chatId: message.Chat.Id,
                                         text: replyText, ParseMode.Html);
 
@@ -114,10 +134,19 @@ public class MusicWatcherTelegramBotClient
 
     private async Task<Message> ProviderListCommand(Message message)
     {
-        string replyText = $"Функционал отключен";
+        commandHandlers.TryGetValue(TelegramBotCommand.ShowTrackedArtists, out var callback);
+        string replyText = callback?.Invoke() ?? commandHandlers[TelegramBotCommand.None].Invoke();
+
         return await bot.SendMessage(chatId: message.Chat.Id,
                                         text: replyText, ParseMode.Html);
     }
+}
 
+public enum TelegramBotCommand
+{
+    None,
+    ShowLastUpdate,
+    ExecutForceUpdate,
+    ShowTrackedArtists
 }
 

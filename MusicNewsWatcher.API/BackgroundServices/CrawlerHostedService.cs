@@ -1,23 +1,19 @@
 ﻿using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.TelegramBot;
+using MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
 
-public sealed class CrawlerHostedService : BackgroundService
+public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
+        MusicWatcherTelegramBotClient telegramBotClient,
+        IMusicNewsMessageFormatter telegramBotMessageFormatter,
+        MusicUpdateManager updateManager) : BackgroundService
 {
     public TimeSpan DefaultTimerInterval { get; } = TimeSpan.FromMinutes(60);
 
-    private readonly ILogger<CrawlerHostedService> logger;
-    private readonly MusicUpdateManager updateManager;
-
-    public CrawlerHostedService(ILogger<CrawlerHostedService> logger,
-        MusicUpdateManager updateManager)
-    {
-        this.logger = logger;
-        this.updateManager = updateManager;
-    }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        updateManager.NewAlbumsFound += UpdateManager_NewAlbumsFound;
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(DefaultTimerInterval, stoppingToken);
@@ -26,6 +22,15 @@ public sealed class CrawlerHostedService : BackgroundService
         }
 
         logger.LogInformation("Выход из службы парсера. Токен отмены: {stoppingToken}", stoppingToken);
+    }
+
+    private async void UpdateManager_NewAlbumsFound(object? sender, Core.Models.NewAlbumsFoundEventArgs[] result)
+    {
+        foreach (var data in result)
+        {
+            string messageText = telegramBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
+            await telegramBotClient.SendMessage(messageText);
+        }
     }
 
     private async Task RunCrawlerTask(CancellationToken stoppingToken)

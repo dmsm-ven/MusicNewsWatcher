@@ -1,12 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Core.Models.Dtos;
-using MusicNewsWatcher.TelegramBot;
-using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using System.Diagnostics;
 
 namespace MusicNewsWatcher.API.Services;
@@ -14,12 +11,11 @@ namespace MusicNewsWatcher.API.Services;
 //TODO: разбить класс
 public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProviders,
         IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
-        MusicWatcherTelegramBotClient tgBot,
-        IMusicNewsMessageFormatter tgBotMessageFormatter,
-        IOptions<MusicWatcherTelegramBotConfiguration> tgBotConfig,
         ILogger<MusicUpdateManager> logger,
         MusicNewsCrawler crawler)
 {
+
+    public event EventHandler<NewAlbumsFoundEventArgs[]> NewAlbumsFound;
 
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
@@ -121,15 +117,15 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 (int)sw.Elapsed.TotalSeconds,
                 result.Sum(i => i.NewAlbums?.Length));
 
-            foreach (var data in result)
-            {
-                string messageText = tgBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
-                await tgBot.SendMessage(messageText);
-            }
+            NewAlbumsFound?.Invoke(this, result);
+        }
+        catch (NotSupportedException ex)
+        {
+            logger.LogWarning($"Метод не поддерживается: {ex.Message}");
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Ошибка переобхода по таймеру: {error}", ex.Message);
+            logger.LogError("Ошибка переобхода по таймеру: {error}", ex.Message);
             throw;
         }
         finally
