@@ -14,4 +14,16 @@ public static class TrackEntityExtensions
             DownloadUri: entity.DownloadUri
         );
     }
+
+    public static TrackEntity ToEntity(this TrackDto dto)
+    {
+        return new TrackEntity()
+        {
+            AlbumId = dto.AlbumId,
+            DownloadUri = dto.DownloadUri,
+            Name = dto.Name,
+            Id = dto.Id,
+        };
+    }
+
 }

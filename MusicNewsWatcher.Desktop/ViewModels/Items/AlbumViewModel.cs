@@ -27,7 +27,7 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
     [ObservableProperty]
     private string? image;
 
-    async partial void OnImageChanged(string newValue)
+    async partial void OnImageChanged(string? newValue)
     {
         CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Album);
         await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
@@ -94,21 +94,32 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
 
     private async Task RefreshTracksSource()
     {
-        var tracksEntities = await apiClient.GetAlbumTracksAsync(ParentArtist.ParentProvider.MusicProviderId, this.ParentArtist.ArtistId, AlbumId);
+        InProgress = true;
+        try
+        {
+            var tracksEntities = await apiClient.GetAlbumTracksAsync(
+                albumId: AlbumId,
+                providerId: this.ParentArtist.ParentProvider.MusicProviderId);
 
-        tracksEntities
-            .Select(i => new TrackViewModel(this)
-            {
-                AlbumId = i.AlbumId,
-                Id = i.Id,
-                Name = HttpUtility.HtmlDecode(i.Name),
-                DownloadUri = i.DownloadUri
-            })
-            .OrderBy(a => a.Id)
-            .ToList()
-            .ForEach(t => Tracks.Add(t));
+            tracksEntities
+                .Select(i => new TrackViewModel(this)
+                {
+                    AlbumId = i.AlbumId,
+                    Id = i.Id,
+                    Name = HttpUtility.HtmlDecode(i.Name),
+                    DownloadUri = i.DownloadUri
+                })
+                .OrderBy(a => a.Id)
+                .ToList()
+                .ForEach(t => Tracks.Add(t));
 
-        isLoaded = true;
+
+        }
+        finally
+        {
+            isLoaded = true;
+            InProgress = false;
+        }
     }
 
     [RelayCommand]

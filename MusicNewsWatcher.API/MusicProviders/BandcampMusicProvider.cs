@@ -1,6 +1,7 @@
-﻿using MusicNewsWatcher.API.DataAccess.Entity;
+﻿using HtmlAgilityPack;
+using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.MusicProviders.Base;
-using System.Web;
+using MusicNewsWatcher.Core.Models.Dtos;
 namespace MusicNewsWatcher.API.MusicProviders;
 
 public sealed class BandcampMusicProvider : MusicProviderBase
@@ -8,17 +9,15 @@ public sealed class BandcampMusicProvider : MusicProviderBase
     const string albumsXPath = "//ol[@id='music-grid']/li";
     const string HOST = "bandcamp.com";
 
-    public BandcampMusicProvider(HttpClient client) : base(client)
+    public BandcampMusicProvider()
     {
         this.Id = 1;
         this.Name = "Bandcamp";
     }
 
-    public override async Task<AlbumEntity[]> GetAlbumsAsync(ArtistEntity artist)
+    public override async Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc)
     {
-        var doc = await GetDocument(artist.Uri + "/music");
-
-        if (doc != null && doc.DocumentNode.SelectSingleNode(albumsXPath) != null)
+        /*if (doc != null && doc.DocumentNode.SelectSingleNode(albumsXPath) != null)
         {
             var albums = doc.DocumentNode.SelectNodes(albumsXPath)
                 .Select(li => new AlbumEntity()
@@ -33,14 +32,16 @@ public sealed class BandcampMusicProvider : MusicProviderBase
 
             return albums;
         }
-        return Enumerable.Empty<AlbumEntity>().ToArray();
+        */
+        return Array.Empty<AlbumDto>();
     }
 
-    public override async Task<TrackEntity[]> GetTracksAsync(AlbumEntity album)
+    public override async Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
     {
+        return Array.Empty<TrackDto>();
+        /*
         if (!string.IsNullOrWhiteSpace(album.Uri) && album.Uri.Contains(HOST))
         {
-            var doc = await GetDocument(album.Uri);
             const string trackXPath = "//table[@id='track_table']//tr[contains(@rel, 'tracknum')]";
 
             if (doc != null && doc.DocumentNode.SelectSingleNode(trackXPath) != null)
@@ -68,7 +69,8 @@ public sealed class BandcampMusicProvider : MusicProviderBase
                 return tracks;
             }
         }
-        return Enumerable.Empty<TrackEntity>().ToArray();
+        */
+
     }
 
 }

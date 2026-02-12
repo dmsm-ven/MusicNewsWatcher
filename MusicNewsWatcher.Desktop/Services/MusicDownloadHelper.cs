@@ -23,7 +23,7 @@ public class MusicDownloadHelper
         this.musicDownloadManager = musicDownloadManager;
         this.toasts = toasts;
         this.logger = logger;
-        this.musicDownloadFolder = options.Value.MusicDownloadFolder;
+        this.musicDownloadFolder = options.Value.MusicDownloadFolder ?? throw new Exception("MusicDownloadHelper options not provided");
         this.musicDownloadManager.ThreadLimit = 1;
     }
 

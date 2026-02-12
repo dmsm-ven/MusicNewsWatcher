@@ -17,6 +17,7 @@ builder.Services.AddHostedService<TelegramBotHostedService>();
 
 builder.Services.AddScoped<AuthorizeMiddleware>();
 builder.Services.AddControllers();
+builder.Services.AddHttpLogging(logging => { logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All; });
 
 var app = builder.Build();
 

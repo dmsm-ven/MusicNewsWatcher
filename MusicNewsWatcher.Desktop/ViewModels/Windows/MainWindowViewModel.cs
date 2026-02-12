@@ -55,9 +55,11 @@ public partial class MainWindowViewModel : ObservableObject,
     }
 
     [RelayCommand]
-    private void AddArtist()
+    private async Task AddArtist()
     {
         dialogWindowService?.ShowNewArtistWindow(SelectedMusicProvider!);
+        await CheckUpdatesAll();
+
     }
 
     [RelayCommand]
