@@ -17,4 +17,16 @@ public static class AlbumEntityExtensions
             Uri: entity.Uri
         );
     }
+
+    public static AlbumEntity ToEntity(this AlbumDto dto)
+    {
+        return new()
+        {
+            ArtistId = dto.ArtistId,
+            Title = dto.Title,
+            Image = dto.Image,
+            Uri = dto.Uri,
+            Created = dto.Created
+        };
+    }
 }

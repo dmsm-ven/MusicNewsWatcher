@@ -1,22 +1,13 @@
-﻿using MusicNewsWatcher.API.Services;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicNewsWatcher.API.Services;
 using MusicNewsWatcher.TelegramBot;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
 
-public sealed class TelegramBotHostedService : BackgroundService
-{
-    private readonly MusicWatcherTelegramBotClient bot;
-    private readonly MusicUpdateManager updateManager;
-    private readonly ILogger<TelegramBotHostedService> logger;
-
-    public TelegramBotHostedService(MusicWatcherTelegramBotClient bot,
+public sealed class TelegramBotHostedService(MusicWatcherTelegramBotClient telegramBotClient,
         MusicUpdateManager updateManager,
-        ILogger<TelegramBotHostedService> logger)
-    {
-        this.bot = bot;
-        this.updateManager = updateManager;
-        this.logger = logger;
-    }
+        ILogger<TelegramBotHostedService> logger) : BackgroundService
+{
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -24,8 +15,12 @@ public sealed class TelegramBotHostedService : BackgroundService
 
         try
         {
-            bot.Start(stoppingToken);
-            logger.LogInformation("Telegram бот запущен");
+            telegramBotClient.Start(stoppingToken);
+
+            DateTime convertedTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time"));
+            await telegramBotClient.SendMessage($"Бот по парсингу запущен в {convertedTime.ToString()}");
+            logger.LogInformation("Telegram bot запущен");
+
         }
         catch (Exception ex)
         {
@@ -41,4 +36,3 @@ public sealed class TelegramBotHostedService : BackgroundService
         logger.LogInformation("Выход из службы телеграм бота. Токен отмены: {stoppingToken}", stoppingToken);
     }
 }
-

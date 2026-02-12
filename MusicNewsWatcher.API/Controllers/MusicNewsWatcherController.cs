@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
+using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.DataAccess.MapperExtensions;
 using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.Core.DataAccess.Entity;
 using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.API.Controllers;
 
+//TODO: заменить длинные url контроллеров
 [ApiController]
 public class MusicNewsWatcherController : ControllerBase
 {
@@ -18,6 +21,7 @@ public class MusicNewsWatcherController : ControllerBase
         this.db = db;
         this.updateManager = updateManager;
     }
+
     [HttpGet]
     [Route("api/providers")]
     public async Task<ActionResult<IEnumerable<MusicProviderDto>>> GetProviders()
@@ -32,7 +36,7 @@ public class MusicNewsWatcherController : ControllerBase
 
     [HttpGet]
     [Route("api/providers/{provider_id}/artists")]
-    public async Task<ActionResult<IEnumerable<ArtistDto>>> GetProviderArtists([FromRoute] int provider_id)
+    public async Task<ActionResult<IEnumerable<ArtistDto>>> GetProviderArtists(int provider_id)
     {
         bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
         if (!providerExists)
@@ -50,12 +54,11 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpGet]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums")]
-    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetArtistAlbums([FromRoute] int provider_id, [FromRoute] int artist_id)
+    [Route("api/artists/{artist_id}/albums")]
+    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetArtistAlbums(int artist_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
         bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        if (!providerExists || !artistExists)
+        if (!artistExists)
         {
             return NotFound();
         }
@@ -68,39 +71,102 @@ public class MusicNewsWatcherController : ControllerBase
         return albums.Any() ? Ok(albums) : NoContent();
     }
 
-    [HttpPost]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums/refresh")]
-    public async Task<IActionResult> CheckArtistAlbums([FromRoute] int provider_id, [FromRoute] int artist_id)
+    [HttpDelete]
+    [Route("api/artists/{artist_id}")]
+    public async Task<IActionResult> DeleteArtist(int artist_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
-        bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        if (!providerExists || !artistExists)
+        ArtistEntity? artist = await db.Artists.FirstOrDefaultAsync(a => a.ArtistId == artist_id);
+        if (artist is null)
         {
             return NotFound();
         }
 
-        await updateManager.CheckUpdatesForArtistAsync(provider_id, artist_id);
+        db.Artists.Remove(artist);
+        await db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPost]
+    [Route("api/artists/{artist_id}/refresh-albums")]
+    public async Task<IActionResult> CheckArtistAlbums(int artist_id)
+    {
+        var artist = await db.Artists.FirstOrDefaultAsync(a => a.ArtistId == artist_id);
+        if (artist is null)
+        {
+            return NotFound();
+        }
+
+        await updateManager.CheckUpdatesForArtistAsync(artist.MusicProviderId, artist_id);
 
         return Accepted();
     }
 
     [HttpGet]
-    [Route("api/providers/{provider_id}/artists/{artist_id}/albums/{album_id}")]
-    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetAlbumTracks([FromRoute] int provider_id, [FromRoute] int artist_id, [FromRoute] int album_id)
+    [Route("api/albums/{album_id}/provider/{provider_id}")]
+    public async Task<ActionResult<IEnumerable<AlbumDto>>> GetAlbumTracks([FromRoute] int album_id, [FromRoute] int provider_id)
     {
-        bool providerExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == provider_id);
-        bool artistExists = await db.Artists.AnyAsync(a => a.ArtistId == artist_id);
-        bool albumExists = await db.Albums.AnyAsync(a => a.AlbumId == album_id);
-        if (!providerExists || !artistExists || !albumExists)
+        var album = await db.Albums.FirstOrDefaultAsync(a => a.AlbumId == album_id);
+        if (album is null)
         {
             return NotFound();
         }
 
-        var albums = await db.Albums
-            .Where(a => a.ArtistId == artist_id)
-            .Select(a => a.ToDto())
+        var tracks = await db.Tracks
+            .Where(t => t.AlbumId == album_id)
+            .Select(track => track.ToDto())
             .ToListAsync();
 
-        return albums.Any() ? Ok(albums) : NoContent();
+        if (tracks.Count == 0)
+        {
+            await updateManager.CheckUpdatesForAlbumAsync(provider_id, album_id);
+            tracks = await db.Tracks
+                .Where(t => t.AlbumId == album_id)
+                .Select(track => track.ToDto())
+                .ToListAsync();
+        }
+
+        return tracks.Any() ? Ok(tracks) : NoContent();
+    }
+
+    [HttpPost]
+    [Route("api/artists")]
+    public async Task<ActionResult<ArtistDto>> CreateArtist([FromBody] CreateArtistDto dto)
+    {
+        bool isProviderExists = await db.MusicProviders.AnyAsync(a => a.MusicProviderId == dto.MusicProviderId);
+        bool isArtistAlreadyExists = await db.Artists.AnyAsync(a => a.Name == dto.Name);
+
+        if (!isProviderExists || isArtistAlreadyExists || string.IsNullOrWhiteSpace(dto?.Name))
+        {
+            return BadRequest();
+        }
+
+        var item = dto.ToEntity();
+        db.Set<ArtistEntity>().Add(item);
+        await db.SaveChangesAsync();
+
+        updateManager.CheckUpdatesForArtistAsync(dto.MusicProviderId, item.ArtistId);
+
+        return item != null ? Ok(item) : BadRequest();
+    }
+
+    [HttpPut]
+    [Route("api/artists/{artist_id}")]
+    public async Task<ActionResult<ArtistDto>> UpdateArtist(int artist_id, [FromBody] ArtistDto dto)
+    {
+        var artist = await db.Artists.FirstOrDefaultAsync(i => i.ArtistId == artist_id);
+
+        if (artist is null)
+        {
+            return BadRequest();
+        }
+
+        var item = dto.ToEntity();
+        db.Set<ArtistEntity>().Remove(artist);
+        db.Set<ArtistEntity>().Add(item);
+
+        await db.SaveChangesAsync();
+
+        return item != null ? Ok(item) : BadRequest();
     }
 }

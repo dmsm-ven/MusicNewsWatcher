@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
-using MusicNewsWatcher.API.DataAccess.MapperExtensions;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Core.Models.Dtos;
@@ -15,7 +14,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         ILogger<MusicUpdateManager> logger,
         MusicNewsCrawler crawler)
 {
-    public event EventHandler<NewAlbumsFoundEventArgs>? OnNewAlbumsFound;
+    public event EventHandler<NewAlbumsFoundEventArgs[]>? NewAlbumsFound;
 
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
@@ -26,7 +25,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// Обновляет дату последнего переобхода
     /// </summary>
     /// <returns></returns>
-    private async Task RefreshLastUpdateDateTime()
+    public async Task RefreshLastUpdateDateTime()
     {
         var dbContext = await dbContextFactory.CreateDbContextAsync();
 
@@ -47,29 +46,24 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// </summary>
     /// <param name="stoppingToken"></param>
     /// <returns></returns>
-    public async Task<int> CheckUpdatesAllAsync(CancellationToken stoppingToken)
+    public async Task<NewAlbumsFoundEventArgs[]> CheckUpdatesAllAsync(CancellationToken stoppingToken)
     {
-
-        int newAlbumsFound = 0;
+        var result = new List<NewAlbumsFoundEventArgs>();
 
         var newAlbumsByProvider = await crawler.CheckUpdatesAllAsync(musicProviders, stoppingToken);
         if (newAlbumsByProvider != null && newAlbumsByProvider.Any())
         {
+            var data = newAlbumsByProvider
+                    .Select(i => new NewAlbumsFoundEventArgs()
+                    {
+                        Provider = i.ProviderName,
+                        Artist = new ArtistDto() { Name = i.ArtistName, Uri = i.ArtistUri },
+                        NewAlbums = i.Albums.ToArray(),
+                    })
+                    .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
+                    .ToArray();
 
-            newAlbumsByProvider
-                .Select(i => new NewAlbumsFoundEventArgs()
-                {
-                    Provider = i.ProviderName,
-                    Artist = new ArtistDto(0, 0, i.ArtistName, i.ArtistUri, ""),
-                    NewAlbums = i.Albums.ToArray()
-                })
-                .Where(i => i.NewAlbums != null && i.NewAlbums.Any())
-                .ToList()
-                .ForEach(i =>
-                {
-                    newAlbumsFound += i.NewAlbums!.Length;
-                    OnNewAlbumsFound?.Invoke(this, i);
-                });
+            result.AddRange(data);
         }
 
         LastUpdate = DateTimeOffset.UtcNow;
@@ -77,33 +71,25 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         await SaveLastUpdateTime();
         await RefreshLastUpdateDateTime();
 
-        return newAlbumsFound;
+        return result.ToArray();
     }
     public async Task CheckUpdatesForArtistAsync(int providerId, int artistId)
     {
         var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
-        var newAlbums = await crawler.CheckUpdatesForArtistAndSaveIfHasAsync(provider, artistId);
         var artist = await dbContext.Artists.FindAsync(artistId);
-        if (artist != null && newAlbums != null && newAlbums.Any())
-        {
-            var newAlbumsData = newAlbums.Select(album => album.ToDto()).ToArray();
-            var e = new NewAlbumsFoundEventArgs()
-            {
-                Provider = provider.Name,
-                Artist = artist.ToDto(),
-                NewAlbums = newAlbumsData
-            };
-            OnNewAlbumsFound?.Invoke(this, e);
-        }
+
+        logger.LogInformation("Начало получения обновлений альбомов для артиста {artist}", artist.Name);
+        var newAlbums = await crawler.RefreshArtist(provider, artistId);
+        logger.LogInformation("Получены альбомы для артиста {artist} ({count} альбомов)", artist.Name, newAlbums.Count);
     }
     public async Task CheckUpdatesForAlbumAsync(int providerId, int albumId)
     {
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
-        await crawler.CheckUpdatesForAlbumAsync(provider, albumId);
+        await crawler.RefreshAlbum(provider, albumId);
     }
-    public async Task RunCrawler(CancellationToken stoppingToken)
+    public async Task RunCrawler(CancellationToken stoppingToken = default)
     {
         if (CrawlerInProgress)
         {
@@ -118,7 +104,9 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
             Stopwatch sw = Stopwatch.StartNew();
             DateTimeOffset started = DateTimeOffset.UtcNow;
 
-            var newAlbumsCount = await CheckUpdatesAllAsync(stoppingToken);
+            logger.LogInformation("Начало переообхода на поиск новинок музыкальных альбомов");
+
+            var result = await CheckUpdatesAllAsync(stoppingToken);
 
             const string message = "[{started}] - [{finished}] Переобход выполнен за {duration} сек. Найдено {newAlbumsCount} новых альбомов";
 
@@ -126,11 +114,17 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
                 started,
                 LastUpdate,
                 (int)sw.Elapsed.TotalSeconds,
-                newAlbumsCount);
+                result.Sum(i => i.NewAlbums?.Length));
+
+            NewAlbumsFound?.Invoke(this, result);
+        }
+        catch (NotSupportedException ex)
+        {
+            logger.LogWarning($"Метод не поддерживается: {ex.Message}. {ex.StackTrace}");
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Ошибка переобхода по таймеру: {error}", ex.Message);
+            logger.LogError("Ошибка переобхода по таймеру: {error}", ex.Message);
             throw;
         }
         finally

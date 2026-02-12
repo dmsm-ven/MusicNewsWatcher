@@ -32,9 +32,9 @@ public class MusicNewsWatcherApiClient
         var artists = await response.Content.ReadFromJsonAsync<ArtistDto[]>(cancellationToken: cancellationToken);
         return artists ?? Array.Empty<ArtistDto>();
     }
-    public async Task<AlbumDto[]> GetArtistAlbumsAsync(int providerId, int artistId, CancellationToken cancellationToken = default)
+    public async Task<AlbumDto[]> GetArtistAlbumsAsync(int artistId, CancellationToken cancellationToken = default)
     {
-        var response = await client.GetAsync($"api/providers/{providerId}/artists/{artistId}/albums", cancellationToken);
+        var response = await client.GetAsync($"api/artists/{artistId}/albums", cancellationToken);
         response.EnsureSuccessStatusCode();
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
@@ -43,9 +43,9 @@ public class MusicNewsWatcherApiClient
         var albums = await response.Content.ReadFromJsonAsync<AlbumDto[]>(cancellationToken: cancellationToken);
         return albums ?? Array.Empty<AlbumDto>();
     }
-    public async Task<TrackDto[]> GetAlbumTracksAsync(int providerId, int artistId, int albumId, CancellationToken cancellationToken = default)
+    public async Task<TrackDto[]> GetAlbumTracksAsync(int albumId, int providerId, CancellationToken cancellationToken = default)
     {
-        var response = await client.GetAsync($"api/providers/{providerId}/artists/{artistId}/albums/{albumId}", cancellationToken);
+        var response = await client.GetAsync($"api/albums/{albumId}/provider/{providerId}", cancellationToken);
         response.EnsureSuccessStatusCode();
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
@@ -54,16 +54,42 @@ public class MusicNewsWatcherApiClient
         var tracks = await response.Content.ReadFromJsonAsync<TrackDto[]>(cancellationToken: cancellationToken);
         return tracks ?? Array.Empty<TrackDto>();
     }
-
-    public async Task<AlbumDto[]?> CheckUpdatesForArtist(int providerId, int artistId, CancellationToken cancellationToken = default)
+    public async Task<AlbumDto[]?> CheckUpdatesForArtist(int artistId, CancellationToken cancellationToken = default)
     {
-        var response = await client.PostAsync($"api/providers/{providerId}/artists/{artistId}/albums/refresh", new StringContent(""), cancellationToken);
+        var response = await client.PostAsync($"api/artists/{artistId}/refresh-albums", new StringContent(""), cancellationToken);
         response.EnsureSuccessStatusCode();
-        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent || response.StatusCode == System.Net.HttpStatusCode.Accepted)
         {
             return Array.Empty<AlbumDto>();
         }
-        var newAlbums = await response.Content.ReadFromJsonAsync<AlbumDto[]>(cancellationToken: cancellationToken);
-        return newAlbums ?? Array.Empty<AlbumDto>();
+        AlbumDto[]? newAlbums = await response.Content.ReadFromJsonAsync<AlbumDto[]>(cancellationToken: cancellationToken);
+        return newAlbums;
+    }
+    public async Task<ArtistDto?> UpdateArtist(ArtistDto data, CancellationToken cancellationToken = default)
+    {
+        var response = await client.PutAsJsonAsync($"api/artists/{data.ArtistId}", data, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+        var artist = await response.Content.ReadFromJsonAsync<ArtistDto?>(cancellationToken: cancellationToken);
+        return artist;
+    }
+    public async Task<ArtistDto?> CreateArtist(CreateArtistDto data, CancellationToken cancellationToken = default)
+    {
+        var response = await client.PostAsJsonAsync($"api/artists", data, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+        var artist = await response.Content.ReadFromJsonAsync<ArtistDto?>(cancellationToken: cancellationToken);
+        return artist;
+    }
+    public async Task DeleteArtist(int artistId, CancellationToken cancellationToken = default)
+    {
+        var response = await client.DeleteAsync($"api/artists/{artistId}", cancellationToken);
+        response.EnsureSuccessStatusCode();
     }
 }

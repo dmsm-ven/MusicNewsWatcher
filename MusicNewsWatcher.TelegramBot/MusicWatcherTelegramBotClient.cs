@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -8,24 +7,21 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class MusicWatcherTelegramBotClient
+public class MusicWatcherTelegramBotClient(ITelegramBotClient bot,
+        ILogger<MusicWatcherTelegramBotClient> logger,
+        MusicWatcherTelegramBotConfiguration config,
+        IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>> commandHandlers)
 {
-    private readonly MusicWatcherTelegramBotConfiguration options;
-    private readonly IMusicNewsMessageFormatter messageFormatter;
-    private readonly ILogger<MusicWatcherTelegramBotClient> logger;
-    private readonly ITelegramBotClient bot;
-
-    public MusicWatcherTelegramBotClient(ITelegramBotClient bot,
-        IMusicNewsMessageFormatter messageFormatter,
-        ILogger<MusicWatcherTelegramBotClient> logger)
-    {
-        this.bot = bot;
-        this.messageFormatter = messageFormatter;
-        this.logger = logger;
-    }
-
+    private bool isStarted = false;
     public void Start(CancellationToken stoppingToken)
     {
+        if (isStarted)
+        {
+            throw new InvalidOperationException("Bot already started");
+        }
+
+        isStarted = true;
+
         var receiverOptions = new ReceiverOptions
         {
             AllowedUpdates = Array.Empty<UpdateType>() // receive all update types };
@@ -33,7 +29,10 @@ public class MusicWatcherTelegramBotClient
 
         bot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: stoppingToken);
     }
-
+    public async Task<Message> SendMessage(string text)
+    {
+        return await bot.SendMessage(config.ClientId, text);
+    }
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
     {
         var sender = update.Message?.From;
@@ -70,13 +69,11 @@ public class MusicWatcherTelegramBotClient
                 break;
         }
     }
-
     private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
     {
         logger.LogError(exception, "Telegram bot error");
         return Task.CompletedTask;
     }
-
     private async Task<Message> UsageCommand(Message message)
     {
         var usageList = new List<string>() {
@@ -95,31 +92,39 @@ public class MusicWatcherTelegramBotClient
 
     private async Task<Message> ForceUpdateCommand(Message message)
     {
-        return await bot.SendMessage(chatId: message.Chat.Id,
-                                text: "Функционал отключен");
+        if (commandHandlers.TryGetValue(TelegramBotCommand.ExecutForceUpdate, out var callback))
+        {
+            await bot.SendMessage(chatId: message.Chat.Id,
+                                            text: "Переобход запущен", ParseMode.Html);
+            string replyText = await callback();
+            return await bot.SendMessage(chatId: message.Chat.Id,
+                                            text: replyText, ParseMode.Html);
+        }
+        throw new NotImplementedException(nameof(ForceUpdateCommand));
     }
 
     private async Task<Message> LastUpdateCommand(Message message)
     {
-        string replyText = $"Функционал отключен";
-        return await bot.SendMessage(chatId: message.Chat.Id,
-                                        text: replyText, ParseMode.Html);
+        if (commandHandlers.TryGetValue(TelegramBotCommand.ShowLastUpdate, out var callback))
+        {
+            string replyText = await callback();
+            return await bot.SendMessage(chatId: message.Chat.Id,
+                                            text: replyText, ParseMode.Html);
+        }
+        throw new NotImplementedException(nameof(LastUpdateCommand));
 
-    }
-
-    private async Task<Message> TrackedArtistsForProviderCommand(Update update, string providerName)
-    {
-        string replyText = $"Функционал отключен";
-        return await bot.SendMessage(chatId: update.Message.Chat.Id,
-                                        text: replyText, ParseMode.Html);
     }
 
     private async Task<Message> ProviderListCommand(Message message)
     {
-        string replyText = $"Функционал отключен";
-        return await bot.SendMessage(chatId: message.Chat.Id,
-                                        text: replyText, ParseMode.Html);
-    }
+        if (commandHandlers.TryGetValue(TelegramBotCommand.ShowTrackedArtists, out var callback))
+        {
+            string replyText = await callback();
 
+            return await bot.SendMessage(chatId: message.Chat.Id,
+                                            text: replyText, ParseMode.Html);
+        }
+        throw new NotImplementedException(nameof(ProviderListCommand));
+    }
 }
 
