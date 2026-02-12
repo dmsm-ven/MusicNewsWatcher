@@ -7,8 +7,8 @@ namespace MusicNewsWatcher.API.MusicProviders.Base;
 public abstract class MusicProviderBase
 {
     public int Id { get; init; }
-    public string Name { get; init; }
-    public virtual string AlbumsUriPath(ArtistEntity artist) => throw new NotSupportedException();
+    public required string Name { get; init; }
+    public virtual string AlbumsUriPath(ArtistEntity artist) => "";
     public abstract Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc);
     public abstract Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc);
 

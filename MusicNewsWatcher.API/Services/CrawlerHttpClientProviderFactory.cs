@@ -31,13 +31,9 @@ public class CrawlerHttpClientProviderFactory
         httpClientsMap = dic;
     }
 
-    public HttpClient GetClientForProvider(MusicProviderBase provider)
+    public HttpClient? GetClientForProvider(MusicProviderBase provider)
     {
         var type = provider.GetType();
-        if (httpClientsMap.ContainsKey(type))
-        {
-            return httpClientsMap[type];
-        }
-        throw new NotSupportedException();
+        return httpClientsMap[type] ?? null;
     }
 }

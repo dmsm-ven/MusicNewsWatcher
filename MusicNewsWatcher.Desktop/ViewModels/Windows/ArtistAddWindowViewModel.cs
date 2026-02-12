@@ -34,7 +34,13 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     public ArtistAddWindowViewModel(MusicProviderViewModel provider, MusicNewsWatcherApiClient apiClient)
     {
         ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
-        ContextArtist.Initialize(provider, new(provider.MusicProviderId, 0, "Новый исполнитель", provider.Uri, string.Empty));
+        ContextArtist.Initialize(provider, new()
+        {
+            MusicProviderId = provider.MusicProviderId,
+            Name = "Новый исполнитель",
+            Uri = provider.Uri,
+
+        });
 
         MusicProviders.Add(provider);
         SelectedMusicProvider = provider;

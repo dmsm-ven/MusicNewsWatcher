@@ -11,21 +11,10 @@ using System.Diagnostics;
 
 namespace MusicNewsWatcher.API.Services;
 
-public class MusicNewsCrawler
-{
-    private readonly IServiceScope services;
-    private readonly IDbContextFactory<MusicWatcherDbContext> dbContextFactory;
-    private readonly CrawlerHttpClientProviderFactory httpClientProviderFactory;
-    private readonly ILogger<MusicNewsCrawler> logger;
-
-    public MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
+public class MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContextFactory,
         CrawlerHttpClientProviderFactory httpClientProviderFactory,
         ILogger<MusicNewsCrawler> logger)
-    {
-        this.dbContextFactory = dbContextFactory;
-        this.httpClientProviderFactory = httpClientProviderFactory;
-        this.logger = logger;
-    }
+{
     public async Task<IReadOnlyList<NewAlbumFoundResult>> CheckUpdatesAllAsync(IEnumerable<MusicProviderBase> musicProviders, CancellationToken stoppingToken)
     {
         logger.LogInformation("Запуск поиска обновлений всех провайдеров");
@@ -181,7 +170,7 @@ public class MusicNewsCrawler
         }
         catch
         {
-            // ignored
+
         }
         return null;
     }

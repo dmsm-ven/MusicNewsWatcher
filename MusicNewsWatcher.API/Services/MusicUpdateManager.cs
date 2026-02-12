@@ -14,8 +14,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         ILogger<MusicUpdateManager> logger,
         MusicNewsCrawler crawler)
 {
-
-    public event EventHandler<NewAlbumsFoundEventArgs[]> NewAlbumsFound;
+    public event EventHandler<NewAlbumsFoundEventArgs[]>? NewAlbumsFound;
 
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
@@ -26,7 +25,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// Обновляет дату последнего переобхода
     /// </summary>
     /// <returns></returns>
-    private async Task RefreshLastUpdateDateTime()
+    public async Task RefreshLastUpdateDateTime()
     {
         var dbContext = await dbContextFactory.CreateDbContextAsync();
 
@@ -90,7 +89,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
         await crawler.RefreshAlbum(provider, albumId);
     }
-    public async Task RunCrawler(CancellationToken stoppingToken)
+    public async Task RunCrawler(CancellationToken stoppingToken = default)
     {
         if (CrawlerInProgress)
         {
@@ -121,7 +120,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         }
         catch (NotSupportedException ex)
         {
-            logger.LogWarning($"Метод не поддерживается: {ex.Message}");
+            logger.LogWarning($"Метод не поддерживается: {ex.Message}. {ex.StackTrace}");
         }
         catch (Exception ex)
         {

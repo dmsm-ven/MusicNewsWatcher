@@ -13,6 +13,7 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await updateManager.RefreshLastUpdateDateTime();
         updateManager.NewAlbumsFound += UpdateManager_NewAlbumsFound;
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -28,8 +29,19 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
     {
         foreach (var data in result)
         {
-            string messageText = telegramBotMessageFormatter.BuildNewAlbumsFoundMessage(data.Provider, data.Artist, data.NewAlbums);
-            await telegramBotClient.SendMessage(messageText);
+            if (data.Artist is not null && data.NewAlbums is not null)
+            {
+                string messageText = telegramBotMessageFormatter.BuildNewAlbumsFoundMessage(
+                    data.Provider,
+                    data.Artist,
+                    data.NewAlbums
+                );
+                await telegramBotClient.SendMessage(messageText);
+            }
+            else
+            {
+                logger.LogWarning("Null Artist or Albums detected for provider {provider}. Skipping message.", data.Provider);
+            }
         }
     }
 

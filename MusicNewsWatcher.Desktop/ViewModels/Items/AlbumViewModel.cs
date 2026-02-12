@@ -27,7 +27,7 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
     [ObservableProperty]
     private string? image;
 
-    async partial void OnImageChanged(string newValue)
+    async partial void OnImageChanged(string? newValue)
     {
         CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Album);
         await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
