@@ -21,16 +21,8 @@ namespace MusicNewsWatcher.Desktop;
 public partial class App : Application
 {
     public static IHost HostContainer { get; private set; }
-    public static Mutex mutex;
     public App()
     {
-        mutex = new Mutex(false, "MusicNewsWatcherWpfApp");
-
-        if (!mutex.WaitOne())
-        {
-            Application.Current.Shutdown();
-        }
-
         HostContainer = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(options =>
             {
@@ -72,6 +64,12 @@ public partial class App : Application
     }
     protected override async void OnStartup(StartupEventArgs e)
     {
+        var apiClient = HostContainer.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+        if ((await apiClient.CheckApiStatusAsync()) == false)
+        {
+            MessageBox.Show("Нет соединения с сервером", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
         //Окно занимает 85% экрана
         double sizeRatio = 0.85;
 
@@ -86,8 +84,6 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         await HostContainer.StopAsync();
-        mutex?.ReleaseMutex();
-
         base.OnExit(e);
     }
 }

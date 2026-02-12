@@ -7,12 +7,54 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MusicNewsWatcher.TelegramBot;
 
-public class MusicWatcherTelegramBotClient(ITelegramBotClient bot,
+public class MusicWatcherTelegramBotClient
+{
+    private readonly ITelegramBotClient bot;
+    private readonly ILogger<MusicWatcherTelegramBotClient> logger;
+    private readonly MusicWatcherTelegramBotConfiguration config;
+
+    //Все обработчики на выполнение команд инициализируем в конструкторе, что бы не усложнять класс и не внедрять DbContext
+    private readonly IReadOnlyDictionary<TelegramBotCommand, CommandDescriptorEntry> commandDescriptors;
+
+    private bool isStarted = false;
+    public MusicWatcherTelegramBotClient(ITelegramBotClient bot,
         ILogger<MusicWatcherTelegramBotClient> logger,
         MusicWatcherTelegramBotConfiguration config,
         IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>> commandHandlers)
-{
-    private bool isStarted = false;
+    {
+        this.bot = bot;
+        this.logger = logger;
+        this.config = config;
+
+        commandDescriptors = new Dictionary<TelegramBotCommand, CommandDescriptorEntry>()
+        {
+            [TelegramBotCommand.ShowTrackedArtists] = new()
+            {
+                Route = "/tracked_artists",
+                Description = "Получить список отслеживаемых исполнителей",
+                Callback = commandHandlers[TelegramBotCommand.ShowTrackedArtists]
+            },
+            [TelegramBotCommand.ShowLastUpdate] = new()
+            {
+                Route = "/last_update",
+                Description = "Дата последнего парсинга сайтов",
+                Callback = commandHandlers[TelegramBotCommand.ShowLastUpdate]
+            },
+            [TelegramBotCommand.ShowLastParsedAlbums] = new()
+            {
+                Route = "/last_parsed_albums",
+                Description = "Список 10 последних найденных альбомов",
+                Callback = commandHandlers[TelegramBotCommand.ShowLastParsedAlbums]
+            },
+            [TelegramBotCommand.ExecuteForceUpdate] = new()
+            {
+                Route = "/force_update",
+                Description = "Запустить переобход парсера на поиск новых альбомов",
+                Callback = commandHandlers[TelegramBotCommand.ExecuteForceUpdate]
+            }
+        };
+    }
+
     public void Start(CancellationToken stoppingToken)
     {
         if (isStarted)
@@ -52,21 +94,26 @@ public class MusicWatcherTelegramBotClient(ITelegramBotClient bot,
             sender?.FirstName ?? "",
             sender?.LastName ?? "");
 
+        var kvp = commandDescriptors.FirstOrDefault(c => c.Value.Route == update.Message.Text);
+        CommandDescriptorEntry descriptor = kvp.Value;
+        TelegramBotCommand commandType = kvp.Key;
 
-        switch (update.Message.Text)
+        if (commandType == TelegramBotCommand.None || descriptor == null)
         {
-            case "/last_update":
-                await LastUpdateCommand(message);
-                break;
-            case "/force_update":
-                await ForceUpdateCommand(message);
-                break;
-            case "/tracked_artists":
-                await ProviderListCommand(message);
-                break;
-            default:
-                await UsageCommand(message);
-                break;
+            await UsageCommand(message);
+        }
+        //задание с несколькими шагами выполнения
+        else if (commandType == TelegramBotCommand.ExecuteForceUpdate)
+        {
+            await bot.SendMessage(chatId: message.Chat.Id, text: "Переобход запущен", ParseMode.Html);
+            string replyText = await descriptor.Callback!();
+            await bot.SendMessage(chatId: message.Chat.Id, text: replyText, ParseMode.Html);
+        }
+        //Для остальных команд просто возращаем сообщение с текстом
+        else
+        {
+            string replyText = await descriptor.Callback!();
+            await bot.SendMessage(chatId: message.Chat.Id, text: replyText, ParseMode.Html);
         }
     }
     private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
@@ -77,11 +124,13 @@ public class MusicWatcherTelegramBotClient(ITelegramBotClient bot,
     private async Task<Message> UsageCommand(Message message)
     {
         var usageList = new List<string>() {
-            "Команды:",
-            "/tracked_artists\t - Получить список отслеживаемых исполнителей",
-            "/last_update\t - дата последнего парсинга сайтов",
-            "/force_update\t - проверить новинки сейчас"
+            "Команды",
+            "/start\t - Отобразить список доступных команд"
         };
+        foreach (var descriptor in commandDescriptors.Values)
+        {
+            usageList.Add($"{descriptor.Route}\t - {descriptor.Description}");
+        }
 
         string usageMessage = string.Join(Environment.NewLine, usageList);
 
@@ -89,42 +138,11 @@ public class MusicWatcherTelegramBotClient(ITelegramBotClient bot,
                                                     text: usageMessage,
                                                     replyMarkup: new ReplyKeyboardRemove());
     }
-
-    private async Task<Message> ForceUpdateCommand(Message message)
-    {
-        if (commandHandlers.TryGetValue(TelegramBotCommand.ExecutForceUpdate, out var callback))
-        {
-            await bot.SendMessage(chatId: message.Chat.Id,
-                                            text: "Переобход запущен", ParseMode.Html);
-            string replyText = await callback();
-            return await bot.SendMessage(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
-        }
-        throw new NotImplementedException(nameof(ForceUpdateCommand));
-    }
-
-    private async Task<Message> LastUpdateCommand(Message message)
-    {
-        if (commandHandlers.TryGetValue(TelegramBotCommand.ShowLastUpdate, out var callback))
-        {
-            string replyText = await callback();
-            return await bot.SendMessage(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
-        }
-        throw new NotImplementedException(nameof(LastUpdateCommand));
-
-    }
-
-    private async Task<Message> ProviderListCommand(Message message)
-    {
-        if (commandHandlers.TryGetValue(TelegramBotCommand.ShowTrackedArtists, out var callback))
-        {
-            string replyText = await callback();
-
-            return await bot.SendMessage(chatId: message.Chat.Id,
-                                            text: replyText, ParseMode.Html);
-        }
-        throw new NotImplementedException(nameof(ProviderListCommand));
-    }
 }
 
+internal class CommandDescriptorEntry
+{
+    public string Route { get; init; } = "/route_path";
+    public string Description { get; init; } = string.Empty;
+    public Func<Task<string>>? Callback { get; init; } = null;
+}

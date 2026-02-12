@@ -1,23 +1,36 @@
-﻿using MusicNewsWatcher.API.Services;
+﻿using Microsoft.Extensions.Options;
+using MusicNewsWatcher.API.Services;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
 
+public class CrawlerConfiguration
+{
+    public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(60);
+}
 public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
         MusicWatcherTelegramBotClient telegramBotClient,
         IMusicNewsMessageFormatter telegramBotMessageFormatter,
-        MusicUpdateManager updateManager) : BackgroundService
+        MusicUpdateManager updateManager,
+        IOptionsMonitor<CrawlerConfiguration> crawlerConfiguration) : BackgroundService
 {
-    public TimeSpan DefaultTimerInterval { get; } = TimeSpan.FromMinutes(60);
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await updateManager.RefreshLastUpdateDateTime();
+
         updateManager.NewAlbumsFound += UpdateManager_NewAlbumsFound;
+
+        bool needUpdateNow = (DateTime.UtcNow - updateManager.LastUpdate) > crawlerConfiguration.CurrentValue.CheckInterval;
+
+        if (needUpdateNow)
+        {
+            await RunCrawlerTask(stoppingToken);
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(DefaultTimerInterval, stoppingToken);
+            await Task.Delay(crawlerConfiguration.CurrentValue.CheckInterval, stoppingToken);
 
             await RunCrawlerTask(stoppingToken);
         }

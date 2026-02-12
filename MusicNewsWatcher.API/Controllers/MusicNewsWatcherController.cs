@@ -23,6 +23,14 @@ public class MusicNewsWatcherController : ControllerBase
     }
 
     [HttpGet]
+    [Route("api/status")]
+    public async Task<IActionResult> CheckStatus()
+    {
+        var isOk = await db.Database.CanConnectAsync();
+        return isOk ? Ok() : Problem();
+    }
+
+    [HttpGet]
     [Route("api/providers")]
     public async Task<ActionResult<IEnumerable<MusicProviderDto>>> GetProviders()
     {

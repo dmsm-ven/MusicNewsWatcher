@@ -1,9 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.Models;
 using MusicNewsWatcher.API.MusicProviders;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using System.Diagnostics;
@@ -15,6 +18,7 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<CrawlerConfiguration>(configuration.GetSection(nameof(CrawlerConfiguration)));
         services.AddSingleton<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
         services.AddSingleton<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>((x) =>
         {
@@ -25,20 +29,31 @@ public static class DependencyInjectionExtensions
 
             var handlers = new Dictionary<TelegramBotCommand, Func<Task<string>>>()
             {
-                [TelegramBotCommand.ExecutForceUpdate] = async () =>
+                [TelegramBotCommand.ExecuteForceUpdate] = async () =>
                 {
                     if (!updateManager.CrawlerInProgress)
                     {
                         var sw = Stopwatch.StartNew();
                         await updateManager.RunCrawler();
                         return $"Переобход выполнен за {(int)sw.Elapsed.TotalSeconds} секунд";
-
                     }
-                    return "Переообход уже в процессе выполнения";
+                    return "Переообход сейчас в процессе выполнения";
                 },
                 [TelegramBotCommand.ShowLastUpdate] = () =>
                 {
-                    return Task.FromResult($"Последний перееобход был {updateManager.LastUpdate.ToLocalTime()}");
+                    if (updateManager.CrawlerInProgress)
+                    {
+                        return Task.FromResult("Переообход сейчас в процессе выполнения");
+                    }
+
+                    var localScope = x.CreateScope();
+                    var updateInterval = localScope.ServiceProvider.GetRequiredService<IOptionsMonitor<CrawlerConfiguration>>().CurrentValue.CheckInterval;
+                    string lastExecDt = updateManager.LastUpdate.ToRussianLocalTime();
+                    int elapsedMinutes = (int)(DateTime.UtcNow - updateManager.LastUpdate).TotalMinutes;
+                    int nextExecInMinutes = Math.Max((int)updateInterval.TotalMinutes - elapsedMinutes, 0);
+
+                    string msg = $"Последний перееобход был {lastExecDt} ({elapsedMinutes} мин. назад). Следующий запуск через: {nextExecInMinutes} мин.";
+                    return Task.FromResult(msg);
                 },
                 [TelegramBotCommand.ShowTrackedArtists] = async () =>
                 {
@@ -57,11 +72,35 @@ public static class DependencyInjectionExtensions
 
                     string message = formatter.BuildTrackedArtistsListMessage(dbData.ToDictionary(i => i.ProviderName, i => i.ArtistNames));
                     return message;
+                },
+                [TelegramBotCommand.ShowLastParsedAlbums] = async () =>
+                {
+                    using var db = dbFactory.CreateDbContext();
+                    var artistNames = await db.Artists
+                        .AsNoTracking()
+                        .ToDictionaryAsync(i => i.ArtistId, i => i.Name);
+
+                    var dbData = (await db.Albums
+                    .AsNoTracking()
+                    .OrderByDescending(album => album.AlbumId)
+                    .Take(10)
+                    .ToArrayAsync())
+                    .Select(i => new LastParsedAlbumInfo()
+                    {
+                        AlbumName = i.Title,
+                        ArtistName = artistNames[i.ArtistId],
+                        CreatedAt = i.Created,
+                        Uri = i.Uri
+                    })
+                    .ToArray();
+
+                    string message = formatter.BuilderLastAlbumsMessage(dbData);
+                    return message;
                 }
             };
+
             return handlers;
         });
-
         services.AddSingleton<MusicWatcherTelegramBotClient>(x =>
         {
             var scope = x.CreateScope();

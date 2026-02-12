@@ -10,6 +10,12 @@ public class MusicNewsWatcherApiClient
     {
         this.client = client;
     }
+
+    public async Task<bool> CheckApiStatusAsync()
+    {
+        var response = await client.GetAsync("api/status");
+        return response.IsSuccessStatusCode;
+    }
     public async Task<MusicProviderDto[]> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
         var response = await client.GetAsync("api/providers", cancellationToken);

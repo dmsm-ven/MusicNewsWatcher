@@ -1,10 +1,30 @@
-﻿using MusicNewsWatcher.Core.Models.Dtos;
+﻿using MusicNewsWatcher.Core;
+using MusicNewsWatcher.Core.Models.Dtos;
 using System.Text;
 
 namespace MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 {
+    public string BuilderLastAlbumsMessage(LastParsedAlbumInfo[] items)
+    {
+        if (items is null)
+        {
+            return "Пусто";
+        }
+
+        var sb = new StringBuilder()
+        .AppendLine($"Список последних ({items.Length}) найденных альбомов");
+
+        foreach (var album in items)
+        {
+            sb.AppendLine($" - {album.CreatedAt.ToRussianLocalTime()} <a href=\"{album.Uri}\" target=\"_blank\">{album.ArtistName} | {album.AlbumName}</a>");
+        }
+        string message = sb.ToString();
+
+        return message;
+    }
+
     public string BuildNewAlbumsFoundMessage(string provider, ArtistDto artist, IEnumerable<AlbumDto> newAlbums)
     {
         var sb = new StringBuilder()
