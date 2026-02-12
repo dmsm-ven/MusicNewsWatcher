@@ -9,6 +9,8 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
                      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                      .AddEnvironmentVariables();
 
+
+builder.Services.Configure<CrawlerConfiguration>(builder.Configuration.GetSection(nameof(CrawlerConfiguration)));
 builder.Services.AddMusicNewsWatcherApi(builder.Configuration);
 builder.Services.AddTelegramBot(builder.Configuration);
 

@@ -18,7 +18,7 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddTelegramBot(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<CrawlerConfiguration>(configuration.GetSection(nameof(CrawlerConfiguration)));
+
         services.AddSingleton<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
         services.AddSingleton<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>((x) =>
         {

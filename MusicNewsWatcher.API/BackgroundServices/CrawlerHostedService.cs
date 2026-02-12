@@ -13,25 +13,35 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
         MusicWatcherTelegramBotClient telegramBotClient,
         IMusicNewsMessageFormatter telegramBotMessageFormatter,
         MusicUpdateManager updateManager,
-        IOptionsMonitor<CrawlerConfiguration> crawlerConfiguration) : BackgroundService
+        IServiceScopeFactory serviceScopeFactory) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await updateManager.RefreshLastUpdateDateTime();
+        logger.LogInformation($"Запуск службы парсера ...");
 
+        await updateManager.RefreshLastUpdateDateTime();
         updateManager.NewAlbumsFound += UpdateManager_NewAlbumsFound;
 
-        bool needUpdateNow = (DateTime.UtcNow - updateManager.LastUpdate) > crawlerConfiguration.CurrentValue.CheckInterval;
+        var scope = serviceScopeFactory.CreateScope();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value;
 
-        if (needUpdateNow)
+        TimeSpan nextExecTime = options.CheckInterval - (DateTime.UtcNow - updateManager.LastUpdate);
+        logger.LogInformation("Интервал обновления парсера: {checkInterval}", options.CheckInterval);
+        logger.LogInformation("Последниее обновление было произведено: {dt}", updateManager.LastUpdate);
+        logger.LogInformation("Следующее обновление будет выполнено через: {nextExecTime}", nextExecTime);
+        if (nextExecTime > TimeSpan.Zero)
         {
-            await RunCrawlerTask(stoppingToken);
+            await Task.Delay(nextExecTime);
         }
+
+        await RunCrawlerTask(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(crawlerConfiguration.CurrentValue.CheckInterval, stoppingToken);
+            scope = serviceScopeFactory.CreateScope();
+            options = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value;
 
+            await Task.Delay(options.CheckInterval, stoppingToken);
             await RunCrawlerTask(stoppingToken);
         }
 
