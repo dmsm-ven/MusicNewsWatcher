@@ -73,7 +73,7 @@ public class MusicWatcherTelegramBotClient
     }
     public async Task<Message> SendMessage(string text)
     {
-        return await bot.SendMessage(config.ClientId, text);
+        return await bot.SendMessage(config.ClientId, text, ParseMode.Html);
     }
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken token)
     {
@@ -118,7 +118,7 @@ public class MusicWatcherTelegramBotClient
     }
     private Task HandleErrorAsync(ITelegramBotClient bot, Exception exception, CancellationToken token)
     {
-        logger.LogError(exception, "Telegram bot error");
+        logger.LogError(exception, $"Telegram bot error: {exception.Message}");
         return Task.CompletedTask;
     }
     private async Task<Message> UsageCommand(Message message)
@@ -138,11 +138,4 @@ public class MusicWatcherTelegramBotClient
                                                     text: usageMessage,
                                                     replyMarkup: new ReplyKeyboardRemove());
     }
-}
-
-internal class CommandDescriptorEntry
-{
-    public string Route { get; init; } = "/route_path";
-    public string Description { get; init; } = string.Empty;
-    public Func<Task<string>>? Callback { get; init; } = null;
 }

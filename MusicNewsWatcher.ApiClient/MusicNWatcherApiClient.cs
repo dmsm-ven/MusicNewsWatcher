@@ -98,4 +98,15 @@ public class MusicNewsWatcherApiClient
         var response = await client.DeleteAsync($"api/artists/{artistId}", cancellationToken);
         response.EnsureSuccessStatusCode();
     }
+    public async Task<TrackDownloadHistoryDto[]> GetDownloadHistory(int limit, CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync($"api/download-history?limit={limit}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return Array.Empty<TrackDownloadHistoryDto>();
+        }
+        TrackDownloadHistoryDto[]? items = await response.Content.ReadFromJsonAsync<TrackDownloadHistoryDto[]>(cancellationToken: cancellationToken);
+        return items ?? Array.Empty<TrackDownloadHistoryDto>();
+    }
 }
