@@ -50,8 +50,17 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
 
     private async void UpdateManager_NewAlbumsFound(object? sender, Core.Models.NewAlbumsFoundEventArgs[] result)
     {
+        int artistsCounter = 0;
+        int maxMessageCount = 5;
         foreach (var data in result)
         {
+            if (artistsCounter > maxMessageCount)
+            {
+                string ellipsesMessage = $"И еще {result.Skip(maxMessageCount).Sum(ar => ar.NewAlbums.Length)} альбомов у {result.Length - maxMessageCount} исполнителей";
+                await telegramBotClient.SendMessage(ellipsesMessage);
+                break;
+            }
+
             if (data.Artist is not null && data.NewAlbums is not null)
             {
                 string messageText = telegramBotMessageFormatter.BuildNewAlbumsFoundMessage(
@@ -65,6 +74,8 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
             {
                 logger.LogWarning("Null Artist or Albums detected for provider {provider}. Skipping message.", data.Provider);
             }
+
+            artistsCounter++;
         }
     }
 
