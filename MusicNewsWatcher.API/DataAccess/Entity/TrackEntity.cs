@@ -11,4 +11,5 @@ public class TrackEntity
     public string? DownloadUri { get; set; }
 
     public AlbumEntity? Album { get; set; }
+    public List<TrackDownloadHistoryEntity> DownloadHistoryList { get; set; } = new();
 }
