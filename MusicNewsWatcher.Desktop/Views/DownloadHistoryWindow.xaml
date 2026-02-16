@@ -1,0 +1,46 @@
+﻿<Window
+    x:Class="MusicNewsWatcher.Desktop.Views.DownloadHistoryWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MusicNewsWatcher.Desktop.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Windows"
+    Title="История загрузок последний 1000 файлов"
+    Width="800"
+    Height="450"
+    d:DataContext="{d:DesignInstance Type={x:Type vm:DownloadHistoryWindowViewModel},
+                                     IsDesignTimeCreatable=False}"
+    mc:Ignorable="d">
+    <beh:Interaction.Triggers>
+        <beh:EventTrigger EventName="Loaded">
+            <beh:InvokeCommandAction Command="{Binding LoadedCommand}" />
+        </beh:EventTrigger>
+    </beh:Interaction.Triggers>
+
+    <DataGrid
+        AutoGenerateColumns="False"
+        CanUserAddRows="False"
+        CanUserDeleteRows="False"
+        CanUserReorderColumns="False"
+        HorizontalGridLinesBrush="LightGray"
+        IsReadOnly="True"
+        ItemsSource="{Binding Items}"
+        VerticalGridLinesBrush="LightGray">
+        <DataGrid.Columns>
+
+            <DataGridTextColumn
+                Width="*"
+                Binding="{Binding TrackName}"
+                FontWeight="Bold"
+                Header="Файл" />
+            <DataGridTextColumn Binding="{Binding ArtistName}" Header="Исполнитель" />
+            <DataGridTextColumn Binding="{Binding AlbumName}" Header="Альбом" />
+            <DataGridTextColumn Binding="{Binding FileSizeHumanized}" Header="Размер" />
+            <DataGridTextColumn Binding="{Binding DownloadStarted, StringFormat=dd.MM.yyyy HH:mm}" Header="Начало загрузки" />
+            <DataGridTextColumn Binding="{Binding DownloadStartedElapsed}" Header="Прошло" />
+            <DataGridTextColumn Binding="{Binding DownloadTimeHumanized}" Header="Длительность загрузки" />
+        </DataGrid.Columns>
+    </DataGrid>
+</Window>

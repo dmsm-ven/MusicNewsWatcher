@@ -1,10 +1,31 @@
-﻿using MusicNewsWatcher.Core.Models.Dtos;
+﻿using MusicNewsWatcher.Core;
+using MusicNewsWatcher.Core.Models.Dtos;
 using System.Text;
 
 namespace MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 {
+    public static readonly int MAX_MESSAGE_LENGTH = 4096;
+    public string BuilderLastAlbumsMessage(LastParsedAlbumInfo[] items)
+    {
+        if (items is null)
+        {
+            return "Пусто";
+        }
+
+        var sb = new StringBuilder()
+        .AppendLine($"Список последних ({items.Length}) найденных альбомов");
+
+        foreach (var album in items)
+        {
+            sb.AppendLine($" - {album.CreatedAt.ToRussianLocalTime()} <a href=\"{album.Uri}\" target=\"_blank\">{album.ArtistName} | {album.AlbumName}</a>");
+        }
+        string message = sb.ToString();
+
+        return TrimMessage(message);
+    }
+
     public string BuildNewAlbumsFoundMessage(string provider, ArtistDto artist, IEnumerable<AlbumDto> newAlbums)
     {
         var sb = new StringBuilder()
@@ -17,7 +38,7 @@ public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
         }
         string message = sb.ToString();
 
-        return message;
+        return TrimMessage(message);
     }
 
     public string BuildTrackedArtistsListMessage(IReadOnlyDictionary<string, string[]> providerToArtistMap)
@@ -40,6 +61,15 @@ public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
 
         string message = sb.ToString();
 
+        return TrimMessage(message);
+    }
+
+    private string TrimMessage(string message)
+    {
+        if (message.Length >= MAX_MESSAGE_LENGTH)
+        {
+            return message.Substring(message.Length - MAX_MESSAGE_LENGTH - 3) + "...";
+        }
         return message;
     }
 }

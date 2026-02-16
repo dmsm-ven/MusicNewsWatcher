@@ -6,4 +6,5 @@ public interface IDialogWindowService
 {
     void ShowNewArtistWindow(MusicProviderViewModel musicProvider);
     void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel);
+    void ShowDownloadHistoryWindow();
 }

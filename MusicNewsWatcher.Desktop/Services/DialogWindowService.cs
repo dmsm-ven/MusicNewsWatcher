@@ -1,32 +1,28 @@
-﻿using Microsoft.Extensions.Hosting;
-using MusicNewsWatcher.ApiClient;
+﻿using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
-public class DialogWindowService : IDialogWindowService
+public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWindowService
 {
-    private readonly IHost host;
-
-    public DialogWindowService(IHost host)
-    {
-        this.host = host;
-    }
-
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
-        var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
-        var apiClient = host.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+        var scope = scopeFactory.CreateScope();
+
+        var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
+        var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
         dialogWindow.DataContext = new ArtistAddWindowViewModel(musicProvider, apiClient);
         dialogWindow.ShowDialog();
     }
 
     public void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel)
     {
-        var dialogWindow = host.Services.GetRequiredService<ArtistAddWindow>();
-        var apiClient = host.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+        var scope = scopeFactory.CreateScope();
+
+        var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
+        var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
 
         var vm = new ArtistAddWindowViewModel(musicProvider, apiClient)
         {
@@ -35,5 +31,15 @@ public class DialogWindowService : IDialogWindowService
         };
         dialogWindow.DataContext = vm;
         dialogWindow.ShowDialog();
+    }
+
+    public void ShowDownloadHistoryWindow()
+    {
+        var scope = scopeFactory.CreateScope();
+        var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
+        var windowVm = scope.ServiceProvider.GetRequiredService<DownloadHistoryWindowViewModel>();
+        var window = new DownloadHistoryWindow();
+        window.DataContext = windowVm;
+        window.ShowDialog();
     }
 }

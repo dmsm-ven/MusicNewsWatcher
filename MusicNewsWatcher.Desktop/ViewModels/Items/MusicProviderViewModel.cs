@@ -127,7 +127,7 @@ public partial class MusicProviderViewModel : ObservableObject
             return;
         }
 
-        var randomAlbumImage = validAlbums[Random.Shared.Next(0, validAlbums.Length)].Image;
+        var randomAlbumImage = validAlbums[Random.Shared.Next(0, validAlbums.Length)].Image ?? string.Empty;
         SelectedArtist.Image = randomAlbumImage;
 
         await apiClient.UpdateArtist(SelectedArtist.ToDto());

@@ -10,6 +10,12 @@ public class MusicNewsWatcherApiClient
     {
         this.client = client;
     }
+
+    public async Task<bool> CheckApiStatusAsync()
+    {
+        var response = await client.GetAsync("api/status");
+        return response.IsSuccessStatusCode;
+    }
     public async Task<MusicProviderDto[]> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
         var response = await client.GetAsync("api/providers", cancellationToken);
@@ -91,5 +97,21 @@ public class MusicNewsWatcherApiClient
     {
         var response = await client.DeleteAsync($"api/artists/{artistId}", cancellationToken);
         response.EnsureSuccessStatusCode();
+    }
+    public async Task<TrackDownloadHistoryDto[]> GetDownloadHistory(int limit, CancellationToken cancellationToken = default)
+    {
+        var response = await client.GetAsync($"api/download-history?limit={limit}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return Array.Empty<TrackDownloadHistoryDto>();
+        }
+        TrackDownloadHistoryDto[]? items = await response.Content.ReadFromJsonAsync<TrackDownloadHistoryDto[]>(cancellationToken: cancellationToken);
+        return items ?? Array.Empty<TrackDownloadHistoryDto>();
+    }
+
+    public async Task LogDownloadHistory(TrackDownloadHistoryRequest item)
+    {
+        var response = await client.PostAsJsonAsync($"api/download-history", item);
     }
 }

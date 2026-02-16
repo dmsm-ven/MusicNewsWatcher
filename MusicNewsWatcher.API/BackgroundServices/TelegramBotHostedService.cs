@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
@@ -16,9 +17,7 @@ public sealed class TelegramBotHostedService(MusicWatcherTelegramBotClient teleg
         try
         {
             telegramBotClient.Start(stoppingToken);
-
-            DateTime convertedTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time"));
-            await telegramBotClient.SendMessage($"Бот по парсингу запущен в {convertedTime.ToString()}");
+            await telegramBotClient.SendMessage($"Бот по парсингу запущен в {DateTime.UtcNow.ToRussianLocalTime()}");
             logger.LogInformation("Telegram bot запущен");
 
         }

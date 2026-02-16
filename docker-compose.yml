@@ -5,7 +5,7 @@ services:
     image: painven/mnwatcher_api:latest
     container_name: mnwatcher_api
     restart: unless-stopped
-    env_file: ".env.api"
+    env_file: "api.env"
     ports:
       - "8050:80"
     environment:
@@ -19,7 +19,7 @@ services:
     image: postgres:latest
     container_name: mnwatcher_database
     restart: always
-    env_file: ".env.db"
+    env_file: "db.env"
     volumes:
       - pgdata:/var/lib/postgresql
     networks:

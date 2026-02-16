@@ -4,7 +4,8 @@ public enum TelegramBotCommand
 {
     None,
     ShowLastUpdate,
-    ExecutForceUpdate,
-    ShowTrackedArtists
+    ExecuteForceUpdate,
+    ShowTrackedArtists,
+    ShowLastParsedAlbums
 }
 

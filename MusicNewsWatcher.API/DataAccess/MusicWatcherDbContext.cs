@@ -10,6 +10,7 @@ namespace MusicNewsWatcher.API.DataAccess
         public DbSet<AlbumEntity> Albums { get; set; }
         public DbSet<TrackEntity> Tracks { get; set; }
         public DbSet<SettingsEntity> Settings { get; set; }
+        public DbSet<TrackDownloadHistoryEntity> DownloadHistory { get; set; }
 
         public MusicWatcherDbContext(DbContextOptions<MusicWatcherDbContext> options) : base(options)
         {
@@ -45,7 +46,6 @@ namespace MusicNewsWatcher.API.DataAccess
                 eb.Property(x => x.Name).HasColumnName("name");
                 eb.Property(x => x.Uri).HasColumnName("uri");
                 eb.Property(x => x.Image).HasColumnName("image");
-
                 eb.HasMany(x => x.Albums)
                   .WithOne(a => a.Artist)
                   .HasForeignKey(a => a.ArtistId)
@@ -89,6 +89,18 @@ namespace MusicNewsWatcher.API.DataAccess
                 eb.HasKey(x => x.Name);
                 eb.Property(x => x.Name).HasColumnName("name");
                 eb.Property(x => x.Value).HasColumnName("value");
+            });
+
+            // DownloadHistory
+            modelBuilder.Entity<TrackDownloadHistoryEntity>(eb =>
+            {
+                eb.ToTable("download_hist");
+                eb.HasKey(x => x.Id);
+                eb.Property(x => x.Id).HasColumnName("id");
+                eb.Property(x => x.TrackId).HasColumnName("track_id");
+                eb.Property(x => x.Started).HasColumnName("started");
+                eb.Property(x => x.Finished).HasColumnName("finished");
+                eb.Property(x => x.FileSizeInBytes).HasColumnName("file_size_in_bytes");
             });
 
             base.OnModelCreating(modelBuilder);

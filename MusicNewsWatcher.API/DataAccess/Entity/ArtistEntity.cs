@@ -13,6 +13,5 @@ public class ArtistEntity
     public string Image { get; set; } = string.Empty;
 
     public List<AlbumEntity> Albums { get; set; } = new List<AlbumEntity>();
-
     public MusicProviderEntity? MusicProvider { get; set; }
 }

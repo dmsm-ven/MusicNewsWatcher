@@ -18,7 +18,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
 
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
     public bool CrawlerInProgress { get; private set; }
-    public DateTimeOffset LastUpdate { get; private set; }
+    public DateTime LastUpdate { get; private set; }
     public bool IsFirstUpdate { get; private set; } = true;
 
     /// <summary>
@@ -30,13 +30,13 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         string? dateTimeStr = (await dbContext.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
-        if (DateTimeOffset.TryParse(dateTimeStr, out var lastUpdate))
+        if (DateTime.TryParse(dateTimeStr, out var lastUpdate))
         {
             LastUpdate = lastUpdate;
         }
         else
         {
-            LastUpdate = new DateTimeOffset();
+            LastUpdate = DateTime.MinValue;
         }
 
         IsFirstUpdate = false;
@@ -66,7 +66,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
             result.AddRange(data);
         }
 
-        LastUpdate = DateTimeOffset.UtcNow;
+        LastUpdate = DateTime.UtcNow;
 
         await SaveLastUpdateTime();
         await RefreshLastUpdateDateTime();
