@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Extensions;
 using System.Collections.Concurrent;
@@ -9,10 +10,10 @@ using System.Text.RegularExpressions;
 namespace MusicNewsWatcher.Desktop.Services;
 
 //TODO убрать прямое обращение через ViewModel
-public class MultithreadHttpDownloadManager
+public class MultithreadHttpDownloadManager(HttpClient client,
+        ILogger<MultithreadHttpDownloadManager> logger,
+        MusicNewsWatcherApiClient apiClient)
 {
-    private readonly ILogger<MultithreadHttpDownloadManager> logger;
-    private readonly HttpClient client;
     private SemaphoreSlim? semaphor = new(1);
     private readonly ConcurrentDictionary<TrackDownloadModel, TrackDownloadResult> downloadStatuses = new();
 
@@ -36,12 +37,6 @@ public class MultithreadHttpDownloadManager
                 }
             }
         }
-    }
-
-    public MultithreadHttpDownloadManager(HttpClient client, ILogger<MultithreadHttpDownloadManager> logger)
-    {
-        this.client = client;
-        this.logger = logger;
     }
 
     /// <summary>
@@ -123,10 +118,15 @@ public class MultithreadHttpDownloadManager
             }
         }
 
+        var startDownloadTime = DateTime.UtcNow;
+
         try
         {
             var bytes = await client.GetByteArrayAsync(track.DownloadUri, token ?? CancellationToken.None);
             await File.WriteAllBytesAsync(localName, bytes, token ?? CancellationToken.None);
+
+            await apiClient.LogDownloadHistory(new(track.TrackId, startDownloadTime, DateTime.UtcNow, bytes.Length));
+
             return TrackDownloadResult.Success;
         }
         catch (TaskCanceledException)

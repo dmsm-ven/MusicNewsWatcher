@@ -4,7 +4,6 @@ using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
-using System.Diagnostics;
 
 namespace MusicNewsWatcher.Desktop.Services;
 
@@ -69,15 +68,14 @@ public class MusicDownloadHelper
 
     private async Task DownloadAlbumTracks(AlbumViewModel album, CancellationToken token)
     {
-        Stopwatch sw = Stopwatch.StartNew();
-
         var albumModel = new AlbumDownloadModel()
         {
             AlbumDisplayName = album.Title,
             ArtistDisplayName = album.ParentArtist.Name,
             Tracks = album.Tracks.Select(t => new TrackDownloadModel()
             {
-                DownloadUri = t.DownloadUri
+                DownloadUri = t.DownloadUri,
+                TrackId = t.Id
             }).ToList()
         };
 

@@ -29,7 +29,7 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
         };
     }
 
-    public async Task<string> GetCachedImage(string originalSourceUri, ThumbnailSize size)
+    public async Task<string> GetCachedImage(string? originalSourceUri, ThumbnailSize size)
     {
         string[] VALID_EXT = new[] { ".jpg", ".png", ".jpeg" };
 
@@ -57,9 +57,9 @@ public class ImageThumbnailCacheService : IImageThumbnailCacheService
     {
         await semaphore.WaitAsync();
 
-        string cacheDir = Path.GetDirectoryName(cachePath);
+        string? cacheDir = Path.GetDirectoryName(cachePath);
 
-        if (!Directory.Exists(cacheDir))
+        if (!Directory.Exists(cacheDir) && !string.IsNullOrWhiteSpace(cacheDir))
         {
             Directory.CreateDirectory(cacheDir);
         }

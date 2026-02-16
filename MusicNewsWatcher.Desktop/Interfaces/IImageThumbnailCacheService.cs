@@ -2,7 +2,7 @@
 
 public interface IImageThumbnailCacheService
 {
-    Task<string> GetCachedImage(string originalSourceUri, ThumbnailSize size);
+    Task<string> GetCachedImage(string? originalSourceUri, ThumbnailSize size);
 }
 
 public enum ThumbnailSize
