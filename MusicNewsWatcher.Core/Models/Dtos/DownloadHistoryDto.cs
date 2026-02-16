@@ -1,5 +1,8 @@
 ﻿namespace MusicNewsWatcher.Core.Models.Dtos;
 
-public record TrackDownloadHistoryRequest(int trackId, DateTime Started, DateTime Finished, int FileSizeInKb);
-public record TrackDownloadHistoryDto(TrackDto track, DateTime Started, DateTime Finished, int FileSizeInKb);
+public record TrackDownloadHistoryRequest(int TrackId, DateTime Started, DateTime Finished, int FileSizeInBytes);
+public record TrackDownloadHistoryDto(string ArtistName, string AlbumName, string TrackName,
+    DateTime Started,
+    DateTime Finished,
+    int FileSizeInBytes);
 

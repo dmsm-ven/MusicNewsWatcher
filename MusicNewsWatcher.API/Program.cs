@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
+using MusicNewsWatcher.API.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

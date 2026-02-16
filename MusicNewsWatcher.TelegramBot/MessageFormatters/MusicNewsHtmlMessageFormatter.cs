@@ -38,7 +38,7 @@ public class MusicNewsHtmlMessageFormatter : IMusicNewsMessageFormatter
         }
         string message = sb.ToString();
 
-        return TrimMessage(message)
+        return TrimMessage(message);
     }
 
     public string BuildTrackedArtistsListMessage(IReadOnlyDictionary<string, string[]> providerToArtistMap)

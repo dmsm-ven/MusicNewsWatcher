@@ -56,6 +56,7 @@ public partial class App : Application
                 services.AddTransient<ArtistAddWindow>();
                 services.AddTransient<ArtistAddWindowViewModel>();
 
+                services.AddTransient<DownloadHistoryWindowViewModel>();
                 services.AddSingleton<MusicDownloadHelper>();
 
                 services.AddViewModels();

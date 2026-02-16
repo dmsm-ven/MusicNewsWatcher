@@ -101,6 +101,12 @@ public partial class MainWindowViewModel : ObservableObject,
         }
     }
 
+    [RelayCommand]
+    private void OpenFilesDownloadHistory()
+    {
+        dialogWindowService.ShowDownloadHistoryWindow();
+    }
+
     public void Receive(AlbumChangedMessage message)
     {
         SelectedMusicProvider!.SelectedArtist!.SelectedAlbum = message.album;

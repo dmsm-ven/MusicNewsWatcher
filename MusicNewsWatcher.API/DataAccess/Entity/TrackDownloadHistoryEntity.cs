@@ -6,6 +6,6 @@ public class TrackDownloadHistoryEntity
     public int TrackId { get; set; }
     public DateTime Started { get; set; }
     public DateTime Finished { get; set; }
-    public int FileSizeInKb { get; set; }
-    public TrackEntity Track { get; set; } = new();
+    public int FileSizeInBytes { get; set; }
+    public TrackEntity? Track { get; set; }
 }

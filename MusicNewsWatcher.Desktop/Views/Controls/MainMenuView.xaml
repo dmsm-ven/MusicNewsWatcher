@@ -35,9 +35,9 @@
         </Button>
 
         <Button
-            Command="{Binding SyncLibraryCommand}"
+            Command="{Binding OpenFilesDownloadHistoryCommand}"
             Style="{StaticResource ToolButtonStyle}"
-            ToolTip="Синхронизация библиотеки на разных устройствах">
+            ToolTip="Открыть окно с историей загрузок">
             <icons:PackIconFontAwesome Kind="ServerSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
 

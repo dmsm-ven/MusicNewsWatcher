@@ -1,14 +1,11 @@
 ﻿using Microsoft.Extensions.Options;
+using MusicNewsWatcher.API.Models;
 using MusicNewsWatcher.API.Services;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 
 namespace MusicNewsWatcher.API.BackgroundServices;
 
-public class CrawlerConfiguration
-{
-    public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(60);
-}
 public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
         MusicWatcherTelegramBotClient telegramBotClient,
         IMusicNewsMessageFormatter telegramBotMessageFormatter,
@@ -26,9 +23,15 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
         var options = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value;
 
         TimeSpan nextExecTime = options.CheckInterval - (DateTime.UtcNow - updateManager.LastUpdate);
+        if (nextExecTime < TimeSpan.Zero)
+        {
+            nextExecTime = TimeSpan.Zero;
+        }
+
         logger.LogInformation("Интервал обновления парсера: {checkInterval}", options.CheckInterval);
         logger.LogInformation("Последниее обновление было произведено: {dt}", updateManager.LastUpdate);
         logger.LogInformation("Следующее обновление будет выполнено через: {nextExecTime}", nextExecTime);
+
         if (nextExecTime > TimeSpan.Zero)
         {
             await Task.Delay(nextExecTime);

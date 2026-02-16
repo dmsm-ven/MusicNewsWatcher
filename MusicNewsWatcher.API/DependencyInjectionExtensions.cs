@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.Models;
 using MusicNewsWatcher.API.MusicProviders;
@@ -26,6 +25,7 @@ public static class DependencyInjectionExtensions
             IMusicNewsMessageFormatter formatter = scope.ServiceProvider.GetRequiredService<IMusicNewsMessageFormatter>();
             var updateManager = scope.ServiceProvider.GetRequiredService<MusicUpdateManager>();
             var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+            var updateInterval = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value.CheckInterval;
 
             var handlers = new Dictionary<TelegramBotCommand, Func<Task<string>>>()
             {
@@ -46,8 +46,6 @@ public static class DependencyInjectionExtensions
                         return Task.FromResult("Переообход сейчас в процессе выполнения");
                     }
 
-                    var localScope = x.CreateScope();
-                    var updateInterval = localScope.ServiceProvider.GetRequiredService<IOptionsMonitor<CrawlerConfiguration>>().CurrentValue.CheckInterval;
                     string lastExecDt = updateManager.LastUpdate.ToRussianLocalTime();
                     int elapsedMinutes = (int)(DateTime.UtcNow - updateManager.LastUpdate).TotalMinutes;
                     int nextExecInMinutes = Math.Max((int)updateInterval.TotalMinutes - elapsedMinutes, 0);
@@ -131,11 +129,8 @@ public static class DependencyInjectionExtensions
         });
 
         services.AddHttpClient();
-
         services.AddSingleton<CrawlerHttpClientProviderFactory>();
-
         services.AddSingleton<MusicNewsCrawler>();
-
         services.AddSingleton<MusicUpdateManager>();
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
         services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
