@@ -3,7 +3,6 @@ using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
 using MusicNewsWatcher.API.Models;
-using MusicNewsWatcher.Core;
 using PainvenNotificator;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,7 +48,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
         logger.LogInformation($"Бот по парсингу запущен");
-        await notificator.Notify($"Бот по парсингу запущен в {DateTime.UtcNow.ToRussianLocalTime()}");
+        await notificator.Notify($"API парсер MusicNewsWatcher запущен");
     });
 });
 
