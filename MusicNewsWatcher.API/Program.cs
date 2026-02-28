@@ -43,12 +43,8 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     _ = Task.Run(async () =>
     {
-        using var scope = app.Services.CreateScope();
-        var notificator = scope.ServiceProvider.GetRequiredService<IApiEventNotificator>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-        logger.LogInformation($"Бот по парсингу запущен");
-        await notificator.Notify($"API парсер MusicNewsWatcher запущен");
+        var notificator = app.Services.GetRequiredService<IApiEventNotificator>();
+        await notificator.Notify($"API парсера MusicNewsWatcher запущен");
     });
 });
 

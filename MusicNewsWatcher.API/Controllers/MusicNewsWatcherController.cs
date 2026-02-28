@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+п»їusing Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
@@ -9,7 +9,7 @@ using MusicNewsWatcher.Core.Models.Dtos;
 
 namespace MusicNewsWatcher.API.Controllers;
 
-//TODO: заменить длинные url контроллеров
+//TODO: Р·Р°РјРµРЅРёС‚СЊ РґР»РёРЅРЅС‹Рµ url РєРѕРЅС‚СЂРѕР»Р»РµСЂРѕРІ
 [ApiController]
 public class MusicNewsWatcherController : ControllerBase
 {
@@ -153,7 +153,7 @@ public class MusicNewsWatcherController : ControllerBase
         db.Set<ArtistEntity>().Add(item);
         await db.SaveChangesAsync();
 
-        updateManager.CheckUpdatesForArtistAsync(dto.MusicProviderId, item.ArtistId);
+        _ = updateManager.CheckUpdatesForArtistAsync(dto.MusicProviderId, item.ArtistId);
 
         return item != null ? Ok(item) : BadRequest();
     }

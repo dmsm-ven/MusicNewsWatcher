@@ -5,7 +5,7 @@ using MusicNewsWatcher.TelegramBot;
 namespace MusicNewsWatcher.API.BackgroundServices;
 
 public sealed class TelegramBotHostedService(MusicWatcherTelegramBotClient telegramBotClient,
-        MusicUpdateManager updateManager,
+        MusicUpdateManager musicUpdateManager,
         ILogger<TelegramBotHostedService> logger) : BackgroundService
 {
 

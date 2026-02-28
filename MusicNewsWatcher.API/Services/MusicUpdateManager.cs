@@ -80,9 +80,16 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
         var artist = await dbContext.Artists.FindAsync(artistId);
 
-        logger.LogInformation("Начало получения обновлений альбомов для артиста {artist}", artist.Name);
-        var newAlbums = await crawler.RefreshArtist(provider, artistId);
-        logger.LogInformation("Получены альбомы для артиста {artist} ({count} альбомов)", artist.Name, newAlbums.Count);
+        if (artist != null)
+        {
+            logger.LogInformation("Начало получения обновлений альбомов для артиста {artist}", artist.Name);
+            var newAlbums = await crawler.RefreshArtist(provider, artistId);
+            logger.LogInformation("Получены альбомы для артиста {artist} ({count} альбомов)", artist.Name, newAlbums.Count);
+        }
+        else
+        {
+            logger.LogWarning("Артист с id {artistId} не найден в базе данных", artistId);
+        }
     }
     public async Task CheckUpdatesForAlbumAsync(int providerId, int albumId)
     {

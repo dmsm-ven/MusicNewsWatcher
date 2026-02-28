@@ -76,7 +76,7 @@ public class MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContext
                     ProviderName = kvp.Key.Name,
                     ArtistName = artist.Name,
                     ArtistUri = artist.Uri,
-                    Albums = result
+                    Albums = result ?? Array.Empty<AlbumDto>()
                 });
             }
 
@@ -155,11 +155,11 @@ public class MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContext
                 provider.Name, albumId);
         }
     }
-    protected async Task<HtmlDocument?> GetDocument(string uri, MusicProviderBase provider)
+    protected async Task<HtmlDocument> GetDocument(string uri, MusicProviderBase provider)
     {
         try
         {
-            var response = await httpClientProviderFactory.GetClientForProvider(provider).GetAsync(uri);
+            var response = await httpClientProviderFactory.GetClientForProvider(provider)!.GetAsync(uri);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -172,6 +172,6 @@ public class MusicNewsCrawler(IDbContextFactory<MusicWatcherDbContext> dbContext
         {
 
         }
-        return null;
+        return new HtmlDocument();
     }
 }

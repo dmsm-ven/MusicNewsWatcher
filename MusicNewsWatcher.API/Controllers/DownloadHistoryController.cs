@@ -4,7 +4,6 @@ using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.MapperExtensions;
 using MusicNewsWatcher.Core.DataAccess.Entity;
 using MusicNewsWatcher.Core.Models.Dtos;
-using System.Text.Json;
 
 namespace MusicNewsWatcher.API.Controllers;
 
@@ -56,11 +55,10 @@ public class DownloadHistoryController(MusicWatcherDbContext db, ILogger<Downloa
         }
 
         var entity = dto.ToEntity();
+        entity.Track = trackItem;
         db.DownloadHistory.Add(entity);
 
         await db.SaveChangesAsync();
-
-        logger.LogInformation("Добавлена записать в историю загрузок: {item}", JsonSerializer.Serialize(entity));
 
         return Ok();
     }

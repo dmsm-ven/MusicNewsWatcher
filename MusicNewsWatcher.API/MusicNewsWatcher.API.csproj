@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>cac7025c-6db0-4d80-a2b0-7a61c056bb4c</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	<ContainerRepository>painven/mnwatcher_api</ContainerRepository>
+	<ContainerImageName>painven/mnwatcher_api</ContainerImageName>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
