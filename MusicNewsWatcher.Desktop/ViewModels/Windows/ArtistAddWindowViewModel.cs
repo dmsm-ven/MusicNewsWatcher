@@ -31,20 +31,14 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     private ArtistViewModel selectedFindedArtist;
     private readonly MusicNewsWatcherApiClient apiClient;
 
-    public ArtistAddWindowViewModel(MusicProviderViewModel provider, MusicNewsWatcherApiClient apiClient)
+    public ArtistAddWindowViewModel(MusicProviderViewModel provider, MusicNewsWatcherApiClient apiClient, ArtistViewModel contextArtist)
     {
-        ContextArtist = App.HostContainer.Services.GetRequiredService<ViewModelFactory<ArtistViewModel>>().Create();
-        ContextArtist.Initialize(provider, new()
-        {
-            MusicProviderId = provider.MusicProviderId,
-            Name = "Новый исполнитель",
-            Uri = provider.Uri,
-
-        });
+        this.apiClient = apiClient;
+        this.ContextArtist = contextArtist;
+        this.IsEdit = string.IsNullOrWhiteSpace(ContextArtist.Uri);
 
         MusicProviders.Add(provider);
         SelectedMusicProvider = provider;
-        this.apiClient = apiClient;
     }
 
     partial void OnSelectedFindedArtistChanged(ArtistViewModel? oldValue, ArtistViewModel newValue)

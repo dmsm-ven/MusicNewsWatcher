@@ -13,13 +13,9 @@ using System.Web;
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 //TODO разбить/упростить класс делает слишком много лишнего
-public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
-    MusicDownloadHelper downloadHelper,
-    IToastsNotifier toasts,
-    IImageThumbnailCacheService imageCacheService) : ObservableObject
+public partial class AlbumViewModel : ObservableObject
 {
     private bool isLoaded = false;
-    private bool isInitialized = false;
 
     public DateTime Created { get; private set; }
     public int AlbumId { get; private set; }
@@ -73,6 +69,28 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
     public ObservableCollection<TrackViewModel> Tracks { get; } = new();
 
     private readonly CancellationTokenSource cts = new();
+    private readonly MusicNewsWatcherApiClient apiClient;
+    private readonly MusicDownloadHelper downloadHelper;
+    private readonly IToastsNotifier toasts;
+    private readonly IImageThumbnailCacheService imageCacheService;
+
+    public AlbumViewModel(ArtistViewModel parentArtist, AlbumDto dto, MusicNewsWatcherApiClient apiClient,
+        MusicDownloadHelper downloadHelper,
+        IToastsNotifier toasts,
+        IImageThumbnailCacheService imageCacheService)
+    {
+        this.apiClient = apiClient;
+        this.downloadHelper = downloadHelper;
+        this.toasts = toasts;
+        this.imageCacheService = imageCacheService;
+
+        ParentArtist = parentArtist;
+        AlbumId = dto.AlbumId;
+        Title = dto.Title.ToDisplayName();
+        Created = dto.Created;
+        Image = dto.Image;
+        Uri = dto.Uri;
+    }
 
     [RelayCommand(CanExecute = nameof(CanDownloadAlbum))]
     private async Task DownloadAlbum(bool openFolder)
@@ -161,21 +179,5 @@ public partial class AlbumViewModel(MusicNewsWatcherApiClient apiClient,
     {
         toasts.ShowError("Загрузка альбома отменена");
         cts.Cancel();
-    }
-
-    public void Initialize(ArtistViewModel parentArtist, AlbumDto dto)
-    {
-        if (isInitialized)
-        {
-            throw new InvalidOperationException("ViewModel already initialized");
-        }
-        isInitialized = true;
-
-        ParentArtist = parentArtist;
-        AlbumId = dto.AlbumId;
-        Title = dto.Title.ToDisplayName();
-        Created = dto.Created;
-        Image = dto.Image;
-        Uri = dto.Uri;
     }
 }

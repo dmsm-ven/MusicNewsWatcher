@@ -16,26 +16,10 @@ public partial class ArtistViewModel : ObservableObject
     private readonly IImageThumbnailCacheService imageCacheService;
     private readonly MusicDownloadHelper downloadHelper;
     private readonly MusicNewsWatcherApiClient apiClient;
-    private readonly ViewModelFactory<AlbumViewModel> albumViewFactory;
+    private readonly Func<ArtistViewModel, AlbumDto, AlbumViewModel> albumViewFactory;
 
-    public ArtistViewModel(IToastsNotifier toasts,
-        IImageThumbnailCacheService imageCacheService,
-        MusicDownloadHelper downloadHelper,
-        MusicNewsWatcherApiClient apiClient,
-        ViewModelFactory<AlbumViewModel> albumViewFactory)
-    {
-        this.toasts = toasts;
-        this.imageCacheService = imageCacheService;
-        this.downloadHelper = downloadHelper;
-        this.apiClient = apiClient;
-        this.albumViewFactory = albumViewFactory;
-    }
-
-    private bool isInitialized = false;
-    private bool isLoaded = false;
-
-    public int ArtistId { get; private set; }
-    public MusicProviderViewModel ParentProvider { get; private set; }
+    public int ArtistId { get; init; }
+    public MusicProviderViewModel ParentProvider { get; init; }
 
     [ObservableProperty]
     private string name;
@@ -45,6 +29,31 @@ public partial class ArtistViewModel : ObservableObject
 
     [ObservableProperty]
     private string image;
+
+    private bool isLoaded = false;
+
+    public ArtistViewModel(MusicProviderViewModel parentProvider, ArtistDto artist,
+        IToastsNotifier toasts,
+        IImageThumbnailCacheService imageCacheService,
+        MusicDownloadHelper downloadHelper,
+        MusicNewsWatcherApiClient apiClient,
+        Func<ArtistViewModel, AlbumDto, AlbumViewModel> albumViewFactory)
+    {
+        this.toasts = toasts;
+        this.imageCacheService = imageCacheService;
+        this.downloadHelper = downloadHelper;
+        this.apiClient = apiClient;
+        this.albumViewFactory = albumViewFactory;
+
+        ParentProvider = parentProvider;
+        ArtistId = artist.ArtistId;
+        Name = artist.Name;
+        Image = artist.Image;
+        Uri = artist.Uri;
+
+        this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
+    }
+
 
     async partial void OnImageChanged(string oldValue, string newValue)
     {
@@ -121,9 +130,8 @@ public partial class ArtistViewModel : ObservableObject
 
         foreach (var albumDto in albumsData.OrderByDescending(ae => ae.Created))
         {
-            var album = albumViewFactory.Create();
+            var album = albumViewFactory(this, albumDto);
             album.PropertyChanged += Album_PropertyChanged;
-            album.Initialize(this, albumDto);
             Albums.Add(album);
         }
 
@@ -138,24 +146,6 @@ public partial class ArtistViewModel : ObservableObject
         {
             HasCheckedAlbums = this.Albums.Any(a => a.IsChecked == true);
         }
-    }
-
-    public void Initialize(MusicProviderViewModel parentProvider, ArtistDto artist)
-    {
-        if (isInitialized)
-        {
-            throw new InvalidOperationException("ViewModel already initialized");
-        }
-
-        isInitialized = true;
-
-        ParentProvider = parentProvider;
-        ArtistId = artist.ArtistId;
-        Name = artist.Name;
-        Image = artist.Image;
-        Uri = artist.Uri;
-
-        this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
     }
 
     [RelayCommand]

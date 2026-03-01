@@ -1,4 +1,5 @@
 ﻿using MusicNewsWatcher.ApiClient;
+using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
@@ -13,7 +14,15 @@ public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWin
 
         var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
         var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
-        dialogWindow.DataContext = new ArtistAddWindowViewModel(musicProvider, apiClient);
+        var vmFactory = scope.ServiceProvider.GetRequiredService<Func<MusicProviderViewModel, ArtistDto, ArtistViewModel>>();
+
+        var vm = new ArtistAddWindowViewModel(musicProvider, apiClient, vmFactory(musicProvider, new()
+        {
+            MusicProviderId = musicProvider.MusicProviderId,
+            Name = "Новый исполнитель"
+        }));
+
+        dialogWindow.DataContext = vm;
         dialogWindow.ShowDialog();
     }
 
@@ -23,12 +32,10 @@ public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWin
 
         var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
         var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
+        var vmFactory = scope.ServiceProvider.GetRequiredService<Func<MusicProviderViewModel, ArtistDto, ArtistViewModel>>();
 
-        var vm = new ArtistAddWindowViewModel(musicProvider, apiClient)
-        {
-            ContextArtist = artistViewModel,
-            IsEdit = true
-        };
+        var vm = new ArtistAddWindowViewModel(musicProvider, apiClient, artistViewModel);
+
         dialogWindow.DataContext = vm;
         dialogWindow.ShowDialog();
     }

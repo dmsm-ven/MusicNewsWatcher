@@ -15,24 +15,11 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Button
-            Grid.Column="0"
-            VerticalAlignment="Center"
-            Panel.ZIndex="99"
-            Command="{Binding OpenInBrowserCommand}"
-            CommandParameter="{Binding DownloadUri}"
-            DockPanel.Dock="Left"
-            Style="{StaticResource ToolButtonStyle}"
-            Visibility="{Binding Path=DataContext.InProgress, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter='inverse'}">
-            <icons:PackIconFontAwesome Kind="DownloadSolid" Style="{StaticResource LinkIconSize}" />
-        </Button>
-
         <icons:PackIconFontAwesome
-            Grid.Column="1"
+            Grid.Column="0"
             VerticalAlignment="Center"
             Foreground="#FF6262"
             Kind="{Binding DownloadResult, Converter={StaticResource TrackDownloadResultToIconKind}}"
@@ -40,7 +27,7 @@
             Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Hidden}" />
 
         <Label
-            Grid.Column="2"
+            Grid.Column="1"
             Margin="6,0,4,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"

@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.Desktop.Interfaces;
+﻿using MusicNewsWatcher.Core.Models.Dtos;
+using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.ViewModels.Items;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
 
@@ -10,14 +11,25 @@ public static class ConfigureServicesAppExtensions
     {
         services.AddTransient<MainWindowViewModel>();
 
-        services.AddTransient<AlbumViewModel>();
-        services.AddTransient<ViewModelFactory<AlbumViewModel>>();
+
+        // как вариант можно заменить все ViewModelFactory на Func версию, без вызова дополнительного метода Initialize
+        services.AddTransient<MusicProviderViewModel>();
+        services.AddSingleton<Func<MusicProviderDto, MusicProviderViewModel>>(sp => dto =>
+        {
+            return ActivatorUtilities.CreateInstance<MusicProviderViewModel>(sp, dto);
+        });
 
         services.AddTransient<ArtistViewModel>();
-        services.AddTransient<ViewModelFactory<ArtistViewModel>>();
+        services.AddSingleton<Func<MusicProviderViewModel, ArtistDto, ArtistViewModel>>(sp => (parent, dto) =>
+        {
+            return ActivatorUtilities.CreateInstance<ArtistViewModel>(sp, parent, dto);
+        });
 
-        services.AddTransient<MusicProviderViewModel>();
-        services.AddTransient<ViewModelFactory<MusicProviderViewModel>>();
+        services.AddTransient<AlbumViewModel>();
+        services.AddSingleton<Func<ArtistViewModel, AlbumDto, AlbumViewModel>>(sp => (parent, dto) =>
+        {
+            return ActivatorUtilities.CreateInstance<AlbumViewModel>(sp, parent, dto);
+        });
     }
 
     public static void AddNotifyIcon(this IServiceCollection services)
