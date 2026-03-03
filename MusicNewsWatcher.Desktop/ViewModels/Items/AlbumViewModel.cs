@@ -23,10 +23,13 @@ public partial class AlbumViewModel : ObservableObject
     [ObservableProperty]
     private string? image;
 
-    async partial void OnImageChanged(string? newValue)
+    async partial void OnImageChanged(string? value)
     {
-        CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Album);
-        await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+        _ = Task.Run(async () =>
+        {
+            CachedImage = await imageCacheService.GetCachedImage(value, ThumbnailSize.Album);
+            await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+        });
     }
 
     public string Uri { get; private set; }

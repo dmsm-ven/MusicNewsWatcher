@@ -55,10 +55,13 @@ public partial class ArtistViewModel : ObservableObject
     }
 
 
-    async partial void OnImageChanged(string oldValue, string newValue)
+    async partial void OnImageChanged(string? oldValue, string newValue)
     {
-        CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Artist);
-        await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+        _ = Task.Run(async () =>
+        {
+            CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Artist);
+            await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
+        });
     }
 
     [ObservableProperty]
@@ -73,7 +76,7 @@ public partial class ArtistViewModel : ObservableObject
     private bool inProgress;
 
     [ObservableProperty]
-    private AlbumViewModel selectedAlbum;
+    private AlbumViewModel? selectedAlbum = null;
 
     public bool IsUpdateAlbumsButtonVisibile => Albums.Count == 0 && !InProgress;
 

@@ -17,10 +17,10 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     private ObservableCollection<MusicProviderViewModel> musicProviders = new();
 
     [ObservableProperty]
-    private MusicProviderViewModel? selectedMusicProvider;
+    private MusicProviderViewModel? selectedMusicProvider = null;
 
     [ObservableProperty]
-    private string artistSearchName;
+    private string artistSearchName = string.Empty;
 
     public ArtistViewModel ContextArtist { get; init; }
 
@@ -28,7 +28,8 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     private ObservableCollection<ArtistViewModel> findedArtist = new();
 
     [ObservableProperty]
-    private ArtistViewModel selectedFindedArtist;
+    private ArtistViewModel? selectedFindedArtist = null;
+
     private readonly MusicNewsWatcherApiClient apiClient;
 
     public ArtistAddWindowViewModel(MusicProviderViewModel provider, MusicNewsWatcherApiClient apiClient, ArtistViewModel contextArtist)
@@ -38,21 +39,21 @@ public partial class ArtistAddWindowViewModel : ObservableObject
         this.IsEdit = string.IsNullOrWhiteSpace(ContextArtist.Uri);
 
         MusicProviders.Add(provider);
-        SelectedMusicProvider = provider;
+        selectedMusicProvider = provider;
     }
 
-    partial void OnSelectedFindedArtistChanged(ArtistViewModel? oldValue, ArtistViewModel newValue)
+    partial void OnSelectedFindedArtistChanged(ArtistViewModel? oldValue, ArtistViewModel? newValue)
     {
-        ArtistSearchName = newValue.Name;
-        ContextArtist.Name = newValue.Name;
-        ContextArtist.Image = newValue.Image;
-        ContextArtist.Uri = newValue.Uri;
+        ArtistSearchName = newValue?.Name ?? "артист";
+        ContextArtist.Name = newValue?.Name ?? "";
+        ContextArtist.Image = newValue?.Image ?? "";
+        ContextArtist.Uri = newValue?.Uri ?? "";
     }
 
-    async partial void OnArtistSearchNameChanged(string oldName, string newName)
+    partial void OnArtistSearchNameChanged(string? oldValue, string newValue)
     {
-        ContextArtist.Name = newName;
-        await LoadSearchResults();
+        ContextArtist.Name = newValue;
+        _ = LoadSearchResults();
     }
 
     [RelayCommand]
@@ -90,7 +91,7 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task Submit(object obj)
     {
-        if (SelectedMusicProvider == null)
+        if (SelectedMusicProvider == null || obj == null)
         {
             return;
         }
@@ -106,6 +107,6 @@ public partial class ArtistAddWindowViewModel : ObservableObject
             await apiClient.CreateArtist(artist);
         }
 
-        (obj as Window).DialogResult = true;
+        ((Window)obj).DialogResult = true;
     }
 }

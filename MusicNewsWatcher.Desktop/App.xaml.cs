@@ -1,6 +1,5 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
 global using MusicNewsWatcher.Desktop.Services;
-global using MusicNewsWatcher.Desktop.ViewModels;
 global using MusicNewsWatcher.Desktop.Views;
 global using System;
 global using System.Collections.Generic;
@@ -20,7 +19,7 @@ namespace MusicNewsWatcher.Desktop;
 /// </summary>
 public partial class App : Application
 {
-    public static IHost HostContainer { get; private set; }
+    public static IHost? HostContainer { get; private set; }
     public App()
     {
         HostContainer = Host.CreateDefaultBuilder()
@@ -65,7 +64,7 @@ public partial class App : Application
     }
     protected override async void OnStartup(StartupEventArgs e)
     {
-        var apiClient = HostContainer.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+        var apiClient = HostContainer!.Services.GetRequiredService<MusicNewsWatcherApiClient>();
         if ((await apiClient.CheckApiStatusAsync()) == false)
         {
             MessageBox.Show("Нет соединения с сервером", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -84,7 +83,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        await HostContainer.StopAsync();
+        await HostContainer!.StopAsync();
         base.OnExit(e);
     }
 }

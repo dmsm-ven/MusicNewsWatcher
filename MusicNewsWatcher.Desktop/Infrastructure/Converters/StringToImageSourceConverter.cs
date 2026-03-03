@@ -15,9 +15,12 @@ public class StringToImageSourceConverter : IValueConverter
     {
         defaultPath = new Lazy<string>(() =>
         {
-            var thumbnailOptions = App.HostContainer.Services.GetRequiredService<IOptions<ImageThumbnailCacheServiceOptions>>();
-
-            return thumbnailOptions.Value.PlaceholderFilePath;
+            var thumbnailOptions = App.HostContainer?.Services.GetRequiredService<IOptions<ImageThumbnailCacheServiceOptions>>();
+            if (thumbnailOptions != null)
+            {
+                return thumbnailOptions.Value.PlaceholderFilePath;
+            }
+            return "";
         });
     }
 

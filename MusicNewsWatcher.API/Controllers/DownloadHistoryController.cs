@@ -21,8 +21,8 @@ public class DownloadHistoryController(MusicWatcherDbContext db, ILogger<Downloa
             .AsNoTracking()
             .OrderByDescending(i => i.Id)
             .Include(p => p.Track)
-            .ThenInclude(p => p.Album)
-            .ThenInclude(a => a.Artist)
+            .ThenInclude(p => p!.Album)
+            .ThenInclude(a => a!.Artist)
             .Take((limit < MAX_HISTORY_ITEMS_LIMIT) ? limit : MAX_HISTORY_ITEMS_LIMIT)
             .ToArrayAsync();
 
