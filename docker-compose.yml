@@ -4,10 +4,6 @@ services:
   api:
     container_name: mnwatcher_api
     image: painven/mnwatcher_api:latest
-    build:
-      context: .
-      dockerfile: ./MusicNewsWatcher.API/Dockerfile
-
     restart: unless-stopped
     env_file: "api.env"
     ports:
@@ -32,10 +28,6 @@ services:
   web:
     container_name: mnwatcher_web
     image: painven/mnwatcher_web:latest
-    build:
-      context: .
-      dockerfile: ./MusicNewsWatcher.Web/Dockerfile
-
     ports:
       - "9010:80"
     depends_on:
