@@ -24,6 +24,7 @@ builder.Services.AddHostedService<TelegramBotHostedService>();
 
 builder.Services.AddScoped<AuthorizeMiddleware>();
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 builder.Services.AddHttpLogging(logging =>
 {
     logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.Response;
@@ -32,9 +33,22 @@ builder.Services.AddHttpLogging(logging =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("cors",
+        p => p.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+
+
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+
+// Enable CORS early so browser preflight requests are handled before other middleware
+app.UseCors("cors");
 
 app.UseMiddleware<AuthorizeMiddleware>();
 
@@ -50,6 +64,10 @@ app.Lifetime.ApplicationStarted.Register(() =>
         await notificator.Notify($"API парсера MusicNewsWatcher запущен");
     });
 });
+
+app.UseCors("react");
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.Run();
 

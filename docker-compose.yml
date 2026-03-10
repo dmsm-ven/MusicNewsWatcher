@@ -25,7 +25,8 @@ services:
     networks:
       - mnwatcher_network
 
-  web-prod:
+  web:
+    container_name: mnwatcher_web
     build:
       context: ./MusicNewsWatcher.Web
       dockerfile: Dockerfile
@@ -37,7 +38,6 @@ services:
       - api
     networks:
       - mnwatcher_network
-    profiles: ["prod"]
 
 networks:  
   mnwatcher_network:

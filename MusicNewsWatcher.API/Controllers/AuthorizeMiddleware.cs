@@ -18,6 +18,14 @@ public class AuthorizeMiddleware : IMiddleware
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         string clientIp = context.Request.Headers.ContainsKey("X-Real-IP") ? context.Request.Headers["X-Real-IP"].ToString() : "";
+        var path = context.Request.Path.Value ?? "";
+
+        // Пропускаем Swagger и внутренние прокси-эндпоинты без проверки
+        if (path.StartsWith("/swagger") || path.StartsWith("/api/internal"))
+        {
+            await next(context);
+            return;
+        }
 
         if (!context.Request.Headers.TryGetValue("Authorization", out var authHeaderValue))
         {
