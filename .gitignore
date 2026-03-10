@@ -367,3 +367,5 @@ FodyWeavers.xsd
 /api.env
 /db.env
 /web.env
+/MusicNewsWatcher.Web/.vite/deps/package.json
+/MusicNewsWatcher.Web/.vite/deps/_metadata.json
