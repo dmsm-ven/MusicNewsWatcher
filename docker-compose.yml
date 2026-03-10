@@ -1,4 +1,4 @@
-name: mnwatcher
+﻿name: mnwatcher
 
 services:
   api:
@@ -24,6 +24,20 @@ services:
       - pgdata:/var/lib/postgresql
     networks:
       - mnwatcher_network
+
+  web-prod:
+    build:
+      context: ./MusicNewsWatcher.Web
+      dockerfile: Dockerfile
+
+    env_file: "web.env"
+    ports:
+      - "9010:80"
+    depends_on:
+      - api
+    networks:
+      - mnwatcher_network
+    profiles: ["prod"]
 
 networks:  
   mnwatcher_network:

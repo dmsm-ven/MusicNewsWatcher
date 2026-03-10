@@ -29,6 +29,9 @@ builder.Services.AddHttpLogging(logging =>
     logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.Response;
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
