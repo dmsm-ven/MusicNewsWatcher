@@ -5,8 +5,4 @@
   <ItemGroup>
     <Folder Include="src\conponents\" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="src\api\client.ts\.openapi-generator\FILES" />
-    <None Include="src\api\client.ts\.openapi-generator\VERSION" />
-  </ItemGroup>
 </Project>
