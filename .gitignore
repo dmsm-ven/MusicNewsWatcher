@@ -364,8 +364,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/api.env
-/db.env
-/web.env
+*.env
 /MusicNewsWatcher.Web/.vite/deps/package.json
 /MusicNewsWatcher.Web/.vite/deps/_metadata.json
