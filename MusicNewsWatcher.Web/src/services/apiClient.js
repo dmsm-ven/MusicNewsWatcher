@@ -5,7 +5,7 @@
  */
 
 // Base configuration for API (can be extended per-request)
-export const baseConfig = new Configuration({ basePath: "http://localhost:8050" });
+export const baseConfig = new Configuration({ basePath: "http://localhost:8050"});
 
 export function getCookie(name) {
   if (typeof document === "undefined") return "";

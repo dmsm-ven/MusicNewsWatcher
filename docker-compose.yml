@@ -2,14 +2,18 @@
 
 services:
   api:
-    image: painven/mnwatcher_api:latest
     container_name: mnwatcher_api
+    image: painven/mnwatcher_api:latest
+    build:
+      context: .
+      dockerfile: ./MusicNewsWatcher.API/Dockerfile
+
     restart: unless-stopped
     env_file: "api.env"
     ports:
       - "8050:80"
     environment:
-      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_URLS: "http://+:80"
     networks:
     - mnwatcher_network
     depends_on:
@@ -27,11 +31,11 @@ services:
 
   web:
     container_name: mnwatcher_web
+    image: painven/mnwatcher_web:latest
     build:
-      context: ./MusicNewsWatcher.Web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./MusicNewsWatcher.Web/Dockerfile
 
-    env_file: "web.env"
     ports:
       - "9010:80"
     depends_on:

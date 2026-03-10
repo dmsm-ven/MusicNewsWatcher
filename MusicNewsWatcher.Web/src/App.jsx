@@ -8,7 +8,7 @@ function App() {
     const [token, setToken] = useState(() => getCookie("mnw_token") || "");
 
   useEffect(() => {
-    async function fetchData() {
+      async function fetchData() {
       if (!token) {
           setDownloadHistory([]);
         return;
@@ -33,7 +33,6 @@ function App() {
   const handleClear = () => {
     setToken("");
     setCookie("mnw_token", "", -1);
-    setApiResponseJson("token cleared");
   };
 
   return (

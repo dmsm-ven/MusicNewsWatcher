@@ -2,7 +2,4 @@
   <PropertyGroup>
     <ProjectName>MusicNewsWatcher.Web</ProjectName>
   </PropertyGroup>
-  <ItemGroup>
-    <Folder Include="src\conponents\" />
-  </ItemGroup>
 </Project>
