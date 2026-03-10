@@ -1,5 +1,9 @@
 ﻿import { Configuration, DownloadHistoryApi } from "../api/client.ts";
 
+/**
+ * @typedef {import("../api/client.ts/models/TrackDownloadHistoryDto").TrackDownloadHistoryDto} TrackDownloadHistoryDto
+ */
+
 // Base configuration for API (can be extended per-request)
 export const baseConfig = new Configuration({ basePath: "http://localhost:8050" });
 
@@ -17,12 +21,24 @@ export function setCookie(name, value, days = 365) {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
 }
 
+/**
+ * Create API client configured with Authorization header
+ * @param {string} token
+ * @returns {DownloadHistoryApi}
+ */
 export function createApiWithToken(token) {
   const cfg = new Configuration({ basePath: baseConfig.basePath, headers: { Authorization: `Bearer ${token}` } });
   return new DownloadHistoryApi(cfg);
 }
 
+/**
+ * Fetch download history from API
+ * @param {number} [limit=50]
+ * @param {string} token
+ * @returns {Promise<TrackDownloadHistoryDto[]>}
+ */
 export async function fetchDownloadHistory(limit = 50, token) {
   const api = createApiWithToken(token);
-  return await api.apiDownloadHistoryGet({ limit });
+    const res = await api.apiDownloadHistoryGet({ limit });
+  return Array.isArray(res) ? res : [];
 }
