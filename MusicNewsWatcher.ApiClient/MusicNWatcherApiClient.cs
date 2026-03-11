@@ -109,7 +109,6 @@ public class MusicNewsWatcherApiClient
         TrackDownloadHistoryDto[]? items = await response.Content.ReadFromJsonAsync<TrackDownloadHistoryDto[]>(cancellationToken: cancellationToken);
         return items ?? Array.Empty<TrackDownloadHistoryDto>();
     }
-
     public async Task LogDownloadHistory(TrackDownloadHistoryRequest item)
     {
         var response = await client.PostAsJsonAsync($"api/download-history", item);

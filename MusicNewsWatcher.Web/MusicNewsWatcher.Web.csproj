@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
+  <PropertyGroup>
+    <ProjectName>MusicNewsWatcher.Web</ProjectName>
+  </PropertyGroup>
+</Project>

@@ -35,7 +35,6 @@ bld/
 [Ll]ogs/
 
 *.db
-appsettings.*json
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -365,5 +364,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/api.env
-/db.env
+*.env
+/MusicNewsWatcher.Web/.vite/deps/package.json
+/MusicNewsWatcher.Web/.vite/deps/_metadata.json

@@ -20,9 +20,9 @@ public partial class DownloadHistoryWindowViewModel(MusicNewsWatcherApiClient ap
         var mappedItems = history.Select(i => new TrackDownloadHistoryItem()
         {
             TrackName = i.TrackName,
-            DownloadStarted = i.Started,
+            DownloadStarted = i.Started.ToLocalTime(),
             DownloadTimeHumanized = (i.Finished - i.Started).Humanize(),
-            DownloadStartedElapsed = (DateTime.Now - i.Started).Humanize(),
+            DownloadStartedElapsed = (DateTime.Now - i.Started.ToLocalTime()).Humanize(),
             FileSizeHumanized = i.FileSizeInBytes.Bytes().Humanize(),
             ArtistName = i.ArtistName,
             AlbumName = i.AlbumName

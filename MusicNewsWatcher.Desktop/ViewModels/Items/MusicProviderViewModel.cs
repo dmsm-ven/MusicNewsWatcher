@@ -13,18 +13,17 @@ namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 
 public partial class MusicProviderViewModel : ObservableObject
 {
-    public string Name { get; private set; }
-    public int MusicProviderId { get; private set; }
-    public string Image { get; private set; }
-    public string Uri { get; private set; }
+    public string Name { get; init; }
+    public int MusicProviderId { get; init; }
+    public string Image { get; init; }
+    public string Uri { get; init; }
 
     private readonly MusicNewsWatcherApiClient apiClient;
-    private readonly ViewModelFactory<ArtistViewModel> artistVmFactory;
+    private readonly Func<MusicProviderViewModel, ArtistDto, ArtistViewModel> artistVmFactory;
     private readonly IDialogWindowService dialogWindowService;
     private readonly IToastsNotifier toasts;
 
     private bool isLoaded = false;
-    private bool isInitialized = false;
     private int initialTrackedArtistsCount;
 
     [ObservableProperty]
@@ -46,15 +45,21 @@ public partial class MusicProviderViewModel : ObservableObject
         await RefreshProviderSource();
     }
 
-    public MusicProviderViewModel(MusicNewsWatcherApiClient apiClient,
+    public MusicProviderViewModel(MusicProviderDto dto, MusicNewsWatcherApiClient apiClient,
     IDialogWindowService dialogWindowService,
     IToastsNotifier toasts,
-    ViewModelFactory<ArtistViewModel> artistVmFactory)
+    Func<MusicProviderViewModel, ArtistDto, ArtistViewModel> artistVmFactory)
     {
         this.apiClient = apiClient;
         this.dialogWindowService = dialogWindowService;
         this.toasts = toasts;
         this.artistVmFactory = artistVmFactory;
+
+        Name = dto.Name;
+        MusicProviderId = dto.MusicProviderId;
+        Image = dto.Image;
+        Uri = dto.Uri;
+        initialTrackedArtistsCount = dto.TotalArtists;
 
         trackedArtists.CollectionChanged += (o, e) => OnPropertyChanged(nameof(TrackedArtistsCount));
     }
@@ -63,11 +68,9 @@ public partial class MusicProviderViewModel : ObservableObject
     {
         var artists = await apiClient.GetProviderArtistsAsync(MusicProviderId);
 
-        foreach (var artist in artists.OrderBy(a => a.Name))
+        foreach (var artistDto in artists.OrderBy(a => a.Name))
         {
-            var artistVm = artistVmFactory.Create();
-            artistVm.Initialize(this, artist);
-
+            var artistVm = artistVmFactory(this, artistDto);
             await App.Current.Dispatcher.InvokeAsync(() => TrackedArtists.Add(artistVm));
         }
 
@@ -131,21 +134,5 @@ public partial class MusicProviderViewModel : ObservableObject
         SelectedArtist.Image = randomAlbumImage;
 
         await apiClient.UpdateArtist(SelectedArtist.ToDto());
-    }
-
-    public void Initialize(MusicProviderDto provider)
-    {
-        if (isInitialized)
-        {
-            throw new Exception("MusicProviderViewModel already initialized");
-        }
-
-        Name = provider.Name;
-        MusicProviderId = provider.MusicProviderId;
-        Image = provider.Image;
-        Uri = provider.Uri;
-        initialTrackedArtistsCount = provider.TotalArtists;
-
-        isInitialized = true;
     }
 }

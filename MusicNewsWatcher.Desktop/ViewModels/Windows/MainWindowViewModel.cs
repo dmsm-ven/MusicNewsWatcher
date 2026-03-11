@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
 using MusicNewsWatcher.ApiClient;
+using MusicNewsWatcher.Core.Models.Dtos;
 using MusicNewsWatcher.Desktop.Infrastructure.Helpers;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
@@ -23,7 +24,7 @@ public partial class MainWindowViewModel : ObservableObject,
     private readonly IToastsNotifier toasts;
     private readonly IDialogWindowService dialogWindowService;
     private readonly IOptions<MusicDownloadFolderOptions> options;
-    private readonly ViewModelFactory<MusicProviderViewModel> providerVmFactory;
+    private readonly Func<MusicProviderDto, MusicProviderViewModel> providerVmFactory;
 
     [ObservableProperty]
     private bool isLoading = true;
@@ -41,7 +42,7 @@ public partial class MainWindowViewModel : ObservableObject,
         IToastsNotifier toasts,
         IDialogWindowService dialogWindowService,
         IOptions<MusicDownloadFolderOptions> options,
-        ViewModelFactory<MusicProviderViewModel> providerVmFactory)
+        Func<MusicProviderDto, MusicProviderViewModel> providerVmFactory)
     {
         this.apiClient = apiClient;
         this.toasts = toasts;
@@ -85,11 +86,9 @@ public partial class MainWindowViewModel : ObservableObject,
 
         IsLoading = true;
         var providers = await apiClient.GetProvidersAsync();
-        foreach (var provider in providers)
+        foreach (var providerDto in providers)
         {
-            var providerVm = providerVmFactory.Create();
-            providerVm.Initialize(provider);
-            MusicProviders.Add(providerVm);
+            MusicProviders.Add(providerVmFactory(providerDto));
         }
 
         IsLoading = false;
