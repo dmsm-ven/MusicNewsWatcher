@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MusicNewsWatcher.API;
+﻿using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
 using MusicNewsWatcher.API.Models;
@@ -17,7 +16,10 @@ builder.Services.Configure<CrawlerConfiguration>(builder.Configuration.GetSectio
 
 builder.Services.AddMusicNewsWatcherApi(builder.Configuration);
 builder.Services.AddTelegramBot(builder.Configuration);
-builder.Services.AddTelegramNotificationsWithGeodata(builder.Configuration);
+builder.Services.AddTelegramNotificationsWithGeodata(builder.Configuration, options =>
+{
+    options.AppPrefix = "MusicNewsWatcher";
+});
 
 builder.Services.AddHostedService<CrawlerHostedService>();
 builder.Services.AddHostedService<TelegramBotHostedService>();
@@ -61,7 +63,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     _ = Task.Run(async () =>
     {
         var notificator = app.Services.GetRequiredService<IApiEventNotificator>();
-        await notificator.Notify($"API парсера MusicNewsWatcher запущен");
+        await notificator.Notify($"API запущен");
     });
 });
 
