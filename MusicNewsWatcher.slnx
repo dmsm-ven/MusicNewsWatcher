@@ -10,7 +10,6 @@
     <Project Path="MusicNewsWatcher.Core/MusicNewsWatcher.Core.csproj" />
     <Project Path="MusicNewsWatcher.Desktop/MusicNewsWatcher.Desktop.csproj" />
     <Project Path="MusicNewsWatcher.TelegramBot/MusicNewsWatcher.TelegramBot.csproj" />
-    <Project Path="MusicNewsWatcher.Web/MusicNewsWatcher.Web.csproj" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build Solution="Release|*" />

@@ -25,16 +25,6 @@ services:
     networks:
       - mnwatcher_network
 
-  web:
-    container_name: mnwatcher_web
-    image: painven/mnwatcher_web:latest
-    ports:
-      - "9010:80"
-    depends_on:
-      - api
-    networks:
-      - mnwatcher_network
-
 networks:  
   mnwatcher_network:
     name: mnwatcher_network
