@@ -30,29 +30,32 @@ public class MusicDownloadHelper
     {
         album.InProgress = true;
 
-
+        Action<TrackDownloadModel, TrackDownloadResult> statusChangedAction = (track, status) =>
+        {
+            var trackVm = album.Tracks.Single(t => t.Id == track.TrackId);
+            trackVm.DownloadResult = status;
+        };
 
         try
         {
-            logger.LogInformation("Начало загрузки альбома {albumName}", album.Title);
+            this.musicDownloadManager.TrackDownloadResultChanged += statusChangedAction;
+
             await DownloadAlbumTracks(album, token);
-            logger.LogInformation("Конец загрузки альбома {albumName}", album.Title);
 
             toasts.ShowSuccess($"Альбом загружен: {album.Title}");
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("Загрузка альбома отменена {albumName}", album.Title);
             toasts.ShowError($"Загрузка альбома отменена");
         }
         catch (Exception ex)
         {
-            logger.LogWarning("Ошибка загрузки альбома '{albumName} - {msg}'", album.Title, ex.Message);
             toasts.ShowError($"Ошибка загрузки альбома '{album.Title}'\r\n{ex.Message}");
         }
         finally
         {
             album.InProgress = false;
+            this.musicDownloadManager.TrackDownloadResultChanged -= statusChangedAction;
         }
     }
 
@@ -80,6 +83,5 @@ public class MusicDownloadHelper
         };
 
         await musicDownloadManager.DownloadFullAlbum(albumModel, musicDownloadFolder, token);
-
     }
 }

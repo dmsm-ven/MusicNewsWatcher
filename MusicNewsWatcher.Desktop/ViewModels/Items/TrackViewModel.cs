@@ -12,14 +12,14 @@ public partial class TrackViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDownloaded))]
+    [NotifyPropertyChangedFor(nameof(IsDownloading))]
     private TrackDownloadResult downloadResult;
 
-    [ObservableProperty]
-    private bool isDownloading;
+    public bool IsDownloading => DownloadResult == TrackDownloadResult.Started;
 
     public AlbumViewModel Parent { get; }
 
-    public bool IsDownloaded => DownloadResult != TrackDownloadResult.None;
+    public bool IsDownloaded => (int)DownloadResult > (int)TrackDownloadResult.Started;
 
     public TrackViewModel(AlbumViewModel parent)
     {

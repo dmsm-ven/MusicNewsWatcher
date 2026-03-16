@@ -16,6 +16,8 @@ public class MultithreadHttpDownloadManager(HttpClient client,
 {
     private SemaphoreSlim? semaphor = new(1);
     private readonly ConcurrentDictionary<TrackDownloadModel, TrackDownloadResult> downloadStatuses = new();
+    public event Action<TrackDownloadModel, TrackDownloadResult>? TrackDownloadResultChanged;
+
 
     private int threadLimit = 1;
     public int ThreadLimit
@@ -59,9 +61,6 @@ public class MultithreadHttpDownloadManager(HttpClient client,
 
         downloadStatuses.Clear();
 
-
-        album.Tracks.ToList().ForEach(i => downloadStatuses[i] = TrackDownloadResult.None);
-
         var tasks = album.Tracks.Select(track => CreateDownloadTrackTask(track, albumDirectory, token));
 
         await Task.WhenAll(tasks);
@@ -92,14 +91,13 @@ public class MultithreadHttpDownloadManager(HttpClient client,
 
         string localName = Path.Combine(albumDirectory, Path.GetFileName(rawName));
 
+        downloadStatuses[track] = TrackDownloadResult.Started;
+        TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
+
         TrackDownloadResult downloadResult = await DownloadTrack(track, localName, token);
 
-        if (downloadResult == TrackDownloadResult.Success)
-        {
-            await Task.Delay(TimeSpan.FromSeconds(1));
-        }
-
         downloadStatuses[track] = downloadResult;
+        TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
 
         semaphor.Release();
     }

@@ -9,7 +9,7 @@
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Items"
     d:Background="White"
     d:DataContext="{d:DesignInstance Type={x:Type vm:TrackViewModel},
-                                     IsDesignTimeCreatable=True}"
+                                     IsDesignTimeCreatable=False}"
     mc:Ignorable="d">
     <Grid Margin="8,0,2,0">
 
@@ -34,11 +34,13 @@
             HorizontalContentAlignment="Right"
             VerticalContentAlignment="Center"
             Content="{Binding Name}"
+            d:Content="Track name"
             FontSize="13"
             Foreground="Navy" />
 
         <ProgressBar
-            Grid.ColumnSpan="3"
+            Grid.ColumnSpan="2"
+            Grid.Column="0"
             Panel.ZIndex="99"
             BorderBrush="Transparent"
             BorderThickness="0"

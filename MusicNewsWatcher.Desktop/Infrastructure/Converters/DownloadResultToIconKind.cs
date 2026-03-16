@@ -13,6 +13,7 @@ public class TrackDownloadResultToIconKind : IValueConverter
         {
             PackIconFontAwesomeKind result = d switch
             {
+                TrackDownloadResult.Started => PackIconFontAwesomeKind.PersonRunningSolid,
                 TrackDownloadResult.Success => PackIconFontAwesomeKind.CheckSolid,
                 TrackDownloadResult.Error => PackIconFontAwesomeKind.CrossSolid,
                 TrackDownloadResult.Skipped => PackIconFontAwesomeKind.ArrowRightSolid,
