@@ -11,7 +11,7 @@ services:
     environment:
       ASPNETCORE_URLS: "http://+:80"
     networks:
-    - mnwatcher_network
+      - mnwatcher_network
     depends_on:
       - db
 
@@ -28,7 +28,6 @@ services:
 networks:  
   mnwatcher_network:
     name: mnwatcher_network
-    external: false
 
 volumes:
   pgdata:

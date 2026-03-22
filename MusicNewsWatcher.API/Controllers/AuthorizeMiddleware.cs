@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API.Models;
 using PainvenNotificator;
+using System.Net;
 
 namespace MusicNewsWatcher.API.Controllers;
 
@@ -17,6 +18,7 @@ public class AuthorizeMiddleware : IMiddleware
     }
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
+
         string clientIp = context.Request.Headers.ContainsKey("X-Real-IP") ? context.Request.Headers["X-Real-IP"].ToString() : "";
         var path = context.Request.Path.Value ?? "";
 
@@ -27,9 +29,16 @@ public class AuthorizeMiddleware : IMiddleware
             return;
         }
 
+        if (!IPAddress.TryParse(clientIp, out _))
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsync("Bad Request");
+            return;
+        }
+
         if (!context.Request.Headers.TryGetValue("Authorization", out var authHeaderValue))
         {
-            _ = notificator.Notify($"Unauthorized access attempt from IP: {clientIp}");
+            _ = notificator.Notify("Попытка доступа к API без API KEY", clientIp);
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsync("Bad Request");
@@ -38,7 +47,7 @@ public class AuthorizeMiddleware : IMiddleware
 
         if (authHeaderValue.ToString().Replace("Bearer ", string.Empty) != apiKey)
         {
-            _ = notificator.Notify($"Invalid access token auth attempt from IP: {clientIp}");
+            _ = notificator.Notify("Попытка доступа к API с неверным API KEY", clientIp);
 
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsync("Forbidden");
