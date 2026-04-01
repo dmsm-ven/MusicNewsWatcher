@@ -10,6 +10,7 @@ using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models;
 using MusicNewsWatcher.Desktop.ViewModels.Windows;
+using System.Net;
 using System.Net.Http;
 using System.Windows;
 
@@ -34,8 +35,20 @@ public partial class App : Application
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
                 services.AddOptions<MusicWatcherApiConfiguration>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
                 services.AddOptions<ApiConnectionConfiguration>().Bind(context.Configuration.GetSection(nameof(ApiConnectionConfiguration)));
+                services.AddOptions<HttpClientParserConfiguration>().Bind(context.Configuration.GetSection(nameof(HttpClientParserConfiguration)));
 
-                services.AddHttpClient<MultithreadHttpDownloadManager>();
+                services.AddHttpClient<MultithreadHttpDownloadManager>(client =>
+                {
+                    var userAgent = context.Configuration.GetValue<string>("HttpClientParserConfiguration:UserAgent");
+                    client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                    client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+                    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9,ru;q=0.8");
+                }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    CookieContainer = new CookieContainer(),
+                    UseCookies = true // This is true by default
+                });
+
                 services.AddHttpClient(nameof(MusicNewsWatcherApiClient), client =>
                 {
                     var options = context.Configuration.GetSection(nameof(ApiConnectionConfiguration)).Get<ApiConnectionConfiguration>()

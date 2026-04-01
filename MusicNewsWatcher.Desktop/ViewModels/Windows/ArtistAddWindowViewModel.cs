@@ -36,7 +36,7 @@ public partial class ArtistAddWindowViewModel : ObservableObject
     {
         this.apiClient = apiClient;
         this.ContextArtist = contextArtist;
-        this.IsEdit = string.IsNullOrWhiteSpace(ContextArtist.Uri);
+        this.IsEdit = !string.IsNullOrWhiteSpace(ContextArtist.Uri);
 
         MusicProviders.Add(provider);
         selectedMusicProvider = provider;

@@ -3,6 +3,7 @@ using MusicNewsWatcher.ApiClient;
 using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.Desktop.Extensions;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -135,8 +136,9 @@ public class MultithreadHttpDownloadManager(HttpClient client,
             }
             return TrackDownloadResult.Cancelled;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Ошибка при загрузки трека {track.TrackId} по адресу {track.DownloadUri}: {ex}");
             return TrackDownloadResult.Error;
         }
     }
