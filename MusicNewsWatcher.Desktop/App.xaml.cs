@@ -81,6 +81,8 @@ public partial class App : Application
         if ((await apiClient.CheckApiStatusAsync()) == false)
         {
             MessageBox.Show("Нет соединения с сервером", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Application.Current.Shutdown();
+            return;
         }
 
         //Окно занимает 85% экрана

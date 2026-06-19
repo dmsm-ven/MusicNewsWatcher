@@ -9,6 +9,7 @@ using MusicNewsWatcher.Core;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 using System.Diagnostics;
+using System.Net;
 using Telegram.Bot;
 
 namespace MusicNewsWatcher.API;
@@ -106,6 +107,21 @@ public static class DependencyInjectionExtensions
             var options = configuration
                 .GetSection(nameof(MusicWatcherTelegramBotConfiguration))
                 .Get<MusicWatcherTelegramBotConfiguration>() ?? throw new ArgumentNullException("Ошибка конфигурации TG бота");
+
+            var proxy = new WebProxy(options.ProxySettings.Host, options.ProxySettings.Port)
+            {
+                Credentials = new NetworkCredential(
+                options.ProxySettings.Login,
+                options.ProxySettings.Password)
+            };
+
+            var handler = new HttpClientHandler
+            {
+                Proxy = proxy,
+                UseProxy = true
+            };
+
+            var httpClient = new HttpClient(handler);
 
             var routeHandlers = scope.ServiceProvider.GetRequiredService<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>();
             var client = new TelegramBotClient(options!.ApiKey);

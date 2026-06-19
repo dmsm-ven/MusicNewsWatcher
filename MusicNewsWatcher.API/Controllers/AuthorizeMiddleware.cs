@@ -8,12 +8,12 @@ namespace MusicNewsWatcher.API.Controllers;
 
 public class AuthorizeMiddleware : IMiddleware
 {
-    private readonly string apiKey;
+    private readonly AuthorizeMiddlewareOptions options;
     private readonly IApiEventNotificator notificator;
 
     public AuthorizeMiddleware(IOptions<AuthorizeMiddlewareOptions> options, IApiEventNotificator notificator)
     {
-        apiKey = options.Value.AccessToken;
+        this.options = options.Value;
         this.notificator = notificator;
     }
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -29,29 +29,32 @@ public class AuthorizeMiddleware : IMiddleware
             return;
         }
 
-        if (!IPAddress.TryParse(clientIp, out _))
+        if (options.IPFilteringEnabled && !IPAddress.TryParse(clientIp, out _))
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsync("Bad Request");
             return;
         }
 
-        if (!context.Request.Headers.TryGetValue("Authorization", out var authHeaderValue))
+        if (options.AccessTokenRequired)
         {
-            _ = notificator.Notify("Попытка доступа к API без API KEY", clientIp);
+            if (!context.Request.Headers.TryGetValue("Authorization", out var authHeaderValue))
+            {
+                _ = notificator.Notify("Попытка доступа к API без API KEY", clientIp);
 
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsync("Bad Request");
-            return;
-        }
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Bad Request");
+                return;
+            }
 
-        if (authHeaderValue.ToString().Replace("Bearer ", string.Empty) != apiKey)
-        {
-            _ = notificator.Notify("Попытка доступа к API с неверным API KEY", clientIp);
+            if (authHeaderValue.ToString().Replace("Bearer ", string.Empty) != options.AccessToken)
+            {
+                _ = notificator.Notify("Попытка доступа к API с неверным API KEY", clientIp);
 
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsync("Forbidden");
-            return;
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsync("Forbidden");
+                return;
+            }
         }
 
         await next(context);

@@ -1,4 +1,5 @@
-﻿using MusicNewsWatcher.API;
+﻿using Microsoft.Extensions.Options;
+using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
 using MusicNewsWatcher.API.Models;
@@ -63,6 +64,10 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     _ = Task.Run(async () =>
     {
+        ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var options = app.Services.GetRequiredService<IOptions<AuthorizeMiddlewareOptions>>().Value;
+        logger.LogInformation($"{nameof(AuthorizeMiddlewareOptions)}.{nameof(AuthorizeMiddlewareOptions.AccessTokenRequired)}: {options.AccessTokenRequired}");
+        logger.LogInformation($"{nameof(AuthorizeMiddlewareOptions)}.{nameof(AuthorizeMiddlewareOptions.IPFilteringEnabled)}: {options.IPFilteringEnabled}");
         var notificator = app.Services.GetRequiredService<IApiEventNotificator>();
         await notificator.Notify($"API запущен");
     });

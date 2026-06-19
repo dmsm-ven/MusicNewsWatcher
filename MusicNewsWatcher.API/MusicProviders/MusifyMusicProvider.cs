@@ -69,8 +69,8 @@ public sealed class MusifyMusicProvider : MusicProviderBase
                 var tracks = doc.DocumentNode.SelectNodes(trackXPath)
                     .Select(div => new TrackDto(Id: 0,
                     AlbumId: album.AlbumId,
-                    Name: div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]").InnerText?.Trim() ?? "<Ошибка>",
-                    DownloadUri: HOST + div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty)
+                    Name: div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]")?.InnerText?.Trim() ?? "<Ошибка>",
+                    DownloadUri: HOST + (div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty) ?? string.Empty)
                     ))
                     .ToArray();
 
