@@ -58,9 +58,15 @@ public partial class MainWindowViewModel : ObservableObject,
     [RelayCommand]
     private async Task AddArtist()
     {
-        dialogWindowService?.ShowNewArtistWindow(SelectedMusicProvider!);
-        await CheckUpdatesAll();
+        if (SelectedMusicProvider == null)
+        {
+            return;
+        }
 
+        dialogWindowService.ShowNewArtistWindow(SelectedMusicProvider);
+
+        // Перезагружаем только список исполнителей текущего провайдера, а не пересоздаём все провайдеры
+        await SelectedMusicProvider.ReloadArtistsAsync();
     }
 
     [RelayCommand]
@@ -85,13 +91,22 @@ public partial class MainWindowViewModel : ObservableObject,
         MusicProviders.Clear();
 
         IsLoading = true;
-        var providers = await apiClient.GetProvidersAsync();
-        foreach (var providerDto in providers)
+        try
         {
-            MusicProviders.Add(providerVmFactory(providerDto));
+            var providers = await apiClient.GetProvidersAsync();
+            foreach (var providerDto in providers)
+            {
+                MusicProviders.Add(providerVmFactory(providerDto));
+            }
         }
-
-        IsLoading = false;
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Не удалось получить список провайдеров: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
 
         if (MusicProviders.Any())
         {

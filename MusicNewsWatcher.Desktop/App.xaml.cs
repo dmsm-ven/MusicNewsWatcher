@@ -33,7 +33,6 @@ public partial class App : Application
                 services.AddToasts();
                 services.AddOptions<MusicDownloadFolderOptions>().Bind(context.Configuration.GetSection(nameof(MusicDownloadFolderOptions)));
                 services.AddOptions<ImageThumbnailCacheServiceOptions>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
-                services.AddOptions<MusicWatcherApiConfiguration>().Bind(context.Configuration.GetSection(nameof(ImageThumbnailCacheServiceOptions)));
                 services.AddOptions<ApiConnectionConfiguration>().Bind(context.Configuration.GetSection(nameof(ApiConnectionConfiguration)));
                 services.AddOptions<HttpClientParserConfiguration>().Bind(context.Configuration.GetSection(nameof(HttpClientParserConfiguration)));
 
@@ -47,6 +46,19 @@ public partial class App : Application
                 {
                     CookieContainer = new CookieContainer(),
                     UseCookies = true // This is true by default
+                });
+
+                // Клиент для загрузки обложек (используется ImageThumbnailCacheService)
+                services.AddHttpClient(ImageThumbnailCacheService.HttpClientName, client =>
+                {
+                    var userAgent = context.Configuration.GetValue<string>("HttpClientParserConfiguration:UserAgent");
+                    if (!string.IsNullOrWhiteSpace(userAgent))
+                    {
+                        client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
+                    }
+                    // WebP/AVIF средствами WPF не прочитать, поэтому просим только jpeg/png
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "image/jpeg,image/png,image/*;q=0.5");
+                    client.Timeout = TimeSpan.FromSeconds(30);
                 });
 
                 services.AddHttpClient(nameof(MusicNewsWatcherApiClient), client =>
@@ -77,28 +89,38 @@ public partial class App : Application
     }
     protected override async void OnStartup(StartupEventArgs e)
     {
-        var apiClient = HostContainer!.Services.GetRequiredService<MusicNewsWatcherApiClient>();
-        if ((await apiClient.CheckApiStatusAsync()) == false)
+        try
         {
-            MessageBox.Show("Нет соединения с сервером", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            Application.Current.Shutdown();
-            return;
+            var apiClient = HostContainer!.Services.GetRequiredService<MusicNewsWatcherApiClient>();
+            if ((await apiClient.CheckApiStatusAsync()) == false)
+            {
+                MessageBox.Show("Нет соединения с сервером", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Application.Current.Shutdown();
+                return;
+            }
+
+            //Окно занимает 85% экрана
+            double sizeRatio = 0.85;
+
+            var mainWindow = new MainWindow();
+            //mainWindow.Closing += (o, e) => { e.Cancel = true; mainWindow.Hide(); };
+            mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
+            mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
+            mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
+            mainWindow.ShowDialog();
         }
-
-        //Окно занимает 85% экрана
-        double sizeRatio = 0.85;
-
-        var mainWindow = new MainWindow();
-        //mainWindow.Closing += (o, e) => { e.Cancel = true; mainWindow.Hide(); };
-        mainWindow.DataContext = HostContainer.Services.GetRequiredService<MainWindowViewModel>();
-        mainWindow.Width = SystemParameters.PrimaryScreenWidth * sizeRatio;
-        mainWindow.Height = SystemParameters.PrimaryScreenHeight * sizeRatio;
-        mainWindow.ShowDialog();
+        catch (Exception ex)
+        {
+            // async void: необработанное исключение здесь уронило бы приложение без объяснений
+            MessageBox.Show($"Ошибка запуска приложения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            Application.Current.Shutdown();
+        }
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    protected override void OnExit(ExitEventArgs e)
     {
-        await HostContainer!.StopAsync();
+        // Host только собирался (Build) и не запускался, поэтому StopAsync не нужен, достаточно освободить ресурсы
+        HostContainer?.Dispose();
         base.OnExit(e);
     }
 }

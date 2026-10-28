@@ -59,7 +59,7 @@ public static class ConfigureServicesAppExtensions
 
     public static void AddToasts(this IServiceCollection services)
     {
-        services.AddSingleton<IToastsNotifier, MockToastsNotifier>();
+        services.AddSingleton<IToastsNotifier, MessageBoxToastsNotifier>();
     }
 }
 

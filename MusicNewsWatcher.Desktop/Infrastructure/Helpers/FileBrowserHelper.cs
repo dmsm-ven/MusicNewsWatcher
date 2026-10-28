@@ -9,11 +9,13 @@ public static class FileBrowserHelper
     {
         get
         {
-            string cacheDir = Path.Combine(Environment.CurrentDirectory, "cache");
-            if (!Directory.Exists(cacheDir))
-            {
-                Directory.CreateDirectory(cacheDir);
-            }
+            // Кэш лежит в профиле пользователя, а не рядом с exe/в текущей папке процесса
+            string cacheDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MusicNewsWatcher",
+                "cache");
+
+            Directory.CreateDirectory(cacheDir);
             return cacheDir;
         }
     }

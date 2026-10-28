@@ -13,7 +13,6 @@ namespace MusicNewsWatcher.Desktop.ViewModels.Items;
 public partial class ArtistViewModel : ObservableObject
 {
     private readonly IToastsNotifier toasts;
-    private readonly IImageThumbnailCacheService imageCacheService;
     private readonly MusicDownloadHelper downloadHelper;
     private readonly MusicNewsWatcherApiClient apiClient;
     private readonly Func<ArtistViewModel, AlbumDto, AlbumViewModel> albumViewFactory;
@@ -22,25 +21,24 @@ public partial class ArtistViewModel : ObservableObject
     public MusicProviderViewModel ParentProvider { get; init; }
 
     [ObservableProperty]
-    private string name;
+    private string name = string.Empty;
 
     [ObservableProperty]
-    private string uri;
+    private string uri = string.Empty;
 
+    // Только адрес оригинальной картинки. Сама картинка загружается лениво контролом ThumbnailImage
     [ObservableProperty]
-    private string image;
+    private string image = string.Empty;
 
     private bool isLoaded = false;
 
     public ArtistViewModel(MusicProviderViewModel parentProvider, ArtistDto artist,
         IToastsNotifier toasts,
-        IImageThumbnailCacheService imageCacheService,
         MusicDownloadHelper downloadHelper,
         MusicNewsWatcherApiClient apiClient,
         Func<ArtistViewModel, AlbumDto, AlbumViewModel> albumViewFactory)
     {
         this.toasts = toasts;
-        this.imageCacheService = imageCacheService;
         this.downloadHelper = downloadHelper;
         this.apiClient = apiClient;
         this.albumViewFactory = albumViewFactory;
@@ -51,17 +49,7 @@ public partial class ArtistViewModel : ObservableObject
         Image = artist.Image;
         Uri = artist.Uri;
 
-        this.Albums.CollectionChanged += async (o, e) => await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile)));
-    }
-
-
-    async partial void OnImageChanged(string? oldValue, string newValue)
-    {
-        _ = Task.Run(async () =>
-        {
-            CachedImage = await imageCacheService.GetCachedImage(newValue, ThumbnailSize.Artist);
-            await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
-        });
+        this.Albums.CollectionChanged += (o, e) => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
     }
 
     [ObservableProperty]
@@ -80,8 +68,6 @@ public partial class ArtistViewModel : ObservableObject
 
     public bool IsUpdateAlbumsButtonVisibile => Albums.Count == 0 && !InProgress;
 
-    public string? CachedImage { get; private set; }
-
     [NotifyCanExecuteChangedFor(nameof(DownloadCheckedAlbumsCommand))]
     [ObservableProperty]
     private bool hasCheckedAlbums = false;
@@ -99,7 +85,7 @@ public partial class ArtistViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(HasCheckedAlbums))]
     private async Task DownloadCheckedAlbums()
     {
-        var checkedAlbums = Albums.Where(a => a?.IsChecked ?? false);
+        var checkedAlbums = Albums.Where(a => a?.IsChecked ?? false).ToList();
         await downloadHelper.DownloadCheckedAlbums(checkedAlbums);
     }
 
@@ -110,13 +96,19 @@ public partial class ArtistViewModel : ObservableObject
         this.Albums.Where(a => a.IsChecked is null).ToList().ForEach(a => a.IsChecked = false);
     }
 
+    /// <summary>
+    /// Просит сервер проверить сайт-источник на новые альбомы и обновляет список
+    /// </summary>
     [RelayCommand]
     private async Task GetAlbumsFromProviderForArtist()
     {
-        InProgress = true;
-        await apiClient.CheckUpdatesForArtist(ArtistId);
-        await RefreshSource();
-        InProgress = false;
+        await CheckUpdatesAndRefresh();
+    }
+
+    [RelayCommand]
+    private async Task RefreshArtistAlbums()
+    {
+        await CheckUpdatesAndRefresh();
     }
 
     [RelayCommand]
@@ -125,36 +117,65 @@ public partial class ArtistViewModel : ObservableObject
         //IGNORE
     }
 
+    private async Task CheckUpdatesAndRefresh()
+    {
+        InProgress = true;
+        try
+        {
+            await apiClient.CheckUpdatesForArtist(ArtistId);
+        }
+        catch (Exception ex)
+        {
+            InProgress = false;
+            toasts.ShowError($"Ошибка получения новинок: {ex.Message}");
+            return;
+        }
+
+        await RefreshSource();
+    }
+
     private async Task RefreshSource()
     {
         InProgress = true;
 
-        var albumsData = await apiClient.GetArtistAlbumsAsync(this.ArtistId);
-
-        foreach (var albumDto in albumsData.OrderByDescending(ae => ae.Created))
+        try
         {
-            var album = albumViewFactory(this, albumDto);
-            album.PropertyChanged += Album_PropertyChanged;
-            Albums.Add(album);
-        }
+            var albumsData = await apiClient.GetArtistAlbumsAsync(this.ArtistId);
 
-        InProgress = false;
-        isLoaded = true;
+            foreach (var oldAlbum in Albums)
+            {
+                oldAlbum.PropertyChanged -= Album_PropertyChanged;
+            }
+
+            SelectedAlbum = null;
+            HasCheckedAlbums = false;
+            Albums.Clear();
+
+            foreach (var albumDto in albumsData.OrderByDescending(ae => ae.Created))
+            {
+                var album = albumViewFactory(this, albumDto);
+                album.PropertyChanged += Album_PropertyChanged;
+                Albums.Add(album);
+            }
+
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Ошибка загрузки альбомов: {ex.Message}");
+        }
+        finally
+        {
+            InProgress = false;
+        }
     }
+
     private void Album_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        var album = (AlbumViewModel)sender!;
-
         if (e.PropertyName == nameof(AlbumViewModel.IsChecked))
         {
             HasCheckedAlbums = this.Albums.Any(a => a.IsChecked == true);
         }
-    }
-
-    [RelayCommand]
-    private async Task RefreshArtistAlbums()
-    {
-        await apiClient.CheckUpdatesForArtist(this.ArtistId);
     }
 
     [RelayCommand]

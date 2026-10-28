@@ -86,21 +86,28 @@ public class MultithreadHttpDownloadManager(HttpClient client,
             return;
         }
 
-        await semaphor!.WaitAsync(token ?? CancellationToken.None);
+        // Берём семафор в локальную переменную: Release должен вызываться именно у того экземпляра, который мы заняли
+        var gate = semaphor!;
+        await gate.WaitAsync(token ?? CancellationToken.None);
 
-        string rawName = Regex.Replace(track.DownloadUri, @"^(.*?)\?.*$", "$1");
+        try
+        {
+            string rawName = Regex.Replace(track.DownloadUri, @"^(.*?)\?.*$", "$1");
 
-        string localName = Path.Combine(albumDirectory, Path.GetFileName(rawName));
+            string localName = Path.Combine(albumDirectory, Path.GetFileName(rawName));
 
-        downloadStatuses[track] = TrackDownloadResult.Started;
-        TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
+            downloadStatuses[track] = TrackDownloadResult.Started;
+            TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
 
-        TrackDownloadResult downloadResult = await DownloadTrack(track, localName, token);
+            TrackDownloadResult downloadResult = await DownloadTrack(track, localName, token);
 
-        downloadStatuses[track] = downloadResult;
-        TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
-
-        semaphor.Release();
+            downloadStatuses[track] = downloadResult;
+            TrackDownloadResultChanged?.Invoke(track, downloadStatuses[track]);
+        }
+        finally
+        {
+            gate.Release();
+        }
     }
     private async Task<TrackDownloadResult> DownloadTrack(TrackDownloadModel track, string localName, CancellationToken? token = null)
     {
@@ -118,28 +125,64 @@ public class MultithreadHttpDownloadManager(HttpClient client,
         }
 
         var startDownloadTime = DateTime.UtcNow;
+        var cancellationToken = token ?? CancellationToken.None;
+
+        // Качаем потоком в временный .part файл (трек целиком в памяти не держим) и переименовываем только после полной загрузки:
+        // оборванная загрузка никогда не будет принята за готовый файл
+        string partName = localName + ".part";
+        long fileSize;
 
         try
         {
-            var bytes = await client.GetByteArrayAsync(track.DownloadUri, token ?? CancellationToken.None);
-            await File.WriteAllBytesAsync(localName, bytes, token ?? CancellationToken.None);
+            using var response = await client.GetAsync(track.DownloadUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            await apiClient.LogDownloadHistory(new(track.TrackId, startDownloadTime, DateTime.UtcNow, bytes.Length));
-
-            return TrackDownloadResult.Success;
-        }
-        catch (TaskCanceledException)
-        {
-            if (File.Exists(localName))
+            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+            await using (var destination = new FileStream(partName, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true))
             {
-                File.Delete(localName);
+                await source.CopyToAsync(destination, 81920, cancellationToken);
+                fileSize = destination.Length;
             }
+
+            File.Move(partName, localName, overwrite: true);
+        }
+        catch (OperationCanceledException)
+        {
+            TryDeleteFile(partName);
             return TrackDownloadResult.Cancelled;
         }
         catch (Exception ex)
         {
+            TryDeleteFile(partName);
             Debug.WriteLine($"Ошибка при загрузки трека {track.TrackId} по адресу {track.DownloadUri}: {ex}");
             return TrackDownloadResult.Error;
+        }
+
+        try
+        {
+            await apiClient.LogDownloadHistory(new(track.TrackId, startDownloadTime, DateTime.UtcNow, (int)Math.Min(fileSize, int.MaxValue)));
+        }
+        catch (Exception ex)
+        {
+            // Файл уже скачан: недоступность истории не должна превращать успешную загрузку в ошибку
+            Debug.WriteLine($"Не удалось записать историю загрузки трека {track.TrackId}: {ex.Message}");
+        }
+
+        return TrackDownloadResult.Success;
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (IOException)
+        {
+            // файл занят или уже удалён - не критично
         }
     }
     public void Dispose()

@@ -10,7 +10,8 @@ public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWin
 {
     public void ShowNewArtistWindow(MusicProviderViewModel musicProvider)
     {
-        var scope = scopeFactory.CreateScope();
+        // ShowDialog блокирует до закрытия окна, поэтому scope безопасно освободить сразу после него
+        using var scope = scopeFactory.CreateScope();
 
         var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
         var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
@@ -28,11 +29,10 @@ public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWin
 
     public void ShowEditArtistWindow(MusicProviderViewModel musicProvider, ArtistViewModel artistViewModel)
     {
-        var scope = scopeFactory.CreateScope();
+        using var scope = scopeFactory.CreateScope();
 
         var dialogWindow = scope.ServiceProvider.GetRequiredService<ArtistAddWindow>();
         var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
-        var vmFactory = scope.ServiceProvider.GetRequiredService<Func<MusicProviderViewModel, ArtistDto, ArtistViewModel>>();
 
         var vm = new ArtistAddWindowViewModel(musicProvider, apiClient, artistViewModel);
 
@@ -42,8 +42,8 @@ public class DialogWindowService(IServiceScopeFactory scopeFactory) : IDialogWin
 
     public void ShowDownloadHistoryWindow()
     {
-        var scope = scopeFactory.CreateScope();
-        var apiClient = scope.ServiceProvider.GetRequiredService<MusicNewsWatcherApiClient>();
+        using var scope = scopeFactory.CreateScope();
+
         var windowVm = scope.ServiceProvider.GetRequiredService<DownloadHistoryWindowViewModel>();
         var window = new DownloadHistoryWindow();
         window.DataContext = windowVm;

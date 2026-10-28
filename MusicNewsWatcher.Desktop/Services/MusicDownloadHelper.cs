@@ -32,8 +32,11 @@ public class MusicDownloadHelper
 
         Action<TrackDownloadModel, TrackDownloadResult> statusChangedAction = (track, status) =>
         {
-            var trackVm = album.Tracks.Single(t => t.Id == track.TrackId);
-            trackVm.DownloadResult = status;
+            var trackVm = album.Tracks.FirstOrDefault(t => t.Id == track.TrackId);
+            if (trackVm != null)
+            {
+                trackVm.DownloadResult = status;
+            }
         };
 
         try
@@ -46,7 +49,7 @@ public class MusicDownloadHelper
         }
         catch (OperationCanceledException)
         {
-            toasts.ShowError($"Загрузка альбома отменена");
+            toasts.ShowInformation($"Загрузка альбома отменена");
         }
         catch (Exception ex)
         {

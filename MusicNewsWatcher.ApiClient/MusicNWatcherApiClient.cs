@@ -13,8 +13,21 @@ public class MusicNewsWatcherApiClient
 
     public async Task<bool> CheckApiStatusAsync()
     {
-        var response = await client.GetAsync("api/status");
-        return response.IsSuccessStatusCode;
+        try
+        {
+            using var response = await client.GetAsync("api/status");
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException)
+        {
+            // сервер недоступен
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            // таймаут запроса
+            return false;
+        }
     }
     public async Task<MusicProviderDto[]> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
@@ -111,6 +124,7 @@ public class MusicNewsWatcherApiClient
     }
     public async Task LogDownloadHistory(TrackDownloadHistoryRequest item)
     {
-        var response = await client.PostAsJsonAsync($"api/download-history", item);
+        using var response = await client.PostAsJsonAsync($"api/download-history", item);
+        response.EnsureSuccessStatusCode();
     }
 }

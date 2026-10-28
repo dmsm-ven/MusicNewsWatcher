@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:beh="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ctl="clr-namespace:MusicNewsWatcher.Desktop.Views.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:MusicNewsWatcher.Desktop.ViewModels.Windows"
     x:Name="addNewArtistDialogWindow"
@@ -93,10 +94,11 @@
 
 
                 <TextBlock Text="URL страница исполнителя" />
-                <TextBox Text="{Binding ContextArtist.Uri, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding ArtistUri, UpdateSourceTrigger=PropertyChanged}" />
 
                 <TextBlock Text="Ссылка на изображение" />
-                <TextBox Text="{Binding ContextArtist.Image, UpdateSourceTrigger=PropertyChanged}" />
+                <!--  Превью обновляется при потере фокуса, а не на каждый введённый символ  -->
+                <TextBox Text="{Binding ArtistImage, UpdateSourceTrigger=LostFocus}" />
             </StackPanel>
             <DockPanel
                 Grid.Row="1"
@@ -140,10 +142,13 @@
                     BorderBrush="#0F0E2E"
                     BorderThickness="1"
                     CornerRadius="6">
-                    <Image
+                    <ctl:ThumbnailImage
                         Width="200"
                         Height="200"
-                        Source="{Binding ContextArtist.Image}" />
+                        DecodeWidth="300"
+                        Kind="Artist"
+                        Stretch="UniformToFill"
+                        Url="{Binding ArtistImage}" />
                 </Border>
             </Grid>
 

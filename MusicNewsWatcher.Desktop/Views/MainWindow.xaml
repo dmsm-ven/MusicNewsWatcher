@@ -149,7 +149,8 @@
 
             <!--  Tacks Menu  -->
             <Border Grid.Column="3" Style="{StaticResource MainSectionBorder}">
-                <Grid DataContext="{Binding SelectedMusicProvider}">
+                <!--  DataContext - выбранный альбом (AlbumViewModel): кнопки и заголовок ниже привязаны именно к нему  -->
+                <Grid DataContext="{Binding SelectedMusicProvider.SelectedArtist.SelectedAlbum}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -166,7 +167,7 @@
                         <TextBlock
                             Grid.ColumnSpan="4"
                             Style="{StaticResource MainSectionTitle}"
-                            Text="{Binding DisplayName}" />
+                            Text="{Binding Title}" />
 
 
                         <Button
@@ -206,7 +207,7 @@
                         </Button>
                     </Grid>
 
-                    <vs:TracksSectionControl Grid.Row="1" DataContext="{Binding SelectedArtist.SelectedAlbum}" />
+                    <vs:TracksSectionControl Grid.Row="1" DataContext="{Binding}" />
                 </Grid>
             </Border>
         </Grid>

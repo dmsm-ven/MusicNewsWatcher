@@ -23,6 +23,10 @@ public partial class MusicProviderViewModel : ObservableObject
     private readonly IDialogWindowService dialogWindowService;
     private readonly IToastsNotifier toasts;
 
+    // Загрузка исполнителей может быть запрошена сразу из нескольких мест (смена IsActiveProvider и команда выбора провайдера).
+    // Блокировка гарантирует, что список запрашивается и заполняется один раз, а не дублируется.
+    private readonly SemaphoreSlim loadLock = new(1, 1);
+
     private bool isLoaded = false;
     private int initialTrackedArtistsCount;
 
@@ -37,12 +41,10 @@ public partial class MusicProviderViewModel : ObservableObject
 
     async partial void OnIsActiveProviderChanged(bool oldValue, bool newValue)
     {
-        if (!newValue || isLoaded)
+        if (newValue)
         {
-            return;
+            await LoadArtistsAsync(force: false);
         }
-
-        await RefreshProviderSource();
     }
 
     public MusicProviderViewModel(MusicProviderDto dto, MusicNewsWatcherApiClient apiClient,
@@ -61,20 +63,53 @@ public partial class MusicProviderViewModel : ObservableObject
         Uri = dto.Uri;
         initialTrackedArtistsCount = dto.TotalArtists;
 
-        trackedArtists.CollectionChanged += (o, e) => OnPropertyChanged(nameof(TrackedArtistsCount));
+        TrackedArtists.CollectionChanged += (o, e) => OnPropertyChanged(nameof(TrackedArtistsCount));
     }
 
-    private async Task RefreshProviderSource()
+    /// <summary>
+    /// Полностью перезагружает список исполнителей провайдера с сервера
+    /// </summary>
+    public Task ReloadArtistsAsync()
     {
-        var artists = await apiClient.GetProviderArtistsAsync(MusicProviderId);
+        return LoadArtistsAsync(force: true);
+    }
 
-        foreach (var artistDto in artists.OrderBy(a => a.Name))
+    private async Task LoadArtistsAsync(bool force)
+    {
+        await loadLock.WaitAsync();
+        try
         {
-            var artistVm = artistVmFactory(this, artistDto);
-            await App.Current.Dispatcher.InvokeAsync(() => TrackedArtists.Add(artistVm));
-        }
+            if (isLoaded && !force)
+            {
+                return;
+            }
 
-        isLoaded = true;
+            InProgress = true;
+
+            var artists = await apiClient.GetProviderArtistsAsync(MusicProviderId);
+            var viewModels = artists
+                .OrderBy(a => a.Name)
+                .Select(artistDto => artistVmFactory(this, artistDto))
+                .ToList();
+
+            SelectedArtist = null;
+            TrackedArtists.Clear();
+            foreach (var artistVm in viewModels)
+            {
+                TrackedArtists.Add(artistVm);
+            }
+
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Не удалось загрузить исполнителей: {ex.Message}");
+        }
+        finally
+        {
+            InProgress = false;
+            loadLock.Release();
+        }
     }
 
     [ObservableProperty]
@@ -95,12 +130,21 @@ public partial class MusicProviderViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(IsArtistSelected))]
     private async Task DeleteArtist()
     {
-        if (SelectedArtist == null) { return; }
-        var dialogResult = MessageBox.Show($"Удалить '{SelectedArtist!.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (dialogResult == MessageBoxResult.Yes)
+        var artist = SelectedArtist;
+        if (artist == null) { return; }
+
+        var dialogResult = MessageBox.Show($"Удалить '{artist.Name}' ?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (dialogResult != MessageBoxResult.Yes) { return; }
+
+        try
         {
-            await apiClient.DeleteArtist(SelectedArtist.ArtistId);
-            this.TrackedArtists.Remove(SelectedArtist);
+            await apiClient.DeleteArtist(artist.ArtistId);
+            this.TrackedArtists.Remove(artist);
+            this.SelectedArtist = null;
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Не удалось удалить исполнителя: {ex.Message}");
         }
     }
 
@@ -109,10 +153,8 @@ public partial class MusicProviderViewModel : ObservableObject
     {
         IsActiveProvider = true;
 
-        if (!isLoaded)
-        {
-            await RefreshProviderSource();
-        }
+        // Если загрузку уже запустил OnIsActiveProviderChanged, дождёмся её (блокировка) и ничего не продублируем
+        await LoadArtistsAsync(force: false);
 
         WeakReferenceMessenger.Default.Send(new ProviderChangedMessage(this));
     }
@@ -120,19 +162,27 @@ public partial class MusicProviderViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshArtistPreviewImageToRandom()
     {
-        if (SelectedArtist == null)
+        var artist = SelectedArtist;
+        if (artist == null)
         {
             return;
         }
-        var validAlbums = SelectedArtist.Albums.Where(a => a.Image != null && !a.Image.Contains("image-placeholder")).ToArray();
+        var validAlbums = artist.Albums.Where(a => a.Image != null && !a.Image.Contains("image-placeholder")).ToArray();
         if (validAlbums.Length == 0)
         {
             return;
         }
 
         var randomAlbumImage = validAlbums[Random.Shared.Next(0, validAlbums.Length)].Image ?? string.Empty;
-        SelectedArtist.Image = randomAlbumImage;
 
-        await apiClient.UpdateArtist(SelectedArtist.ToDto());
+        try
+        {
+            artist.Image = randomAlbumImage;
+            await apiClient.UpdateArtist(artist.ToDto());
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Не удалось обновить превью исполнителя: {ex.Message}");
+        }
     }
 }

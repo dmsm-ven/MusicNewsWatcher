@@ -21,9 +21,6 @@
         d:BorderBrush="Yellow"
         BorderThickness="2"
         CornerRadius="0">
-        <Border.Effect>
-            <DropShadowEffect Color="LightGray" />
-        </Border.Effect>
 
         <Grid>
             <beh:Interaction.Triggers>
@@ -42,10 +39,12 @@
                 <icons:PackIconFontAwesome Kind="LinkSolid" Style="{StaticResource LinkIconSize}" />
             </Button>
 
-            <Image
-                Source="{Binding CachedImage}"
-                d:Source="/Assets/image-placeholder.jpg"
-                Stretch="Uniform" />
+            <local:ThumbnailImage
+                DecodeWidth="300"
+                Kind="Artist"
+                Stretch="UniformToFill"
+                Url="{Binding Image}"
+                d:Source="/Assets/image-placeholder.jpg" />
             <Label
                 Margin="0"
                 HorizontalAlignment="Stretch"
