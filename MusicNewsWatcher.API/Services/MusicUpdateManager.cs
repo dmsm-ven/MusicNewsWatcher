@@ -17,7 +17,10 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     public event EventHandler<NewAlbumsFoundEventArgs[]>? NewAlbumsFound;
 
     public static readonly string LastFullUpdateDateTimeSettingsKey = "LastFullUpdateDateTime";
-    public bool CrawlerInProgress { get; private set; }
+
+    // 0 - переобход не выполняется, 1 - выполняется (Interlocked: таймер и команда из Telegram могут прийти одновременно)
+    private int crawlerInProgress;
+    public bool CrawlerInProgress => Volatile.Read(ref crawlerInProgress) == 1;
     public DateTime LastUpdate { get; private set; }
     public bool IsFirstUpdate { get; private set; } = true;
 
@@ -27,7 +30,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     /// <returns></returns>
     public async Task RefreshLastUpdateDateTime()
     {
-        var dbContext = await dbContextFactory.CreateDbContextAsync();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         string? dateTimeStr = (await dbContext.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey))?.Value;
         if (DateTime.TryParse(dateTimeStr, out var lastUpdate))
@@ -75,7 +78,7 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     }
     public async Task CheckUpdatesForArtistAsync(int providerId, int artistId)
     {
-        var dbContext = await dbContextFactory.CreateDbContextAsync();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         MusicProviderBase provider = musicProviders.Single(p => p.Id == providerId);
         var artist = await dbContext.Artists.FindAsync(artistId);
@@ -98,13 +101,11 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
     }
     public async Task RunCrawler(CancellationToken stoppingToken = default)
     {
-        if (CrawlerInProgress)
+        if (Interlocked.CompareExchange(ref crawlerInProgress, 1, 0) != 0)
         {
             logger.LogWarning("Попытка выполнения переобхода во время выполнения другого (Отмена)");
             return;
         }
-
-        CrawlerInProgress = true;
 
         try
         {
@@ -127,21 +128,21 @@ public sealed class MusicUpdateManager(IEnumerable<MusicProviderBase> musicProvi
         }
         catch (NotSupportedException ex)
         {
-            logger.LogWarning($"Метод не поддерживается: {ex.Message}. {ex.StackTrace}");
+            logger.LogWarning(ex, "Метод не поддерживается: {message}", ex.Message);
         }
         catch (Exception ex)
         {
-            logger.LogError("Ошибка переобхода по таймеру: {error}", ex.Message);
+            logger.LogError(ex, "Ошибка переобхода по таймеру");
             throw;
         }
         finally
         {
-            CrawlerInProgress = false;
+            Volatile.Write(ref crawlerInProgress, 0);
         }
     }
     private async Task SaveLastUpdateTime()
     {
-        var dbContext = await dbContextFactory.CreateDbContextAsync();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
         var item = await dbContext.Settings.FindAsync(LastFullUpdateDateTimeSettingsKey);
 

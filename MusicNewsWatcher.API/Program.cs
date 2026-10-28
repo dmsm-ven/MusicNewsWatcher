@@ -1,15 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
+using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.Models;
 using PainvenNotificator;
+
+// Настройка Npgsql должна быть выполнена до первого обращения к БД (раньше это делалось в конструкторе DbContext при каждом его создании)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-                     .AddEnvironmentVariables();
+                     .AddEnvironmentVariables()
+                     .AddUserSecrets<Program>();
 
 
 
@@ -17,7 +23,10 @@ builder.Services.Configure<CrawlerConfiguration>(builder.Configuration.GetSectio
 
 builder.Services.AddMusicNewsWatcherApi(builder.Configuration);
 builder.Services.AddTelegramBot(builder.Configuration);
-builder.Services.AddTelegramNotificationsWithGeodata(builder.Configuration);
+builder.Services.AddTelegramNotificationsWithGeodata(builder.Configuration, options =>
+{
+    options.AppPrefix = "MusicNewsWatcher";
+});
 
 builder.Services.AddHostedService<CrawlerHostedService>();
 builder.Services.AddHostedService<TelegramBotHostedService>();
@@ -45,6 +54,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Создаём БД/таблицы один раз при старте (раньше EnsureCreated вызывался в конструкторе при каждом создании контекста)
+await using (var startupDb = await app.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>().CreateDbContextAsync())
+{
+    await startupDb.Database.EnsureCreatedAsync();
+}
+
 app.UseHttpsRedirection();
 
 // Enable CORS early so browser preflight requests are handled before other middleware
@@ -60,12 +75,15 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     _ = Task.Run(async () =>
     {
+        ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var options = app.Services.GetRequiredService<IOptions<AuthorizeMiddlewareOptions>>().Value;
+        logger.LogInformation($"{nameof(AuthorizeMiddlewareOptions)}.{nameof(AuthorizeMiddlewareOptions.AccessTokenRequired)}: {options.AccessTokenRequired}");
+        logger.LogInformation($"{nameof(AuthorizeMiddlewareOptions)}.{nameof(AuthorizeMiddlewareOptions.IPFilteringEnabled)}: {options.IPFilteringEnabled}");
         var notificator = app.Services.GetRequiredService<IApiEventNotificator>();
-        await notificator.Notify($"API парсера MusicNewsWatcher запущен");
+        await notificator.Notify($"API запущен");
     });
 });
 
-app.UseCors("react");
 app.UseSwagger();
 app.UseSwaggerUI();
 

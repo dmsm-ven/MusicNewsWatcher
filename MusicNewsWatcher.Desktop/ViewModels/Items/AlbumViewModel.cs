@@ -20,23 +20,15 @@ public partial class AlbumViewModel : ObservableObject
     public DateTime Created { get; private set; }
     public int AlbumId { get; private set; }
 
+    // Только адрес оригинальной картинки. Сама картинка загружается лениво контролом ThumbnailImage
     [ObservableProperty]
     private string? image;
-
-    async partial void OnImageChanged(string? value)
-    {
-        _ = Task.Run(async () =>
-        {
-            CachedImage = await imageCacheService.GetCachedImage(value, ThumbnailSize.Album);
-            await App.Current.Dispatcher.InvokeAsync(() => OnPropertyChanged(nameof(CachedImage)));
-        });
-    }
 
     public string Uri { get; private set; }
     public ArtistViewModel ParentArtist { get; private set; }
 
     [ObservableProperty]
-    private string title;
+    private string title = string.Empty;
 
     [ObservableProperty]
     private bool isActiveAlbum;
@@ -45,6 +37,8 @@ public partial class AlbumViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsUpdateTracksButtonVisibile))]
     [NotifyPropertyChangedFor(nameof(Tracks))]
     [NotifyPropertyChangedFor(nameof(CanDownloadAlbum))]
+    [NotifyCanExecuteChangedFor(nameof(DownloadAlbumCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelDownloadingCommand))]
     private bool inProgress;
 
     [ObservableProperty]
@@ -63,29 +57,28 @@ public partial class AlbumViewModel : ObservableObject
         }
     }
 
-    public string? CachedImage { get; private set; } = null;
-
     public bool IsUpdateTracksButtonVisibile => Tracks.Count == 0 && !InProgress;
 
     public bool CanDownloadAlbum => Tracks.Count > 0 && !InProgress;
 
+    private bool CanCancelDownloading => InProgress;
+
     public ObservableCollection<TrackViewModel> Tracks { get; } = new();
 
-    private readonly CancellationTokenSource cts = new();
+    // Источник отмены создаётся заново для каждой загрузки: после первой отмены альбом можно скачать снова
+    private CancellationTokenSource? downloadCts;
+
     private readonly MusicNewsWatcherApiClient apiClient;
     private readonly MusicDownloadHelper downloadHelper;
     private readonly IToastsNotifier toasts;
-    private readonly IImageThumbnailCacheService imageCacheService;
 
     public AlbumViewModel(ArtistViewModel parentArtist, AlbumDto dto, MusicNewsWatcherApiClient apiClient,
         MusicDownloadHelper downloadHelper,
-        IToastsNotifier toasts,
-        IImageThumbnailCacheService imageCacheService)
+        IToastsNotifier toasts)
     {
         this.apiClient = apiClient;
         this.downloadHelper = downloadHelper;
         this.toasts = toasts;
-        this.imageCacheService = imageCacheService;
 
         ParentArtist = parentArtist;
         AlbumId = dto.AlbumId;
@@ -96,9 +89,12 @@ public partial class AlbumViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanDownloadAlbum))]
-    private async Task DownloadAlbum(bool openFolder)
+    private async Task DownloadAlbum()
     {
-        await downloadHelper.DownloadAlbum(this, cts.Token);
+        downloadCts?.Dispose();
+        downloadCts = new CancellationTokenSource();
+
+        await downloadHelper.DownloadAlbum(this, downloadCts.Token);
     }
 
     [RelayCommand]
@@ -122,23 +118,27 @@ public partial class AlbumViewModel : ObservableObject
                 albumId: AlbumId,
                 providerId: this.ParentArtist.ParentProvider.MusicProviderId);
 
-            tracksEntities
-                .Select(i => new TrackViewModel(this)
+            Tracks.Clear();
+
+            foreach (var track in tracksEntities.OrderBy(t => t.Id))
+            {
+                Tracks.Add(new TrackViewModel(this)
                 {
-                    AlbumId = i.AlbumId,
-                    Id = i.Id,
-                    Name = HttpUtility.HtmlDecode(i.Name),
-                    DownloadUri = i.DownloadUri
-                })
-                .OrderBy(a => a.Id)
-                .ToList()
-                .ForEach(t => Tracks.Add(t));
+                    AlbumId = track.AlbumId,
+                    Id = track.Id,
+                    Name = HttpUtility.HtmlDecode(track.Name),
+                    DownloadUri = track.DownloadUri
+                });
+            }
 
-
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError("Ошибка получения информации о треках: " + ex.Message);
         }
         finally
         {
-            isLoaded = true;
             InProgress = false;
         }
     }
@@ -146,22 +146,7 @@ public partial class AlbumViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshTracks()
     {
-        InProgress = true;
-        try
-        {
-            throw new NotImplementedException();
-            //await updateManager.CheckUpdatesForAlbumAsync(ParentArtist.ParentProvider.Template, AlbumId);
-            //await RefreshTracksSource();
-        }
-        catch (Exception ex)
-        {
-            toasts.ShowError("Ошибка получения информации о треках" + ex.Message);
-        }
-        finally
-        {
-            InProgress = false;
-        }
-
+        await RefreshTracksSource();
     }
 
     [RelayCommand]
@@ -177,10 +162,10 @@ public partial class AlbumViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new AlbumChangedMessage(this));
     }
 
-    [RelayCommand(CanExecute = nameof(InProgress))]
+    [RelayCommand(CanExecute = nameof(CanCancelDownloading))]
     private void CancelDownloading()
     {
-        toasts.ShowError("Загрузка альбома отменена");
-        cts.Cancel();
+        // Уведомление об отмене показывает MusicDownloadHelper
+        downloadCts?.Cancel();
     }
 }

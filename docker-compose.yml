@@ -11,34 +11,32 @@ services:
     environment:
       ASPNETCORE_URLS: "http://+:80"
     networks:
-    - mnwatcher_network
+      - mnwatcher_network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
-    image: postgres:latest
+    # Версия зафиксирована: при смене major-версии (в том числе через :latest) том с данными перестаёт открываться.
+    # Монтирование в /var/lib/postgresql - формат образов PostgreSQL 18+.
+    image: postgres:18
     container_name: mnwatcher_database
     restart: always
     env_file: "db.env"
     volumes:
       - pgdata:/var/lib/postgresql
-    networks:
-      - mnwatcher_network
-
-  web:
-    container_name: mnwatcher_web
-    image: painven/mnwatcher_web:latest
-    ports:
-      - "9010:80"
-    depends_on:
-      - api
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER:-postgres}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - mnwatcher_network
 
 networks:  
   mnwatcher_network:
     name: mnwatcher_network
-    external: false
 
 volumes:
   pgdata:

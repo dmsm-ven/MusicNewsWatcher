@@ -16,9 +16,6 @@
         BorderBrush="{Binding IsActiveAlbum, Converter={StaticResource BoolToForegroundColorConverter}, ConverterParameter='Yellow;Gray'}"
         BorderThickness="2"
         CornerRadius="0">
-        <Border.Effect>
-            <DropShadowEffect Color="LightGray" />
-        </Border.Effect>
         <Grid>
             <beh:Interaction.Triggers>
                 <beh:EventTrigger EventName="PreviewMouseDown">
@@ -41,12 +38,14 @@
             </Button>
 
 
-            <Image
+            <local:ThumbnailImage
                 Width="120"
                 Height="120"
-                d:Source="/Assets/bricks.jpg"
-                Source="{Binding CachedImage, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToImageSourceConverter}}"
-                Stretch="UniformToFill" />
+                DecodeWidth="180"
+                Kind="Album"
+                Stretch="UniformToFill"
+                Url="{Binding Image}"
+                d:Source="/Assets/bricks.jpg" />
             <ProgressBar
                 Panel.ZIndex="99"
                 d:IsIndeterminate="False"

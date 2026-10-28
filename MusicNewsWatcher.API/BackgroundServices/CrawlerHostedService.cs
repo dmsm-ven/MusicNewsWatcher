@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API.Models;
 using MusicNewsWatcher.API.Services;
+using MusicNewsWatcher.Core.Models;
 using MusicNewsWatcher.TelegramBot;
 using MusicNewsWatcher.TelegramBot.MessageFormatters;
 
@@ -10,62 +11,75 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
         MusicWatcherTelegramBotClient telegramBotClient,
         IMusicNewsMessageFormatter telegramBotMessageFormatter,
         MusicUpdateManager updateManager,
-        IServiceScopeFactory serviceScopeFactory) : BackgroundService
+        IOptionsMonitor<CrawlerConfiguration> crawlerOptions) : BackgroundService
 {
+    private const int MaxArtistMessages = 5;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation($"Запуск службы парсера ...");
+        logger.LogInformation("Запуск службы парсера ...");
 
         await updateManager.RefreshLastUpdateDateTime();
         updateManager.NewAlbumsFound += UpdateManager_NewAlbumsFound;
 
-        var scope = serviceScopeFactory.CreateScope();
-        var options = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value;
-
-        TimeSpan nextExecTime = options.CheckInterval - (DateTime.UtcNow - updateManager.LastUpdate);
-        if (nextExecTime < TimeSpan.Zero)
+        try
         {
-            nextExecTime = TimeSpan.Zero;
-        }
+            // IOptionsMonitor подхватывает изменения appsettings.json без перезапуска (в отличие от IOptions)
+            var options = crawlerOptions.CurrentValue;
 
-        logger.LogInformation("Интервал обновления парсера: {checkInterval}", options.CheckInterval);
-        logger.LogInformation("Последниее обновление было произведено: {dt}", updateManager.LastUpdate);
-        logger.LogInformation("Следующее обновление будет выполнено через: {nextExecTime}", nextExecTime);
+            TimeSpan nextExecTime = options.CheckInterval - (DateTime.UtcNow - updateManager.LastUpdate);
+            if (nextExecTime < TimeSpan.Zero)
+            {
+                nextExecTime = TimeSpan.Zero;
+            }
 
-        if (nextExecTime > TimeSpan.Zero)
-        {
-            await Task.Delay(nextExecTime);
-        }
+            logger.LogInformation("Интервал обновления парсера: {checkInterval}", options.CheckInterval);
+            logger.LogInformation("Последниее обновление было произведено: {dt}", updateManager.LastUpdate);
+            logger.LogInformation("Следующее обновление будет выполнено через: {nextExecTime}", nextExecTime);
 
-        await RunCrawlerTask(stoppingToken);
+            if (nextExecTime > TimeSpan.Zero)
+            {
+                await Task.Delay(nextExecTime, stoppingToken);
+            }
 
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            scope = serviceScopeFactory.CreateScope();
-            options = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value;
-
-            await Task.Delay(options.CheckInterval, stoppingToken);
             await RunCrawlerTask(stoppingToken);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(crawlerOptions.CurrentValue.CheckInterval, stoppingToken);
+                await RunCrawlerTask(stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // штатная остановка приложения
+        }
+        finally
+        {
+            updateManager.NewAlbumsFound -= UpdateManager_NewAlbumsFound;
         }
 
         logger.LogInformation("Выход из службы парсера. Токен отмены: {stoppingToken}", stoppingToken);
     }
 
-    private async void UpdateManager_NewAlbumsFound(object? sender, Core.Models.NewAlbumsFoundEventArgs[] result)
+    // Обработчик события не должен быть async void: необработанное исключение в нём роняет весь процесс
+    private void UpdateManager_NewAlbumsFound(object? sender, NewAlbumsFoundEventArgs[] result)
     {
-        int artistsCounter = 0;
-        int maxMessageCount = 5;
-        foreach (var data in result)
-        {
-            if (artistsCounter > maxMessageCount)
-            {
-                string ellipsesMessage = $"И еще {result.Skip(maxMessageCount).Sum(ar => ar.NewAlbums.Length)} альбомов у {result.Length - maxMessageCount} исполнителей";
-                await telegramBotClient.SendMessage(ellipsesMessage);
-                break;
-            }
+        _ = SendNewAlbumsNotificationsAsync(result);
+    }
 
-            if (data.Artist is not null && data.NewAlbums is not null)
+    private async Task SendNewAlbumsNotificationsAsync(NewAlbumsFoundEventArgs[] result)
+    {
+        try
+        {
+            foreach (var data in result.Take(MaxArtistMessages))
             {
+                if (data.Artist is null)
+                {
+                    logger.LogWarning("Null Artist detected for provider {provider}. Skipping message.", data.Provider);
+                    continue;
+                }
+
                 string messageText = telegramBotMessageFormatter.BuildNewAlbumsFoundMessage(
                     data.Provider,
                     data.Artist,
@@ -73,12 +87,17 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
                 );
                 await telegramBotClient.SendMessage(messageText);
             }
-            else
-            {
-                logger.LogWarning("Null Artist or Albums detected for provider {provider}. Skipping message.", data.Provider);
-            }
 
-            artistsCounter++;
+            if (result.Length > MaxArtistMessages)
+            {
+                var rest = result.Skip(MaxArtistMessages).ToArray();
+                string ellipsesMessage = $"И еще {rest.Sum(ar => ar.NewAlbums.Length)} альбомов у {rest.Length} исполнителей";
+                await telegramBotClient.SendMessage(ellipsesMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Ошибка отправки уведомления о новых альбомах в Telegram");
         }
     }
 
@@ -90,14 +109,17 @@ public sealed class CrawlerHostedService(ILogger<CrawlerHostedService> logger,
 
             await updateManager.RunCrawler(stoppingToken);
 
-            var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: true) / 1E6);
+            var memoryUsageInMb = (int)(GC.GetTotalMemory(forceFullCollection: false) / 1E6);
 
             logger.LogTrace("Занимаемая память приложением: {memoryUsage} мб.", memoryUsageInMb);
         }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            logger.LogError("Ошибка выполнения переобхода: {error}", ex.Message);
+            logger.LogError(ex, "Ошибка выполнения переобхода");
         }
     }
 }
-
