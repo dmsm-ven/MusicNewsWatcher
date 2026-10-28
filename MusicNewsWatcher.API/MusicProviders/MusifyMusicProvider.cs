@@ -71,23 +71,17 @@ public sealed class MusifyMusicProvider : MusicProviderBase
             return Task.FromResult(Array.Empty<TrackDto>());
         }
 
-        var trackNodes = doc?.DocumentNode?.SelectNodes("//div[contains(@id, 'playerDiv')]");
+        var trackNodes = doc?.DocumentNode?.SelectNodes("//div[contains(@id, 'playerDiv')]//a[@itemprop='url']");
         if (trackNodes == null)
         {
             return Task.FromResult(Array.Empty<TrackDto>());
         }
 
         var tracks = trackNodes
-            .Select(div =>
-            {
-                string playUrl = div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty) ?? string.Empty;
-
-                return new TrackDto(Id: 0,
+            .Select(a => new TrackDto(Id: 0,
                     AlbumId: album.AlbumId,
-                    Name: div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]")?.InnerText?.Trim() ?? "<Ошибка>",
-                    // Если у трека нет ссылки на файл, не подставляем "голый" адрес сайта
-                    DownloadUri: string.IsNullOrWhiteSpace(playUrl) ? null : HOST + playUrl);
-            })
+                    Name: a.InnerText?.Trim() ?? "<Ошибка парсинга названия трека>",
+                    DownloadUri: HOST + a.GetAttributeValue("href", string.Empty).Trim()))
             .ToArray();
 
         return Task.FromResult(tracks);
