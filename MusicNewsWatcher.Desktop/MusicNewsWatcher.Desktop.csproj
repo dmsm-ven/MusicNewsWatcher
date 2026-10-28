@@ -8,13 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Assets\background-texture.jpg" />
 	  <None Remove="Assets\bandcamp-logo.png" />
 	  <None Remove="Assets\bricks.jpg" />
-	  <None Remove="Assets\cosmos-texture.jpg" />
 	  <None Remove="Assets\image-placeholder.jpg" />
 	  <None Remove="Assets\musify-logo.png" />
-	  <None Remove="Assets\settings-window-background-texture.jpg" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Content Include="appsettings.json">
@@ -36,25 +33,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Assets\background-texture.jpg">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
 		<Content Include="Assets\bandcamp-logo.png">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Assets\bricks.jpg">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Assets\cosmos-texture.jpg">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
 		<Content Include="Assets\image-placeholder.jpg">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Content Include="Assets\musify-logo.png">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Assets\settings-window-background-texture.jpg">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 		<Resource Include="logo.ico" />
