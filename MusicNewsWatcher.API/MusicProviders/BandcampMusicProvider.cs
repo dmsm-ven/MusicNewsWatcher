@@ -15,7 +15,7 @@ public sealed class BandcampMusicProvider : MusicProviderBase
         this.Name = "Bandcamp";
     }
 
-    public override async Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc)
+    public override Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc)
     {
         /*if (doc != null && doc.DocumentNode.SelectSingleNode(albumsXPath) != null)
         {
@@ -33,12 +33,12 @@ public sealed class BandcampMusicProvider : MusicProviderBase
             return albums;
         }
         */
-        return Array.Empty<AlbumDto>();
+        return Task.FromResult(Array.Empty<AlbumDto>());
     }
 
-    public override async Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
+    public override Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
     {
-        return Array.Empty<TrackDto>();
+        return Task.FromResult(Array.Empty<TrackDto>());
         /*
         if (!string.IsNullOrWhiteSpace(album.Uri) && album.Uri.Contains(HOST))
         {

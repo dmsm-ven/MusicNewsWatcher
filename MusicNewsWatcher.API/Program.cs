@@ -1,9 +1,14 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MusicNewsWatcher.API;
 using MusicNewsWatcher.API.BackgroundServices;
 using MusicNewsWatcher.API.Controllers;
+using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.Models;
 using PainvenNotificator;
+
+// Настройка Npgsql должна быть выполнена до первого обращения к БД (раньше это делалось в конструкторе DbContext при каждом его создании)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +54,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Создаём БД/таблицы один раз при старте (раньше EnsureCreated вызывался в конструкторе при каждом создании контекста)
+await using (var startupDb = await app.Services.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>().CreateDbContextAsync())
+{
+    await startupDb.Database.EnsureCreatedAsync();
+}
+
 app.UseHttpsRedirection();
 
 // Enable CORS early so browser preflight requests are handled before other middleware
@@ -73,7 +84,6 @@ app.Lifetime.ApplicationStarted.Register(() =>
     });
 });
 
-app.UseCors("react");
 app.UseSwagger();
 app.UseSwaggerUI();
 

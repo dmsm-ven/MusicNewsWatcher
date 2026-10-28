@@ -19,65 +19,78 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         this.Id = 2;
         this.Name = "Musify";
     }
-    public override async Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc)
+    public override Task<AlbumDto[]> GetAlbumsAsync(ArtistEntity artist, HtmlDocument doc)
     {
-        if (doc == null || doc.DocumentNode.SelectSingleNode(AlbumsXPath) == null)
+        // SelectNodes возвращает null, если ничего не найдено
+        var albumNodes = doc?.DocumentNode?.SelectNodes(AlbumsXPath);
+        if (albumNodes == null)
         {
-            return Array.Empty<AlbumDto>();
-        }
-
-        var parsedAlbums = doc.DocumentNode
-            .SelectNodes("//div[@id='divAlbumsList']/div")
-            .Select(div => new
-            {
-                Title = div.SelectSingleNode("./a/img").GetAttributeValue("alt", string.Empty).Trim(),
-                Image = div.SelectSingleNode("./a/img").GetAttributeValue("data-src", string.Empty).Trim(),
-                Uri = HOST + div.SelectSingleNode("./a").GetAttributeValue("href", string.Empty).Trim(),
-                DateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]").ParentNode.InnerText.Trim(),
-                AlbumType = int.Parse(div.GetAttributeValue("data-type", "0"))
-
-            })
-            .Where(a => Enum.IsDefined(typeof(MusifyAlbumType), a.AlbumType))
-            .ToArray();
-
-        if (parsedAlbums.Length == 0)
-        {
-            return Array.Empty<AlbumDto>();
+            return Task.FromResult(Array.Empty<AlbumDto>());
         }
 
         var albums = new List<AlbumDto>();
 
-        foreach (var album in parsedAlbums)
+        foreach (var div in albumNodes)
         {
-            if (!DateTime.TryParseExact(album.DateTimeString, "dd.MM.yyyy", null, DateTimeStyles.None, out var created))
+            // Любое отклонение разметки одного альбома пропускает только этот альбом, а не весь разбор артиста
+            var link = div.SelectSingleNode("./a");
+            var img = link?.SelectSingleNode("./img");
+            string href = link?.GetAttributeValue("href", string.Empty).Trim() ?? string.Empty;
+
+            if (img == null || string.IsNullOrEmpty(href))
+            {
+                continue;
+            }
+
+            if (!int.TryParse(div.GetAttributeValue("data-type", "0"), out int albumType) ||
+                !Enum.IsDefined(typeof(MusifyAlbumType), albumType))
+            {
+                continue;
+            }
+
+            string title = img.GetAttributeValue("alt", string.Empty).Trim();
+            string image = img.GetAttributeValue("data-src", string.Empty).Trim();
+            string uri = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : HOST + href;
+
+            string dateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]")?.ParentNode?.InnerText?.Trim() ?? string.Empty;
+            if (!DateTime.TryParseExact(dateTimeString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var created))
             {
                 created = DateTime.MinValue;
             }
-            albums.Add(new(0, artist.ArtistId, album.Title, created, false, album.Image, album.Uri));
+
+            albums.Add(new AlbumDto(0, artist.ArtistId, title, created, false, image, uri));
         }
 
-        return albums.ToArray();
+        return Task.FromResult(albums.ToArray());
     }
-    public override async Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
-    {
-        if (!string.IsNullOrWhiteSpace(album.Uri) && album.Uri.Contains(HOST))
-        {
-            const string trackXPath = "//div[contains(@id, 'playerDiv')]";
 
-            if (doc != null && doc.DocumentNode.SelectSingleNode(trackXPath) != null)
+    public override Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
+    {
+        if (string.IsNullOrWhiteSpace(album.Uri) || !album.Uri.Contains(HOST))
+        {
+            return Task.FromResult(Array.Empty<TrackDto>());
+        }
+
+        var trackNodes = doc?.DocumentNode?.SelectNodes("//div[contains(@id, 'playerDiv')]");
+        if (trackNodes == null)
+        {
+            return Task.FromResult(Array.Empty<TrackDto>());
+        }
+
+        var tracks = trackNodes
+            .Select(div =>
             {
-                var tracks = doc.DocumentNode.SelectNodes(trackXPath)
-                    .Select(div => new TrackDto(Id: 0,
+                string playUrl = div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty) ?? string.Empty;
+
+                return new TrackDto(Id: 0,
                     AlbumId: album.AlbumId,
                     Name: div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]")?.InnerText?.Trim() ?? "<Ошибка>",
-                    DownloadUri: HOST + (div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty) ?? string.Empty)
-                    ))
-                    .ToArray();
+                    // Если у трека нет ссылки на файл, не подставляем "голый" адрес сайта
+                    DownloadUri: string.IsNullOrWhiteSpace(playUrl) ? null : HOST + playUrl);
+            })
+            .ToArray();
 
-                return tracks;
-            }
-        }
-        return Array.Empty<TrackDto>();
+        return Task.FromResult(tracks);
     }
     public override Task<AlbumDto[]> SerchArtist(string searchText)
     {

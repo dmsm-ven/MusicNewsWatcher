@@ -22,11 +22,11 @@ public static class DependencyInjectionExtensions
         services.AddSingleton<IMusicNewsMessageFormatter, MusicNewsHtmlMessageFormatter>();
         services.AddSingleton<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>((x) =>
         {
-            var scope = x.CreateScope();
-            IMusicNewsMessageFormatter formatter = scope.ServiceProvider.GetRequiredService<IMusicNewsMessageFormatter>();
-            var updateManager = scope.ServiceProvider.GetRequiredService<MusicUpdateManager>();
-            var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
-            var updateInterval = scope.ServiceProvider.GetRequiredService<IOptions<CrawlerConfiguration>>().Value.CheckInterval;
+            // Все эти сервисы singleton, поэтому отдельный scope (который к тому же нигде не освобождался) не нужен
+            IMusicNewsMessageFormatter formatter = x.GetRequiredService<IMusicNewsMessageFormatter>();
+            var updateManager = x.GetRequiredService<MusicUpdateManager>();
+            var dbFactory = x.GetRequiredService<IDbContextFactory<MusicWatcherDbContext>>();
+            var optionsMonitor = x.GetRequiredService<IOptionsMonitor<CrawlerConfiguration>>();
 
             var handlers = new Dictionary<TelegramBotCommand, Func<Task<string>>>()
             {
@@ -49,7 +49,7 @@ public static class DependencyInjectionExtensions
 
                     string lastExecDt = updateManager.LastUpdate.ToRussianLocalTime();
                     int elapsedMinutes = (int)(DateTime.UtcNow - updateManager.LastUpdate).TotalMinutes;
-                    int nextExecInMinutes = Math.Max((int)updateInterval.TotalMinutes - elapsedMinutes, 0);
+                    int nextExecInMinutes = Math.Max((int)optionsMonitor.CurrentValue.CheckInterval.TotalMinutes - elapsedMinutes, 0);
 
                     string msg = $"Последний перееобход был {lastExecDt} ({elapsedMinutes} мин. назад). Следующий запуск через: {nextExecInMinutes} мин.";
                     return Task.FromResult(msg);
@@ -102,30 +102,32 @@ public static class DependencyInjectionExtensions
         });
         services.AddSingleton<MusicWatcherTelegramBotClient>(x =>
         {
-            var scope = x.CreateScope();
-
             var options = configuration
                 .GetSection(nameof(MusicWatcherTelegramBotConfiguration))
                 .Get<MusicWatcherTelegramBotConfiguration>() ?? throw new ArgumentNullException("Ошибка конфигурации TG бота");
 
-            var proxy = new WebProxy(options.ProxySettings.Host, options.ProxySettings.Port)
+            // Прокси используется только если он задан в конфигурации. HttpClient обязательно передаётся в TelegramBotClient,
+            // иначе настройки прокси никак не применяются.
+            HttpClient? httpClient = null;
+            var proxySettings = options.ProxySettings;
+            if (!string.IsNullOrWhiteSpace(proxySettings.Host))
             {
-                Credentials = new NetworkCredential(
-                options.ProxySettings.Login,
-                options.ProxySettings.Password)
-            };
+                var proxy = new WebProxy(proxySettings.Host, proxySettings.Port);
+                if (!string.IsNullOrWhiteSpace(proxySettings.Login))
+                {
+                    proxy.Credentials = new NetworkCredential(proxySettings.Login, proxySettings.Password);
+                }
 
-            var handler = new HttpClientHandler
-            {
-                Proxy = proxy,
-                UseProxy = true
-            };
+                httpClient = new HttpClient(new HttpClientHandler
+                {
+                    Proxy = proxy,
+                    UseProxy = true
+                });
+            }
 
-            var httpClient = new HttpClient(handler);
-
-            var routeHandlers = scope.ServiceProvider.GetRequiredService<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>();
-            var client = new TelegramBotClient(options!.ApiKey);
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<MusicWatcherTelegramBotClient>>();
+            var routeHandlers = x.GetRequiredService<IReadOnlyDictionary<TelegramBotCommand, Func<Task<string>>>>();
+            var client = new TelegramBotClient(options.ApiKey, httpClient);
+            var logger = x.GetRequiredService<ILogger<MusicWatcherTelegramBotClient>>();
 
             return new MusicWatcherTelegramBotClient(client, logger, options, routeHandlers);
         });

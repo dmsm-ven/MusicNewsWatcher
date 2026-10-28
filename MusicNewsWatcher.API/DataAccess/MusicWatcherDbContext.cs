@@ -12,10 +12,10 @@ namespace MusicNewsWatcher.API.DataAccess
         public DbSet<SettingsEntity> Settings { get; set; }
         public DbSet<TrackDownloadHistoryEntity> DownloadHistory { get; set; }
 
+        // Создание БД (EnsureCreated) и настройка Npgsql выполняются один раз при старте приложения в Program.cs,
+        // а не при каждом создании контекста (а их создаётся очень много)
         public MusicWatcherDbContext(DbContextOptions<MusicWatcherDbContext> options) : base(options)
         {
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-            Database.EnsureCreated();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
