@@ -151,7 +151,7 @@ public static class DependencyInjectionExtensions
         services.AddSingleton<MusicNewsCrawler>();
         services.AddSingleton<MusicUpdateManager>();
         services.AddSingleton<MusicProviderBase, MusifyMusicProvider>();
-        services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
+        //services.AddSingleton<MusicProviderBase, BandcampMusicProvider>();
 
 
         return services;

@@ -2,17 +2,17 @@
 using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models.Dtos;
-using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace MusicNewsWatcher.API.MusicProviders;
 
 public sealed class MusifyMusicProvider : MusicProviderBase
 {
     private const string HOST = "https://musify.club";
-    private const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
+    private const string AlbumsXPath = "//div[@id='divAlbumsList']/article";
     public override string AlbumsUriPath(ArtistEntity artist)
     {
-        return $"{artist.Uri}/releases";
+        return $"{artist.Uri}/discography";
     }
     public MusifyMusicProvider()
     {
@@ -30,40 +30,39 @@ public sealed class MusifyMusicProvider : MusicProviderBase
 
         var albums = new List<AlbumDto>();
 
-        foreach (var div in albumNodes)
+        foreach (var article in albumNodes)
         {
             // Любое отклонение разметки одного альбома пропускает только этот альбом, а не весь разбор артиста
-            var link = div.SelectSingleNode("./a");
-            var img = link?.SelectSingleNode("./img");
-            string href = link?.GetAttributeValue("href", string.Empty).Trim() ?? string.Empty;
+            var href = article?.SelectSingleNode("./a")?.GetAttributeValue("href", string.Empty).Trim() ?? string.Empty;
 
-            if (img == null || string.IsNullOrEmpty(href))
+            if (string.IsNullOrEmpty(href))
             {
                 continue;
             }
 
-            if (!int.TryParse(div.GetAttributeValue("data-type", "0"), out int albumType) ||
+            if (!int.TryParse(article?.GetAttributeValue("data-type", "0"), out int albumType) ||
                 !Enum.IsDefined(typeof(MusifyAlbumType), albumType))
             {
                 continue;
             }
 
-            string title = img.GetAttributeValue("alt", string.Empty).Trim();
-            string image = img.GetAttributeValue("data-src", string.Empty).Trim();
+            string title = article.SelectSingleNode(".//h3[@class='release-thumbnail__title']/a")?.InnerText?.Trim() ?? "<Ошибка>";
+            string image = article?.SelectSingleNode("./a[@class='release-thumbnail__cover']/picture/img")?.GetAttributeValue("src", string.Empty).Trim() ?? "";
             string uri = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : HOST + href;
 
-            string dateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]")?.ParentNode?.InnerText?.Trim() ?? string.Empty;
-            if (!DateTime.TryParseExact(dateTimeString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var created))
+            string releaseYearString = article?.SelectSingleNode(".//a[@class='release-thumbnail__year tabular-nums']")?.GetAttributeValue("title", "") ?? "";
+            const int yearOfReleaseMIN = 1900;
+            const int yearOfReleaseMAX = 2100;
+            if (!int.TryParse(releaseYearString, out var yearOfRelease) || yearOfRelease <= yearOfReleaseMIN || yearOfRelease >= yearOfReleaseMAX)
             {
-                created = DateTime.MinValue;
+                yearOfRelease = yearOfReleaseMIN;
             }
 
-            albums.Add(new AlbumDto(0, artist.ArtistId, title, created, false, image, uri));
+            albums.Add(new AlbumDto(0, artist.ArtistId, title, new DateTime(yearOfRelease, 1, 1), false, image, uri));
         }
 
         return Task.FromResult(albums.ToArray());
     }
-
     public override Task<TrackDto[]> GetTracksAsync(AlbumEntity album, HtmlDocument doc)
     {
         if (string.IsNullOrWhiteSpace(album.Uri) || !album.Uri.Contains(HOST))
@@ -71,22 +70,27 @@ public sealed class MusifyMusicProvider : MusicProviderBase
             return Task.FromResult(Array.Empty<TrackDto>());
         }
 
-        var trackNodes = doc?.DocumentNode?.SelectNodes("//div[contains(@id, 'playerDiv')]");
+        var trackNodes = doc?.DocumentNode?.SelectNodes("//div[contains(@id, 'playerDiv')]//a[@itemprop='url']");
         if (trackNodes == null)
         {
             return Task.FromResult(Array.Empty<TrackDto>());
         }
 
         var tracks = trackNodes
-            .Select(div =>
+            .Select(a =>
             {
-                string playUrl = div.SelectSingleNode(".//div[@data-play-url]")?.GetAttributeValue("data-play-url", string.Empty) ?? string.Empty;
+                Match match = Regex.Match(
+                    a.GetAttributeValue("href", string.Empty),
+                    @"/track/(?<trackName>.+)-(?<trackId>\d+)$");
+
+                var trackUrl = match.Success ?
+                    $"https://musify.club/track/dl/{match.Groups["trackId"].Value}/{match.Groups["trackName"].Value}.mp3"
+                    : "";
 
                 return new TrackDto(Id: 0,
                     AlbumId: album.AlbumId,
-                    Name: div.SelectSingleNode(".//div[@class='playlist__heading']/a[last()]")?.InnerText?.Trim() ?? "<Ошибка>",
-                    // Если у трека нет ссылки на файл, не подставляем "голый" адрес сайта
-                    DownloadUri: string.IsNullOrWhiteSpace(playUrl) ? null : HOST + playUrl);
+                    Name: a.InnerText?.Trim() ?? "<Ошибка парсинга названия трека>",
+                    DownloadUri: trackUrl);
             })
             .ToArray();
 
@@ -123,7 +127,6 @@ public sealed class MusifyMusicProvider : MusicProviderBase
         }  
         */
     }
-
     private enum MusifyAlbumType
     {
         Album = 2,//Студийный альбом = 2,

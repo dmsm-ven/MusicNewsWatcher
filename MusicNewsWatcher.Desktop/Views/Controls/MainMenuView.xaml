@@ -38,17 +38,7 @@
             Command="{Binding OpenFilesDownloadHistoryCommand}"
             Style="{StaticResource ToolButtonStyle}"
             ToolTip="Открыть окно с историей загрузок">
-            <icons:PackIconFontAwesome Kind="ServerSolid" Style="{StaticResource LargeIconSize}" />
+            <icons:PackIconFontAwesome Kind="ListSolid" Style="{StaticResource LargeIconSize}" />
         </Button>
-
-        <Button
-            Command="{Binding SettingsCommand}"
-            Style="{StaticResource ToolButtonStyle}"
-            ToolTip="Настройки">
-            <icons:PackIconFontAwesome Kind="PencilSolid" Style="{StaticResource LargeIconSize}" />
-        </Button>
-
-
-
     </StackPanel>
 </UserControl>
