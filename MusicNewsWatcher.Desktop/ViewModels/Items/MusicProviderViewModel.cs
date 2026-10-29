@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MusicNewsWatcher.ApiClient;
@@ -23,8 +23,7 @@ public partial class MusicProviderViewModel : ObservableObject
     private readonly IDialogWindowService dialogWindowService;
     private readonly IToastsNotifier toasts;
 
-    // Загрузка исполнителей может быть запрошена сразу из нескольких мест (смена IsActiveProvider и команда выбора провайдера).
-    // Блокировка гарантирует, что список запрашивается и заполняется один раз, а не дублируется.
+    // Artist loading may be requested from multiple places (IsActiveProvider and provider selection).
     private readonly SemaphoreSlim loadLock = new(1, 1);
 
     private bool isLoaded = false;
@@ -39,12 +38,20 @@ public partial class MusicProviderViewModel : ObservableObject
     [ObservableProperty]
     private bool isActiveProvider;
 
+    [ObservableProperty]
+    private bool sortByLatestAlbum;
+
     async partial void OnIsActiveProviderChanged(bool oldValue, bool newValue)
     {
         if (newValue)
         {
             await LoadArtistsAsync(force: false);
         }
+    }
+
+    partial void OnSortByLatestAlbumChanged(bool value)
+    {
+        SortTrackedArtists();
     }
 
     public MusicProviderViewModel(MusicProviderDto dto, MusicNewsWatcherApiClient apiClient,
@@ -67,7 +74,7 @@ public partial class MusicProviderViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Полностью перезагружает список исполнителей провайдера с сервера
+    /// Reloads the provider's artist list from the server.
     /// </summary>
     public Task ReloadArtistsAsync()
     {
@@ -88,7 +95,6 @@ public partial class MusicProviderViewModel : ObservableObject
 
             var artists = await apiClient.GetProviderArtistsAsync(MusicProviderId);
             var viewModels = artists
-                .OrderBy(a => a.Name)
                 .Select(artistDto => artistVmFactory(this, artistDto))
                 .ToList();
 
@@ -99,6 +105,7 @@ public partial class MusicProviderViewModel : ObservableObject
                 TrackedArtists.Add(artistVm);
             }
 
+            SortTrackedArtists();
             isLoaded = true;
         }
         catch (Exception ex)
@@ -110,6 +117,33 @@ public partial class MusicProviderViewModel : ObservableObject
             InProgress = false;
             loadLock.Release();
         }
+    }
+
+    private void SortTrackedArtists()
+    {
+        if (TrackedArtists.Count < 2)
+        {
+            return;
+        }
+
+        var selectedArtist = SelectedArtist;
+        var sortedArtists = SortByLatestAlbum
+            ? TrackedArtists
+                .OrderByDescending(artist => artist.LastAlbumCreated.HasValue)
+                .ThenByDescending(artist => artist.LastAlbumCreated)
+                .ThenBy(artist => artist.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList()
+            : TrackedArtists
+                .OrderBy(artist => artist.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+        TrackedArtists.Clear();
+        foreach (var artist in sortedArtists)
+        {
+            TrackedArtists.Add(artist);
+        }
+
+        SelectedArtist = selectedArtist;
     }
 
     [ObservableProperty]
@@ -153,10 +187,16 @@ public partial class MusicProviderViewModel : ObservableObject
     {
         IsActiveProvider = true;
 
-        // Если загрузку уже запустил OnIsActiveProviderChanged, дождёмся её (блокировка) и ничего не продублируем
+        // If OnIsActiveProviderChanged already started loading, wait for it instead of duplicating the request.
         await LoadArtistsAsync(force: false);
 
         WeakReferenceMessenger.Default.Send(new ProviderChangedMessage(this));
+    }
+
+    [RelayCommand]
+    private void ToggleArtistSortMode()
+    {
+        SortByLatestAlbum = !SortByLatestAlbum;
     }
 
     [RelayCommand]

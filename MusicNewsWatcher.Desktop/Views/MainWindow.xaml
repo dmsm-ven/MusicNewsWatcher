@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="MusicNewsWatcher.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -70,9 +70,28 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock
-                            Grid.ColumnSpan="4"
+                            Grid.ColumnSpan="5"
                             Style="{StaticResource MainSectionTitle}"
                             Text="{Binding TrackedArtistsCount, StringFormat={}Отслеживаемые исполнители [{0}]}" />
+
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding ToggleArtistSortModeCommand}"
+                            Style="{StaticResource ToolButtonStyle}"
+                            ToolTip="Переключить сортировку исполнителей">
+                            <TextBlock FontSize="10" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="A-Z" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SortByLatestAlbum}" Value="True">
+                                                <Setter Property="Text" Value="NEW-OLD" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
 
                         <Button
                             Grid.Column="2"

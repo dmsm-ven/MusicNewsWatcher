@@ -8,6 +8,7 @@ using MusicNewsWatcher.Desktop.Extensions;
 using MusicNewsWatcher.Desktop.Interfaces;
 using MusicNewsWatcher.Desktop.Models.WeakReferenceMessages;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Web;
 
 namespace MusicNewsWatcher.Desktop.ViewModels.Items;
@@ -104,9 +105,32 @@ public partial class AlbumViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenInBrowser()
+    private void OpenInBrowser(string uri)
     {
-        //IGNORE
+        if (string.IsNullOrWhiteSpace(uri))
+        {
+            toasts.ShowError("Не удалось открыть альбом: ссылка отсутствует.");
+            return;
+        }
+
+        if (!System.Uri.TryCreate(uri, UriKind.Absolute, out var albumUri))
+        {
+            toasts.ShowError("Не удалось открыть альбом: ссылка имеет неверный формат.");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = albumUri.AbsoluteUri,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            toasts.ShowError($"Не удалось открыть альбом в браузере: {ex.Message}");
+        }
     }
 
     private async Task RefreshTracksSource()

@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MahApps.Metro.IconPacks;
@@ -20,13 +20,18 @@ public partial class ArtistViewModel : ObservableObject
     public int ArtistId { get; init; }
     public MusicProviderViewModel ParentProvider { get; init; }
 
+    /// <summary>
+    /// Latest album creation date returned by the API, without loading the artist's albums.
+    /// </summary>
+    public DateTime? LastAlbumCreated { get; init; }
+
     [ObservableProperty]
     private string name = string.Empty;
 
     [ObservableProperty]
     private string uri = string.Empty;
 
-    // Только адрес оригинальной картинки. Сама картинка загружается лениво контролом ThumbnailImage
+    // Only the original image URL is stored. The ThumbnailImage control loads the image lazily.
     [ObservableProperty]
     private string image = string.Empty;
 
@@ -48,6 +53,7 @@ public partial class ArtistViewModel : ObservableObject
         Name = artist.Name;
         Image = artist.Image;
         Uri = artist.Uri;
+        LastAlbumCreated = artist.LastAlbumCreated;
 
         this.Albums.CollectionChanged += (o, e) => OnPropertyChanged(nameof(IsUpdateAlbumsButtonVisibile));
     }
@@ -97,7 +103,7 @@ public partial class ArtistViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Просит сервер проверить сайт-источник на новые альбомы и обновляет список
+    /// Asks the provider to check for new albums and refreshes the list.
     /// </summary>
     [RelayCommand]
     private async Task GetAlbumsFromProviderForArtist()

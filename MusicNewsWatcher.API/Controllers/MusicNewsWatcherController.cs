@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MusicNewsWatcher.API.DataAccess;
 using MusicNewsWatcher.API.DataAccess.Entity;
@@ -55,10 +55,21 @@ public class MusicNewsWatcherController : ControllerBase
             return NotFound();
         }
 
+        // Compute the latest album date in SQL. This avoids loading every artist's albums separately.
         var artists = await db.Artists
             .AsNoTracking()
             .Where(a => a.MusicProviderId == provider_id)
-            .Select(p => p.ToDto())
+            .Select(a => new ArtistDto
+            {
+                ArtistId = a.ArtistId,
+                MusicProviderId = a.MusicProviderId,
+                Name = a.Name,
+                Uri = a.Uri,
+                Image = a.Image,
+                LastAlbumCreated = a.Albums
+                    .Select(album => (DateTime?)album.Created)
+                    .Max()
+            })
             .ToListAsync();
 
         return artists.Any() ? Ok(artists) : NoContent();
