@@ -2,17 +2,16 @@
 using MusicNewsWatcher.API.DataAccess.Entity;
 using MusicNewsWatcher.API.MusicProviders.Base;
 using MusicNewsWatcher.Core.Models.Dtos;
-using System.Globalization;
 
 namespace MusicNewsWatcher.API.MusicProviders;
 
 public sealed class MusifyMusicProvider : MusicProviderBase
 {
     private const string HOST = "https://musify.club";
-    private const string AlbumsXPath = "//div[@id='divAlbumsList']/div";
+    private const string AlbumsXPath = "//div[@id='divAlbumsList']/article";
     public override string AlbumsUriPath(ArtistEntity artist)
     {
-        return $"{artist.Uri}/releases";
+        return $"{artist.Uri}/discography";
     }
     public MusifyMusicProvider()
     {
@@ -30,11 +29,11 @@ public sealed class MusifyMusicProvider : MusicProviderBase
 
         var albums = new List<AlbumDto>();
 
-        foreach (var div in albumNodes)
+        foreach (var article in albumNodes)
         {
             // Любое отклонение разметки одного альбома пропускает только этот альбом, а не весь разбор артиста
-            var link = div.SelectSingleNode("./a");
-            var img = link?.SelectSingleNode("./img");
+            var link = article.SelectSingleNode("./a");
+            var img = link?.SelectSingleNode("./picture/img");
             string href = link?.GetAttributeValue("href", string.Empty).Trim() ?? string.Empty;
 
             if (img == null || string.IsNullOrEmpty(href))
@@ -42,7 +41,7 @@ public sealed class MusifyMusicProvider : MusicProviderBase
                 continue;
             }
 
-            if (!int.TryParse(div.GetAttributeValue("data-type", "0"), out int albumType) ||
+            if (!int.TryParse(article.GetAttributeValue("data-type", "0"), out int albumType) ||
                 !Enum.IsDefined(typeof(MusifyAlbumType), albumType))
             {
                 continue;
@@ -52,13 +51,16 @@ public sealed class MusifyMusicProvider : MusicProviderBase
             string image = img.GetAttributeValue("data-src", string.Empty).Trim();
             string uri = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : HOST + href;
 
-            string dateTimeString = div.SelectSingleNode(".//i[contains(@class, 'zmdi-calendar')]")?.ParentNode?.InnerText?.Trim() ?? string.Empty;
-            if (!DateTime.TryParseExact(dateTimeString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var created))
+            string releaseYear = article.SelectSingleNode(".//a[@class='release-thumbnail__year tabular-nums']")?.GetAttributeValue("title", "") ?? "";
+            int yearOfRelease = 0;
+            const int yearOfReleaseMIN = 1900;
+            const int yearOfReleaseMAX = 2100;
+            if (!int.TryParse(releaseYear, out var year) || year <= yearOfReleaseMIN || year >= yearOfReleaseMAX)
             {
-                created = DateTime.MinValue;
+                yearOfRelease = yearOfReleaseMIN;
             }
 
-            albums.Add(new AlbumDto(0, artist.ArtistId, title, created, false, image, uri));
+            albums.Add(new AlbumDto(0, artist.ArtistId, title, new DateTime(yearOfRelease, 1, 1), false, image, uri));
         }
 
         return Task.FromResult(albums.ToArray());
